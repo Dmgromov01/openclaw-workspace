@@ -1,43 +1,28 @@
-# Интеграция с календарём iCloud (OpenClaw)
+# Интеграция с календарём (OpenClaw)
 
-## Скрипт
-`/root/.openclaw/workspace/calendar/icloud_calendar.py`
+> ⚠️ **Актуальный календарь — GOOGLE CALENDAR API** (переехали с iCloud 10-11.08).
+> `icloud_calendar.py` — устаревший legacy. Актуальный скрипт чтения — `gcal_reader.py`.
 
-## Доступные операции
+## Актуально: чтение Google Calendar
+`/root/.openclaw/workspace/calendar/gcal_reader.py` (service-account, `dmgromov03@gmail.com`)
 
-### Добавить встречу
-Формат запроса пользователя: «действие + дата + время с годом».
-Примеры:
-- «позвонить Иванову 15.08.2026 14:00»
-- «встреча с клиентом 20.08.2026 10:30»
-- «завтра в 10:00 позвонить клиенту»
-- «купить молоко 21.08.2026 9:00»
+### Посмотреть расписание (Google)
+- Сегодня: `python3 gcal_reader.py today`
+- Неделя: `python3 gcal_reader.py week`
+- N дней: `python3 gcal_reader.py list --days N`
+- Дата/время — Europe/Moscow.
 
-Команда:
+⚠️ Добавление/удаление событий на Google пока НЕ реализовано (gcal_reader только читает).
+
+## Устаревшее (iCloud, legacy)
+Формат запроса пользователя был: «действие + дата + время с годом».
+Примеры: «позвонить Иванову 15.08.2026 14:00», «встреча с клиентом 20.08.2026 10:30».
 ```
 python3 icloud_calendar.py add "<summary>" "<DD.MM.YYYY HH:MM>" [minutes]
+python3 icloud_calendar.py today|week|month
+python3 icloud_calendar.py delete --search "<часть названия>"
 ```
-Пример:
-```
-python3 icloud_calendar.py add "позвонить Петрову" "18.08.2026 11:30"
-```
-(по умолчанию 60 минут)
-
-### Посмотреть расписание
-- Сегодня: `python3 icloud_calendar.py today`
-- Неделя: `python3 icloud_calendar.py week`
-- Месяц: `python3 icloud_calendar.py month`
-- N дней: `python3 icloud_calendar.py list --days N`
-
-### Удалить встречу
-- По названию: `python3 icloud_calendar.py delete --search "<часть названия>"`
-- За конкретную дату: `python3 icloud_calendar.py delete --date "DD.MM.YYYY"`
-
-## Важно
-- Календарь: **Home** (основной), из `ICLOUD_CALENDAR_URL` в `/root/tg_bot/.env`.
-- Дата/время — в Europe/Moscow.
-- Старый бот `bot.py` ОТКЛЮЧЁН (Вариант А). Конфликт токенов решён.
-- Дубли встреч больше не создаются — парсер чистит служебные слова и пишет в конкретный календарь.
+Был календарь Home из `ICLOUD_CALENDAR_URL` в `/root/tg_bot/.env`. Старый бот `bot.py` ОТКЛЮЧЁН.
 
 ## Автоматизации (cron)
 - `daily-digest` — ежедневно 09:00 MSK, дайджест новостей + курс валют → Telegram 1916536646

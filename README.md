@@ -7,11 +7,11 @@
 ## Структура
 
 - **`calendar/`** — календарь и Telegram-логика:
-  - `icloud_calendar.py` — операции с календарём iCloud (Home): add/today/week/month/delete
+  - `gcal_reader.py` — **актуальный** календарь (Google Calendar API, чтение today/week/list)
+  - `icloud_calendar.py` — УСТАРЕЛ (старая система iCloud, остался legacy; см. STATE.md)
   - `command_parser.py` — парсер команд «действие + дата + время + @ник»
   - `orchestrator.py` — связка парсер → календарь → .ics → отправка в Telegram
   - `digest.py` — сбор дайджеста (новости + курс валют)
-  - `gcal_reader.py` — чтение Google Calendar
   - `ics_generator.py` — генерация .ics-приглашений
   - `tg_sender.py` — отправка через личный Telegram (Telethon, proxy)
   - `bot_sender.py` — отправка через бота @Dmbotmy_bot
@@ -19,22 +19,19 @@
 - **`memory/`** — дневники сессий (сырые логи), `MEMORY.md` — курируемая долгосрочная память.
 - **`AGENTS.md`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`** — документы самоидентификации и поведения агента.
 
-## Быстрый старт (календарь)
+## Быстрый старт (календарь — GOOGLE, чтение)
 
 ```bash
-# Добавить встречу
-python3 calendar/icloud_calendar.py add "позвонить Иванову" "15.08.2026 14:00"
+# Расписание (Google Calendar, актуально)
+python3 calendar/gcal_reader.py today   # сегодня
+python3 calendar/gcal_reader.py week    # неделя
+python3 calendar/gcal_reader.py list --days N
 
-# Расписание
-python3 calendar/icloud_calendar.py today   # сегодня
-python3 calendar/icloud_calendar.py week    # неделя
-python3 calendar/icloud_calendar.py month   # месяц
-
-# Удалить
-python3 calendar/icloud_calendar.py delete --search "часть названия"
+# ⚠️ Добавление/удаление событий на Google пока НЕ реализовано (gcal_reader читает).
+# Старый icloud_calendar.py (add/delete) — legacy от iCloud, не использовать как основной.
 ```
 
-Подробнее — `calendar/README.md`.
+Подробнее — `calendar/README.md` и `STATE.md` (актуальное состояние).
 
 ## Конфигурация и секреты
 

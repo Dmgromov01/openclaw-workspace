@@ -2,6 +2,9 @@
 
 This folder is home. Treat it that way.
 
+> 🗂️ **НАПОМИНАЛКА: `STATE.md`** — актуальное состояние (календарь = Google API, НЕ iCloud; личный TG забанен; и т.д.).
+> Сверяйся с ним при старте и перед работой с интеграциями, чтобы не путаться в нестыковках.
+
 ## First Run
 
 If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out who you are, then delete it. You won't need it again.

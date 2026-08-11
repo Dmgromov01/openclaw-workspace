@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """
-Чтение событий из Google Calendar dmgromov03@gmail.com.
+Чтение и создание событий Google Calendar dmgromov03@gmail.com.
 Команды:
   today  — события на сегодня
   week   — события на ближайшие 7 дней
   list --days N — события на N дней
+  add "<summary>" "<start>" ["<end>"] [--location "..."] [--description "..."]
+      — Создать событие. start/end — в формате YYYY-MM-DDTHH:MM (Europe/Moscow).
+        end по умолчанию = start + 1 час.
 Вывод в человекочитаемом виде.
 """
 import argparse
 import sys
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+
+# pip install google-api-python-client google-auth
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -117,10 +122,29 @@ def cmd_week(svc, now):
     return "\n".join(out)
 
 
+def cmd_add(svc, summary, start, end, location, description):
+    body = {
+        "summary": summary,
+        "start": {"dateTime": start.strftime("%Y-%m-%dT%H:%M:%S"), "timeZone": "Europe/Moscow"},
+        "end": {"dateTime": end.strftime("%Y-%m-%dT%H:%M:%S"), "timeZone": "Europe/Moscow"},
+    }
+    if location:
+        body["location"] = location
+    if description:
+        body["description"] = description
+    ev = svc.events().insert(calendarId=CAL, body=body).execute()
+    s = datetime.fromisoformat(ev["start"]["dateTime"]).strftime("%H:%M")
+    e = datetime.fromisoformat(ev["end"]["dateTime"]).strftime("%H:%M")
+    return f"✅ Событие создано: {ev.get('summary')} — {s}–{e} (id: {ev['id'][:8]})"
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["today", "week", "list"])
+    ap.add_argument("cmd", choices=["today", "week", "list", "add"])
+    ap.add_argument("args", nargs="*", help="для add: summary start [end]")
     ap.add_argument("--days", type=int, default=7)
+    ap.add_argument("--location")
+    ap.add_argument("--description")
     a = ap.parse_args()
 
     creds = service_account.Credentials.from_service_account_file(
@@ -133,7 +157,28 @@ def main():
         print(cmd_today(svc, now))
     elif a.cmd == "week":
         print(cmd_week(svc, now))
-    elif a.cmd == "list":
+    elif a.cmd == "add":
+        if len(a.args) < 2:
+            print("Использование: add \"<summary>\" \"<YYYY-MM-DDTHH:MM>\" [\"<end>\"] --location ... --description ...")
+            sys.exit(2)
+        summary = a.args[0]
+        try:
+            start = datetime.fromisoformat(a.args[1]).replace(tzinfo=TZ)
+        except ValueError:
+            print("Ошибка: start должен быть в формате YYYY-MM-DDTHH:MM")
+            sys.exit(2)
+        if len(a.args) >= 3:
+            try:
+                end = datetime.fromisoformat(a.args[2]).replace(tzinfo=TZ)
+            except ValueError:
+                print("Ошибка: end должен быть в формате YYYY-MM-DDTHH:MM")
+                sys.exit(2)
+        else:
+            end = start + timedelta(hours=1)
+        if end <= start:
+            print("Ошибка: end должен быть позже start")
+            sys.exit(2)
+        print(cmd_add(svc, summary, start, end, a.location, a.description))
         start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         end = start + timedelta(days=a.days)
         evs = fetch(start, end, svc)

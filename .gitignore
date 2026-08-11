@@ -20,3 +20,7 @@ node_modules/
 *.log
 *.tmp
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc

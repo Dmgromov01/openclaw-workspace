@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 """
-Оркестратор: связывает парсер команд, календарь iCloud, .ics-генератор и отправку в Telegram.
+Оркестратор: связывает парсер команд, .ics-генератор и отправку в Telegram.
 
 Поток:
 1. Парсит команду (встреча + ник + отправить мем/новости)
-2. Добавляет событие в iCloud-календарь (Home)
-3. Если указан ник участника:
+2. Если указан ник участника:
    - генерирует .ics-файл приглашения
    - отправляет участнику уведомление о встрече + .ics через личный Telegram-аккаунт (Telethon)
-4. Если команда "отправить мем": отправляет приложенный файл-мем участнику
-5. Если команда "отправить новости": собирает новости из источника и отправляет
+3. Если команда "отправить мем": отправляет приложенный файл-мем участнику
+4. Если команда "отправить новости": собирает новости из источника и отправляет
 
 Использование:
   python3 orchestrator.py add "<текст команды>"
   python3 orchestrator.py check  — проверить авторизацию Telethon
+
+Примечание: календарь теперь Google Calendar API (напрямую через gcal_reader/
+внешние вызовы). Добавление событий в календарь из orchestrator больше не
+выполняется (iCloud-путь удалён).
 """
 
 import sys
@@ -25,9 +28,9 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from command_parser import parse_command
-import icloud_calendar as cal
 import ics_generator
 import bot_sender  # схема: шлём приглашение владельцу через бота (для ручной пересылки)
+import tg_sender  # отправка через личный Telegram (Telethon)
 
 
 def _load_attached_meme(text: str) -> str:
@@ -58,12 +61,7 @@ async def process(text: str, meme_file: str = None) -> dict:
         "messages": [],
     }
 
-    # 1) Всегда добавляем событие в календарь
-    ok_cal, msg_cal = cal.add_event(summary, dt)
-    out["messages"].append(("calendar", f"📅 {msg_cal}" if ok_cal else f"❌ {msg_cal}"))
-    if not ok_cal:
-        # если в календарь не добавили, но есть адресат и команда — всё равно попробуем отправить
-        pass
+    # 1) (Добавление события в календарь удалено: iCloud-путь выпилен, календарь = Google API)
 
     # 2) Если есть адресат — шлём владельцу готовое приглашение (текст + .ics) для ручной пересылки
     if username:

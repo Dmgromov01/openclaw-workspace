@@ -1,0 +1,22 @@
+# Секреты и креды
+.env
+.env.*
+*.session
+session.session
+anon_session.session
+qr_token.txt
+pending_code_hash.txt
+*config*.json
+openclaw-workspace-state.json
+
+# Папки, не для репозитория
+_trash_/
+media/
+calendar/anon_session.session
+tg-mtproto/
+node_modules/
+
+# Логи и временное
+*.log
+*.tmp
+.DS_Store

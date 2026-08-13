@@ -28,7 +28,8 @@
 - qwen-image-3-pro (OpenRouter): плагин есть, ключ не подхватывается — активный хвост.
 
 ## 🌐 Инфраструктура
-- Сервер: VPS `vps-amnezia`, Tailscale 100.79.153.33 (в тайлнете tail6a4baa).
+- Сервер (основной, OpenClaw): VPS `vps-7182`/hiplet-109548, IP 45.95.2.246 (Франкфурт DE), Ubuntu 24.04, 2 vCPU/2GB/20GB, Tailscale hiplet-109548 = 100.113.115.17 (в тайлнете tail6a4baa). `vps-amnezia` (100.79.152.33) — отдельный узел, не рабочий.
+- Сервер для личного VPN (AmneziaWG): старый 83.219.98.98 (оплачен до 10.11.2026). Старые серверы/IP забыты.
 - Файрвол ufw: SSH22, tailnet 100.64.0.0/10, device-pair 18789 — только из tailnet; default deny in.
 - Swap 2GB. Модель: deepseek/deepseek-chat (V4 Flash, прямой API).
 - GitHub: приватный репо Dmgromov01/openclaw-workspace (main).

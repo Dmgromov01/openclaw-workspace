@@ -26,5 +26,5 @@ python3 icloud_calendar.py delete --search "<часть названия>"
 
 ## Автоматизации (cron)
 - `daily-digest` — ежедневно 09:00 MSK, дайджест новостей + курс валют → Telegram 1916536646
-- `server-check` — ежедневно 10:00 MSK, проверка сервера 5.181.108.40 + WSS → Telegram 1916536646
+- `server-check` — ежедневно 10:00 MSK, проверка основного сервера + WSS → Telegram 1916536646
 - Новые автоматизации создавать через: `openclaw cron add --name X --cron "..." --tz Europe/Moscow --channel telegram --to telegram:1916536646 --announce --expect-final --message "..."`

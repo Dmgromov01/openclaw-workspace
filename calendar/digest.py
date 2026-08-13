@@ -14,8 +14,15 @@ import json
 import subprocess
 import urllib.request
 
-SOCKS = "socks5h://127.0.0.1:10808"
+# SOCKS-прокси (Xray) НЕ требуется: t.me/s отдаёт HTML напрямую.
+# На сервере Xray не запущен (порт 10808 закрыт) — запросы идут без прокси.
+SOCKS = None
 CHANNELS = ["meduzalive", "istories_media", "thebell_io", "bazabazon"]
+# RSS-фиды: (название, url, лимит постов)
+RSS_FEEDS = [
+    ("РБК", "https://rssexport.rbc.ru/rbcnews/news/30/full.rss", 10),
+    ("Коммерсантъ", "https://www.kommersant.ru/rss/news.xml", 10),
+]
 OWNER = "1916536646"
 
 # Окно времени для "дайджеста за последние N часов" (по умолчанию 2)
@@ -25,6 +32,53 @@ WINDOW_HOURS = 2
 POSTS_PER_CHANNEL = 3
 # Максимум символов на пост (обрезка) — увеличен для полноты текста
 MAX_POST_LEN = 280
+
+
+# ---------- RSS-фиды ----------
+def _rss(feed_url: str, limit: int = None, hours: int = None) -> list:
+    """Возвращает [(текст, время)] заголовков из RSS-фида."""
+    import datetime as _dt
+    hours = WINDOW_HOURS if hours is None else hours
+    limit = RSS_FEEDS[0][2] if limit is None else limit
+    cut = 30
+    try:
+        curl = ["curl", "-sL", "--max-time", "20", "-A", "Mozilla/5.0", feed_url]
+        r = subprocess.run(curl, capture_output=True, text=True)
+        data = r.stdout
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(data)
+        items = []
+        now = _dt.datetime.now(_dt.timezone.utc)
+        for it in root.iter("item"):
+            t = ""
+            for child in it:
+                tag = child.tag.split("}")[-1]
+                if tag == "title":
+                    t = (child.text or "").strip()
+                elif tag == "pubDate" and not (child.text or "").startswith("20"):
+                    pass
+            if t == "Коммерсантъ. Лента новостей":
+                continue
+            t = re.sub(r"\s+", " ", html.unescape(t)).strip()
+            if not t or len(t) <= 15:
+                continue
+            # дата — RFC822 пары (GMT); русские СМИ часто шлют без зоны
+            post_dt = None
+            for child in it:
+                if child.tag.split("}")[-1] == "pubDate" and child.text:
+                    try:
+                        import email.utils as _eu
+                        post_dt = _dt.datetime(*_eu.parsedate(child.text)[:6], tzinfo=_dt.timezone.utc)
+                    except Exception:
+                        post_dt = None
+            if hours is not None and post_dt is not None and post_dt < now - _dt.timedelta(hours=hours):
+                continue
+            items.append((t[:MAX_POST_LEN], post_dt))
+        items.sort(key=lambda x: (x[1] is None, -(x[1].timestamp() if x[1] else 0)))
+        return items[:limit]
+    except Exception as e:
+        print(f"RSS error {feed_url}: {e}")
+        return []
 
 
 # ---------- Курс ЦБ ----------
@@ -50,10 +104,11 @@ def _channel(ch: str, limit: int = None, hours: int = None) -> list:
     cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=hours)
     items = []
     try:
-        r = subprocess.run(
-            ["curl", "-s", "--max-time", "20", "--socks5-hostname", SOCKS,
-             "-A", "Mozilla/5.0", f"https://t.me/s/{ch}"],
-            capture_output=True, text=True)
+        curl = ["curl", "-s", "--max-time", "20", "-A", "Mozilla/5.0"]
+        if SOCKS:
+            curl += ["--socks5-hostname", SOCKS]
+        curl.append(f"https://t.me/s/{ch}")
+        r = subprocess.run(curl, capture_output=True, text=True)
         data = r.stdout
         parts = re.split(r'<div class="tgme_widget_message ', data)
         seen = set()
@@ -94,7 +149,35 @@ def _ai_summarize(posts_text: str) -> str:
         cfg = json.load(open("/root/.openclaw/openclaw.json"))
         keys = cfg.get("models", {}).get("providers", {}).get("deepseek", {})
         api_key = keys.get("apiKey")
-        base_url = keys.get("baseUrl", "https://api.deepseek.com/v1")
+        # apiKey может быть объектом file-provider: {"source": "file", "id": "/deepseek_key"}
+        if isinstance(api_key, dict):
+            # ищем реальный ключ в secrets (все известные места)
+            found = None
+            import os
+            for sp in ["/etc/openclaw/secrets.json", "/root/.openclaw/secrets/secrets.json", "/root/.openclaw/secrets.json"]:
+                if os.path.exists(sp):
+                    try:
+                        sd = json.load(open(sp))
+                        # ключ может лежать по id или по имени
+                        if api_key.get("id"):
+                            sid = api_key["id"].lstrip("/")
+                            if sid in sd:
+                                found = sd[sid]; break
+                        # fallback: ищем любое значение, начинающееся на sk-
+                        def find_sk(o):
+                            if isinstance(o, str):
+                                return o if o.startswith("sk-") else None
+                            if isinstance(o, dict):
+                                for v in o.values():
+                                    r = find_sk(v)
+                                    if r: return r
+                            return None
+                        if not found:
+                            found = find_sk(sd)
+                    except Exception:
+                        continue
+            api_key = found
+        base_url = keys.get("baseUrl", "https://api.deepseek.com/").rstrip("/") + "/v1"
         if not api_key:
             return None
         payload = json.dumps({
@@ -132,6 +215,10 @@ def _collect_posts(hours: int) -> tuple:
                  "thebell_io": "The Bell", "bazabazon": "BAZA"}.get(ch, ch)
         for t, _d in posts:
             raw.append(f"[{label}] {t}")
+            total += 1
+    for name, url, lim in RSS_FEEDS:
+        for t, _d in _rss(url, limit=lim, hours=hours):
+            raw.append(f"[{name}] {t}")
             total += 1
     return "\n".join(raw), total
 
@@ -178,6 +265,15 @@ def build(hours: int = None, use_ai: bool = True) -> str:
     lines.append(f"<b>💱 Курс (ЦБ):</b>")
     lines.append(f"{_curs()}")
     lines.append(f"⭐ Итого свежих постов: {total}")
+    # RSS-фиды в конце (заголовки)
+    for name, url, lim in RSS_FEEDS:
+        posts = _rss(url, limit=lim, hours=hours)
+        if not posts:
+            continue
+        lines.append(f"📡 <b>{name}</b>")
+        for t, _d in posts:
+            lines.append(f"   • {t}")
+        lines.append("")
     return "\n".join(lines)
 
 

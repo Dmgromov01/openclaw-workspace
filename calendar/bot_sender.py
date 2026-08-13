@@ -23,8 +23,21 @@ def _get_token() -> str:
     cfg_path = "/root/.openclaw/openclaw.json"
     with open(cfg_path) as f:
         cfg = json.load(f)
-    tok = cfg.get("channels", {}).get("telegram", {}).get("botToken", "")
+    tg = cfg.get("channels", {}).get("telegram", {})
+    # новый формат: accounts.default.botToken
+    tok = (tg.get("accounts", {}).get("default", {}) or {}).get("botToken", "")
     if not tok:
+        tok = tg.get("botToken", "")
+    # файловая ссылка — пытаемся прочитать файл
+    if isinstance(tok, dict):
+        fid = tok.get("id")
+        if fid and fid != "__OPENCLAW_REDACTED__":
+            try:
+                with open(fid) as f:
+                    tok = f.read().strip()
+            except Exception:
+                tok = ""
+    if not tok or not isinstance(tok, str):
         raise RuntimeError("botToken не найден в конфиге OpenClaw")
     return tok
 

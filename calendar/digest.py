@@ -187,11 +187,14 @@ def _ai_summarize(posts_text: str) -> str:
                     "Ты — редактор новостного дайджеста. Из списка сырых постов составь подробное, "
                     "точное саммари на русском. СОХРАНЯЙ исходный контекст: не пересказывай своими словами "
                     "и не упрощай смысл — передавай факты так, как они изложены в оригинале (кто, что, где, "
-                    "цифры, детали). ВКЛЮЧАЙ как можно больше значимой информации, следи за полнотой. "
-                    "Раздели по темам, сгруппируй похожие новости. В начале заголовок строкой вида "
-                    "\"Главное\". Формат: тематические блоки с буллетами, каждый буллет — "
-                    "развёрнутое фактологичное описание новости. Не опускай важные подробности. "
-                    "Если каких-то деталей нет в исходных постах — не додумывай."
+                    "цифры, детали). ВКЛЮЧАЙ как можно больше значимой информации."
+                    "ГРУППИРУЙ СТРОГО ПО ИСТОЧНИКАМ, НЕ ПО ТЕМАТИКЕ: каждый источник — отдельный блок "
+                    "с заголовком-названием источника (например, Медуза, Важные истории, The Bell, BAZA, "
+                    "РБК, Коммерсантъ), внутри блока — развёрнутые фактологичные описания новостей этого "
+                    "источника буллетами. НЕ объединяй новости разных источников в общие тематические блоки "
+                    "и не перемешивай их. В начале строкой \"Главное\" кратко перечисли 3-4 главные новости,"
+                    "затем блоки по источникам. Не опускай важные подробности. Если каких-то деталей нет "
+                    "в исходных постах — не додумывай."
                 )},
                 {"role": "user", "content": posts_text}
             ],
@@ -229,55 +232,43 @@ def _collect_posts(hours: int) -> tuple:
 
 # ---------- Сборка ----------
 def build(hours: int = None, use_ai: bool = True) -> str:
-    """Собирает дайджест. По умолчанию — за последние WINDOW_HOURS часов (2).
-    Увеличенный объём (+50%: по 3 поста на канал вместо 2) и улучшенная подача."""
+    """Собирает дайджест, сгруппированный СТРОГО ПО ИСТОЧНИКАМ (не по тематике).
+    Каждый источник — отдельный блок с заголовком; внутри — посты этого источника.
+    По умолчанию — за последние WINDOW_HOURS часов (2)."""
     import datetime as _dt
     hours = WINDOW_HOURS if hours is None else hours
     lines = [f"<b>📰 Дайджест за последние {hours} ч</b>", ""]
-    # эмодзи-маркеры для каналов
     emoji = {"meduzalive": "🟣", "istories_media": "🔵", "thebell_io": "🟠", "bazabazon": "⚫️"}
     total = 0
 
-    if use_ai:
-        raw, total = _collect_posts(hours)
-        summ = _ai_summarize(raw) if raw else None
-        if summ:
-            lines.append(summ)
-            lines.append("")
-            lines.append("━━━━━━━━━━━━━")
-            lines.append(f"<b>💱 Курс (ЦБ):</b>")
-            lines.append(f"{_curs()}")
-            lines.append(f"⭐ Свежих постов за {hours} ч: {total}")
-            return "\n".join(lines)
-        # если ИИ не сработал — fallback на сырой список
-
+    # СБОР по источникам: (заголовок_блока, [(текст, время)])
+    sources = []
     for ch in CHANNELS:
-        posts = _channel(ch, hours=hours)
-        if not posts:
-            continue
         label = {"meduzalive": "Медуза", "istories_media": "Важные истории",
                  "thebell_io": "The Bell", "bazabazon": "BAZA"}.get(ch, ch)
-        lines.append(f"{emoji.get(ch, '•')} <b>{label}</b>")
-        for t, _d in posts:
-            lines.append(f"   • {t}")
-            total += 1
-        lines.append("")
-    if total == 0:
+        posts = _channel(ch, hours=hours)
+        if posts:
+            sources.append((f"{emoji.get(ch, '•')} {label}", posts))
+    for name, url, lim in RSS_FEEDS:
+        posts = _rss(url, limit=lim, hours=hours)
+        if posts:
+            sources.append((f"📡 {name}", posts))
+
+    if not sources:
         lines.append("За последние 2 часа свежих постов в каналах нет.")
         lines.append("")
+    else:
+        for title, posts in sources:
+            lines.append(f"{title}")
+            for t, _d in posts:
+                lines.append(f"   • {t}")
+                total += 1
+            lines.append("")
+
     lines.append("━━━━━━━━━━━━━")
     lines.append(f"<b>💱 Курс (ЦБ):</b>")
     lines.append(f"{_curs()}")
     lines.append(f"⭐ Итого свежих постов: {total}")
-    # RSS-фиды в конце (заголовки)
-    for name, url, lim in RSS_FEEDS:
-        posts = _rss(url, limit=lim, hours=hours)
-        if not posts:
-            continue
-        lines.append(f"📡 <b>{name}</b>")
-        for t, _d in posts:
-            lines.append(f"   • {t}")
-        lines.append("")
     return "\n".join(lines)
 
 

@@ -22,8 +22,10 @@ _Курируемые воспоминания, свёрнутые из днев
 ## 🔒 КОНСТАНТА (#1178): В боте — ТОЛЬКО РЕЗУЛЬТАТ
 - В Telegram-чат отправлять ТОЛЬКО готовый результат. Никаких размышлений, «сейчас сделаю», логов, пояснений — в чат только чистый итог. Применять ко ВСЕМ командам навсегда. (Записано и в AGENTS.md.)
 
-## 🧠 Принцип Дмитрия (#1145): решать ПРОЩЕ, без глубокого ухода в IT
-- Сначала самое простое: обычный поиск/браузер/готовый каталог. Код/curl/автоматизация — только когда простой путь не работает, и в меру. (Дважды озвучен 07.08.)
+## 🧠 Принцип Дмитрия (#1145, ОБНОВЛЁН 15.08): мыслить как фулстек-архитектор
+- Внутренние размышления — на уровне фулстек-архитектора: видеть всю систему целиком, слои, зависимости, узкие места.
+- Ответы в чат — максимально лаконичные, короткие, по факту. Без воды и разжёвывания.
+- (Ранее: «решать проще, без ухода в IT» — заменено этим принципом.)
 
 ## Инфраструктура / критичные настройки
 - **Компакция** (`agents.defaults.compaction`): актуально на 11.08 12:40 — `maxActiveTranscriptBytes: "1mb"`, `truncateAfterCompaction: true`, `reserveTokensFloor: 100000`, `reserveTokens: 150000`, `keepRecentTokens: 200000`, `midTurnPrecheck.enabled: false`, mode safeguard, бэкап `openclaw.json.bak-pre-keeprecent-fix-20260811-124051`.
@@ -47,7 +49,8 @@ _Курируемые воспоминания, свёрнутые из днев
 - По кнопкам — ТОЛЬКО чистый список `• ДД.ММ.ГГГГ ЧЧ:ММ — summary` без заголовков (константа выше).
 
 ## Личный Telegram-аккаунт (MTProto / Telethon)
-- Сервис `/root/telegram-user-svc/server.py` (HTTP `127.0.0.1:8765`) — **systemd unit** `telegram-user-svc.service` (важно: systemd перезапускает, pkill бесполезен). Endpoint'ы: /auth/status, /auth/start, /auth/code, /auth/password, /send, /dialogs, /history.
+- Сервис `/root/telegram-user-svc/server.py` (HTTP `127.0.0.1:8765`) — **systemd unit** `telegram-user-svc.service` (важно: systemd перезапускает, pkill бесполезен). Endpoint'ы: /auth/status, /auth/start, /auth/code, /auth/password, /send, /send_file, /dialogs, /history.
+- ⚠️ **ПРАВИЛО ОТПРАВКИ ФОТО (14.08, не путать):** голый `POST /send` = только текст БЕЗ медиа. Фото/картинка ВСЕГДА через `POST /send_file` `{target, path, caption}`. Готовые картинки ВСЕГДА кладём в `/root/.openclaw/workspace/media/outbox/` (человеческое имя, НЕ uuid-хэш-путь). Единая точка — скрипт `/root/telegram_user_send_photo.sh <target> <path> [caption]`. Ошибка 14.08: стих ушёл голым /send без фото.
 - Плагин `~/.openclaw/plugins/tg-user-tools/` → инструменты **tg_send, tg_dialogs, tg_history** (работают; `toolNames:[]` в inspect — это статическая метадата, не рантайм).
 - **Формат плагина**: `definePluginEntry` из `openclaw/plugin-sdk/plugin-entry` + `api.registerTool({name,description,parameters,execute})`; объявить `contracts.tools` в `openclaw.plugin.json` И `package.json` (`openclaw.contracts.tools`).
 - Саммари диалогов: Вариант 2 (свободный текст через агента) — работает, кнопочный флоу не нужен.

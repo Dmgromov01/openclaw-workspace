@@ -30,8 +30,20 @@ WINDOW_HOURS = 2
 
 # Постов на канал (увеличено: объём +50%, было по 2)
 POSTS_PER_CHANNEL = 3
-# Максимум символов на пост (обрезка) — увеличен для полноты текста
+# Максимум символов на пост (обрезка по ЦЕЛОМУ слову, чтобы не рвать текст)
 MAX_POST_LEN = 280
+
+
+def _clip(text: str, n: int = MAX_POST_LEN) -> str:
+    """Обрезает текст по целому слову (не рвёт на полуслове), добавляет многоточие."""
+    if len(text) <= n:
+        return text
+    cut = text[: n - 1]
+    # отрезаем хвост до последнего пробела (вместе с пробелом), чтобы слово не рвалось
+    space = cut.rfind(" ")
+    if space > 0:
+        cut = cut[:space]
+    return cut.rstrip() + "…"
 
 
 # ---------- RSS-фиды ----------
@@ -73,7 +85,7 @@ def _rss(feed_url: str, limit: int = None, hours: int = None) -> list:
                         post_dt = None
             if hours is not None and post_dt is not None and post_dt < now - _dt.timedelta(hours=hours):
                 continue
-            items.append((t[:MAX_POST_LEN], post_dt))
+            items.append((_clip(t), post_dt))
         items.sort(key=lambda x: (x[1] is None, -(x[1].timestamp() if x[1] else 0)))
         return items[:limit]
     except Exception as e:
@@ -139,7 +151,7 @@ def _channel(ch: str, limit: int = None, hours: int = None) -> list:
         pass
     # сортировка по свежести (новые первыми); без даты — в конец
     items.sort(key=lambda x: (x[1] is None, -(x[1].timestamp() if x[1] else 0)))
-    return [(t[:MAX_POST_LEN], d) for t, d in items[:limit]]
+    return [(_clip(t), d) for t, d in items[:limit]]
 
 
 # ---------- ИИ-саммари (DeepSeek) ----------
@@ -230,10 +242,73 @@ def _collect_posts(hours: int) -> tuple:
     return "\n".join(raw), total
 
 
+# ---------- Саммари по источнику ----------
+def _summarize_source(name: str, posts: list) -> str:
+    """Саммаризирует посты ОДНОГО источника через DeepSeek (возвращает краткий текст или None)."""
+    texts = "\n".join(t for t, _d in posts)
+    if not texts.strip():
+        return None
+    try:
+        cfg = json.load(open("/root/.openclaw/openclaw.json"))
+        keys = cfg.get("models", {}).get("providers", {}).get("deepseek", {})
+        api_key = keys.get("apiKey")
+        import os
+        if isinstance(api_key, dict):
+            found = None
+            for sp in ["/etc/openclaw/secrets.json", "/root/.openclaw/secrets/secrets.json", "/root/.openclaw/secrets.json"]:
+                if os.path.exists(sp):
+                    try:
+                        sd = json.load(open(sp))
+                        if api_key.get("id"):
+                            sid = api_key["id"].lstrip("/")
+                            if sid in sd:
+                                found = sd[sid]; break
+                        def find_sk(o):
+                            if isinstance(o, str):
+                                return o if o.startswith("sk-") else None
+                            if isinstance(o, dict):
+                                for v in o.values():
+                                    r = find_sk(v)
+                                    if r: return r
+                            return None
+                        if not found:
+                            found = find_sk(sd)
+                    except Exception:
+                        continue
+            api_key = found
+        base_url = keys.get("baseUrl", "https://api.deepseek.com/").rstrip("/") + "/v1"
+        if not api_key:
+            return None
+        payload = json.dumps({
+            "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": (
+                    "Ты — редактор дайджеста. Перед тобой посты из ОДНОГО источника."
+                    " Составь по ним компактное, но подробное саммари на русском, сохраняя факты"
+                    " и контекст из оригинала (кто, что, где, цифры, детали), без искажений и без"
+                    " выдумывания. Не перечисляй сырые посты — перескажи суть связно, короткими"
+                    " буллетами. Не добавляй ничего, чего нет в постах."
+                )},
+                {"role": "user", "content": texts}
+            ],
+            "temperature": 0.4,
+            "max_tokens": 600
+        }).encode()
+        req = urllib.request.Request(base_url.rstrip("/") + "/chat/completions", data=payload,
+                                     headers={"Content-Type": "application/json",
+                                              "Authorization": "Bearer " + api_key})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            data = json.loads(r.read().decode())
+        return data["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        print("summarize error:", e)
+        return None
+
+
 # ---------- Сборка ----------
 def build(hours: int = None, use_ai: bool = True) -> str:
     """Собирает дайджест, сгруппированный СТРОГО ПО ИСТОЧНИКАМ (не по тематике).
-    Каждый источник — отдельный блок с заголовком; внутри — посты этого источника.
+    Каждый источник — отдельный блок; внутри — его посты или их саммари.
     По умолчанию — за последние WINDOW_HOURS часов (2)."""
     import datetime as _dt
     hours = WINDOW_HOURS if hours is None else hours
@@ -260,6 +335,16 @@ def build(hours: int = None, use_ai: bool = True) -> str:
     else:
         for title, posts in sources:
             lines.append(f"{title}")
+            if use_ai:
+                summ = _summarize_source(title, posts)
+                if summ:
+                    for ln in summ.split("\n"):
+                        ln = ln.strip()
+                        if ln:
+                            lines.append(ln)
+                    lines.append("")
+                    total += len(posts)
+                    continue
             for t, _d in posts:
                 lines.append(f"   • {t}")
                 total += 1

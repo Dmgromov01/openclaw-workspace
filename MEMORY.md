@@ -5,8 +5,9 @@ _Курируемые воспоминания, свёрнутые из днев
 ## Домен (куплен 12.08.2026)
 - **dmkz.org** — куплен Дмитрием. VPS IP для привязки: **138.124.180.178** (Франкфурт). DNS пока НЕ настроен (dmkz.org не резолвится), nginx не установлен, в openclaw.json домен не прописан. Деплой-план v3 заморожен до него; теперь можно размораживать по правилу релиза (тест → отчёт → «можно» → прод).
 
-## Домен (деплой 12.08.2026)
-- **gbkz.uk** — ОСНОВНОЙ домен, куплен напрямую на Cloudflare (не РФ-регистратор, NS alina/damien.ns.cloudflare.com). Цепочка: Cloudflare (DNS+прокси) → nginx (TLS Let's Encrypt, сайт /etc/nginx/sites-available/gbkz.uk, слушает 80+443, прокси на 127.0.0.1:18789) → OpenClaw. Всё развёрнуто и работает (HTTPS 200, редирект http→https, сертификат до 10.11.2026 автообновление).
+## Домен (деплой 12.08.2026, ПЕРЕДЕПЛОЙ 19.08.2026 на новый сервер)
+- **gbkz.uk** — ОСНОВНОЙ домен, куплен напрямую на Cloudflare (не РФ-регистратор, NS alina/damien.ns.cloudflare.com). Цепочка: Cloudflare (DNS+прокси, A → 138.124.180.178) → nginx (TLS Let's Encrypt, сайт /etc/nginx/sites-available/gbkz.uk, слушает 80+443, прокси на 127.0.0.1:18789) → OpenClaw. Работает: HTTPS 200, редирект http→https, www → 200, WSS-хендшейк 200, сертификат до **17.11.2026** (автообновление certbot.timer).
+- Креды Cloudflare (R2 API): `/root/.openclaw/credentials/cloudflare/r2.json` (chmod 600, ВНЕ git). Account id a068ea..., endpoint *.r2.cloudflarestorage.com. Дмитрий сам обновил A-запись 19.08.
 - **dmkz.org** — заброшен у Timeweb (РФ-регистратор, addPeriod-блок смены NS), НЕ используется.
 - Конфиг OpenClaw: `gateway.remote.url` = wss://gbkz.uk; `gateway.controlUi.allowedOrigins` включает gbkz.uk (+ www + Tailscale как fallback для iPhone); `gateway.auth.mode` = **token** со статическим токеном (сменён с password — iPhone шлёт device-token).
 - ⚠️ **УРОК (12.08)**: iPhone подключается к гейтвею через **код настройки (setup code)** — генерировать `openclaw qr --url wss://gbkz.uk --setup-code-only` (или просто `openclaw qr`). Это САМЫЙ простой и надёжный путь, не пароль/токен/порт. Поле «код настройки» на iPhone.

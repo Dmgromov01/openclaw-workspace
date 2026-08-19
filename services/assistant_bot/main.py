@@ -3,6 +3,7 @@ import re
 import json
 import asyncio
 import logging
+import subprocess
 from datetime import datetime
 import aiohttp
 import trafilatura
@@ -14,13 +15,19 @@ from sqlalchemy import BigInteger, String, Text, DateTime, select, event
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-# Импортируем генератор изображений
 import sys
 sys.path.append("/root/openclaw/calendar")
+sys.path.append("/root/openclaw/services/assistant_bot")
+
 try:
     from image_gen import generate_image
 except ImportError:
     generate_image = None
+
+try:
+    from ai_image_editor import process_ai_photo
+except ImportError:
+    process_ai_photo = None
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("assistant_bot")
@@ -50,6 +57,7 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8675950544:AAG56lRsDs
 
 VOICE_DIR = "/root/openclaw/workspace/media/voice"
 PHOTO_DIR = "/root/openclaw/workspace/media/photos"
+OUTBOX_DIR = "/root/openclaw/workspace/media/outbox"
 DB_PATH = "/root/openclaw/data/app.db"
 URL_REGEX = re.compile(r"https?://[^\s]+")
 
@@ -87,6 +95,17 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
 gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
+# --- СИНХРОНИЗАЦИЯ С AI-MEMORY ---
+
+def sync_to_ai_memory(category: str, text_content: str):
+    """Фоновая передача фактов и заметок в ai-memory через OpenClaw CLI"""
+    try:
+        clean_text = text_content.replace('"', '\\"').replace("\n", " ")
+        cmd = f'openclaw agent --agent main -m "Запомни в ai-memory в раздел {category}: {clean_text}"'
+        subprocess.run(cmd, shell=True, timeout=15, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as e:
+        logger.warning(f"Не удалось записать в ai-memory: {e}")
+
 async def call_deepseek(prompt: str) -> str:
     url = "https://api.deepseek.com/chat/completions"
     headers = {
@@ -109,12 +128,12 @@ async def call_deepseek(prompt: str) -> str:
             err = await resp.text()
             raise RuntimeError(f"DeepSeek API Error ({resp.status}): {err}")
 
-# --- 1. ГЕНЕРАЦИЯ ИЗОБРАЖЕНИЙ (Flux, Бесплатно) ---
+# --- ОБРАБОТЧИКИ ---
 
 @dp.message(Command("draw"))
 @dp.message(F.text.lower().startswith("нарисуй"))
 async def handle_draw(message: Message):
-    text = message.text
+    text = message.text or ""
     if text.startswith("/draw"):
         prompt = text[5:].strip()
     elif text.lower().startswith("нарисуй"):
@@ -123,16 +142,13 @@ async def handle_draw(message: Message):
         prompt = ""
 
     if not prompt:
-        await message.reply("Укажите промпт для генерации. Пример:\n`/draw спорткар в неоновом городе`")
+        await message.reply("Укажите промпт. Пример:\n`/draw спорткар в неоновом городе`")
         return
 
-    status_msg = await message.reply("🎨 Генерирую изображение через Flux...")
-
+    status_msg = await message.reply("🎨 Генерирую арт через Flux...")
     try:
-        # Перевод промпта на английский для лучшего качества генерации
-        en_prompt_query = f"Translate this image generation prompt to concise English: {prompt}"
         try:
-            en_prompt = await call_deepseek(en_prompt_query)
+            en_prompt = await call_deepseek(f"Translate this image generation prompt to concise English: {prompt}")
         except Exception:
             en_prompt = prompt
 
@@ -144,48 +160,47 @@ async def handle_draw(message: Message):
         await status_msg.delete()
     except Exception as e:
         logger.error(f"Error drawing image: {e}")
-        await status_msg.edit_text("❌ Ошибка генерации изображения.")
-
-# --- 2. АНАЛИЗ ФОТО И СКРИНШОТОВ (Gemini 2.5 Flash Vision, Бесплатно) ---
+        await status_msg.edit_text("❌ Ошибка генерации.")
 
 @dp.message(F.photo)
 async def handle_photo(message: Message):
-    status_msg = await message.reply("👁 Анализирую изображение...")
+    user_instruction = message.caption or ""
+    status_text = "🪄 Выполняю AI-рестайлинг по вашей инструкции..." if user_instruction else "📸 Применяю студийный свет..."
+    status_msg = await message.reply(status_text)
+    
     try:
         photo = message.photo[-1]
         file_info = await bot.get_file(photo.file_id)
 
         os.makedirs(PHOTO_DIR, exist_ok=True)
-        local_path = os.path.join(PHOTO_DIR, f"{photo.file_id}.jpg")
-        await bot.download_file(file_info.file_path, local_path)
+        os.makedirs(OUTBOX_DIR, exist_ok=True)
 
-        with open(local_path, "rb") as f:
-            image_bytes = f.read()
+        raw_path = os.path.join(PHOTO_DIR, f"raw_{photo.file_id}.jpg")
+        ai_out_path = os.path.join(OUTBOX_DIR, f"ai_{photo.file_id}.jpg")
 
-        caption_text = message.caption or "Опиши подробно, что на фото, извлеки текст или выдели главное."
-        prompt = (
-            f"Пользователь прислал изображение с вопросом/комментарием: '{caption_text}'. "
-            "Дай точный, структурированный и полезный ответ на русском языке."
-        )
+        await bot.download_file(file_info.file_path, raw_path)
 
-        response = await asyncio.to_thread(
-            gemini_client.models.generate_content,
-            model="gemini-2.5-flash",
-            contents=[
-                genai.types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
-                prompt
-            ]
-        )
+        en_instruction = ""
+        if user_instruction:
+            try:
+                en_instruction = await call_deepseek(f"Translate this photo editing instruction to concise English prompt: {user_instruction}")
+            except Exception:
+                en_instruction = user_instruction
 
-        if os.path.exists(local_path):
-            os.remove(local_path)
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, process_ai_photo, raw_path, ai_out_path, en_instruction)
 
-        await status_msg.edit_text(response.text.strip())
+        enhanced_file = FSInputFile(ai_out_path)
+        caption_out = f"✨ **Готово!**\nПромпт: _{user_instruction or 'Студийный свет и грейдинг'}_"
+        await message.reply_photo(photo=enhanced_file, caption=caption_out)
+        await status_msg.delete()
+
+        if os.path.exists(raw_path): os.remove(raw_path)
+        if os.path.exists(ai_out_path): os.remove(ai_out_path)
+
     except Exception as e:
-        logger.error(f"Error analyzing photo: {e}")
-        await status_msg.edit_text("❌ Ошибка анализа изображения.")
-
-# --- 3. САММАРИ СТАТЕЙ (DeepSeek) ---
+        logger.error(f"Error AI photo refiner: {e}")
+        await status_msg.edit_text("❌ Ошибка при AI-обработке фото.")
 
 async def summarize_url(url: str) -> str:
     async with AsyncSessionLocal() as session:
@@ -214,6 +229,9 @@ async def summarize_url(url: str) -> str:
         session.add(article)
         await session.commit()
 
+    # Запись выжимки в ai-memory
+    asyncio.create_task(asyncio.to_thread(sync_to_ai_memory, "read_articles", f"Статья {url}: {summary}"))
+
     return summary
 
 @dp.message(F.text.regexp(URL_REGEX))
@@ -229,8 +247,6 @@ async def handle_url(message: Message):
     except Exception as e:
         logger.error(f"Error URL: {e}")
         await processing_msg.edit_text("❌ Ошибка при обработке ссылки.")
-
-# --- 4. ГОЛОСОВЫЕ СООБЩЕНИЯ (Gemini Audio -> DeepSeek) ---
 
 async def process_voice(ogg_path: str) -> tuple[str, str]:
     mp3_path = ogg_path.replace(".ogg", ".mp3")
@@ -262,6 +278,9 @@ async def process_voice(ogg_path: str) -> tuple[str, str]:
         session.add(note)
         await session.commit()
 
+    # Запись задачи в ai-memory
+    asyncio.create_task(asyncio.to_thread(sync_to_ai_memory, "voice_tasks", f"Заметка/Задача: {action_item} (Транскрипт: {transcript})"))
+
     if os.path.exists(ogg_path): os.remove(ogg_path)
     if os.path.exists(mp3_path): os.remove(mp3_path)
 
@@ -290,12 +309,8 @@ async def handle_voice(message: Message):
         logger.error(f"Error Voice: {e}")
         await processing_msg.edit_text("❌ Ошибка обработки голосового сообщения.")
 
-# --- СТАРТ СЕРВИСА ---
-
 async def main():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Assistant Bot запущен (Drawing + Vision + Voice + Summaries)...")
+    logger.info("Assistant Bot запущен с автосинхронизацией в ai-memory...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

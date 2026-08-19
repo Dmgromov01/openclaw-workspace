@@ -1,7 +1,7 @@
 # Profile — система и окружение
 
 ## Сервер
-- VPS vps-7182, IP 45.95.2.246 (Франкфурт DE), Ubuntu 24.04, 2 vCPU / 2 GB RAM / 20 GB SSD
+- VPS vps-7182, IP 138.124.180.178 (Франкфурт DE), Ubuntu 24.04, 2 vCPU / 2 GB RAM / 20 GB SSD (старый IP 45.95.2.246 — устарел, не использовать)
 - Host Tailscale: hiplet-109548 = 100.113.115.17 (таилнет tail6a4baa)
 - Swap 2GB создан
 

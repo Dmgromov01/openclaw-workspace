@@ -54,6 +54,7 @@ _Курируемые воспоминания, свёрнутые из днев
   - В конце — курс ЦБ (USD/EUR/CNY) + счётчик постов.
   - ⚠️ Авторизация DeepSeek в digest.py: `Authorization: "Bearer " + ключ` (заглушка `"***"` даёт 401). Ключ — из `/etc/openclaw/secrets.json` по `deepseek_key` (id `/deepseek_key`).
 - ⚠️ Кнопки «расписание» должны теперь дёргать **Google Calendar** (`gcal_reader.py`), НЕ `icloud_calendar.py` (устарел). Проверить/переключить при следующей доработке.
+- 🔧 **Как работает дайджест (tech)**: скрипт `calendar/digest.py`; запуск `python3 digest.py` (собирает и ОТПРАВЛЯЕТ владельцу через бота), `--no-send` — только вывод, `--hours N` — окно (по умолчанию WINDOW_HOURS=2). Источники: TG-каналы через t.me/s (meduzalive, istories_media, thebell_io, bazabazon — SOCKS НЕ нужен) + RSS (РБК, Коммерсантъ) + курс ЦБ (cbr-xml-daily). Отправка — `calendar/bot_sender.py` (sendMessage на chat 1916536646, parse_mode=HTML; при HTTP 400 — fallback без parse_mode, фикс 19.08). AI-саммари (DeepSeek): ключ теперь берётся из `openclaw.json → models.providers.deepseek.apiKey` (добавлен 19.08 из auth store sqlite; раньше — `/etc/openclaw/secrets.json` по `deepseek_key`, на новом сервере файла НЕТ).
 - Нативные команды `/den` итд — отменены (имя только латиница; `customCommands` — отдельное поле верхнего уровня `channels.telegram.customCommands`).
 - По кнопкам — ТОЛЬКО чистый список `• ДД.ММ.ГГГГ ЧЧ:ММ — summary` без заголовков (константа выше).
 

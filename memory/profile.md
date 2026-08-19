@@ -8,8 +8,9 @@
 ## Стек
 - Node.js v24.19.0, npm/npx 11.17.0, Python3
 - OpenClaw gateway: user-systemd юнит `openclaw-gateway.service`, порт 18789 (loopback)
-- Модель: deepseek/deepseek-chat (прямой API, 1M ctx). Провайдеры: deepseek · openrouter · google
-- DeepSeek не принимает картинки — для image использовать GPT-4o/Gemini
+- Модель: deepseek/deepseek-v4-flash (прямой API, 1M ctx). Провайдеры: deepseek · openrouter (auto, qwen/qwen-image-3-pro) · google (gemini-3.1-flash-image-preview, gemini-2.5-flash)
+- DeepSeek не принимает картинки — для image использовать Gemini/OpenRouter
+- Ключи: /root/.openclaw/credentials/ (openrouter.key, ai-studio.key, github.token, telegram-app.json, cloudflare/r2.json — все chmod 600, ВНЕ git)
 
 ## Домен/вход
 - gbkz.uk (Cloudflare DNS+прокси) → nginx (TLS Let's Encrypt) → 127.0.0.1:18789

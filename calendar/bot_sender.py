@@ -55,7 +55,11 @@ def _api(method: str, **params) -> dict:
 
 
 def send_text_to_owner(text: str) -> str:
-    r = _api("sendMessage", chat_id=OWNER_CHAT_ID, text=text, parse_mode="HTML")
+    # Сначала пробуем с HTML; при 400 (битый HTML в контенте) — повторяем без parse_mode
+    try:
+        r = _api("sendMessage", chat_id=OWNER_CHAT_ID, text=text, parse_mode="HTML")
+    except urllib.error.HTTPError:
+        r = _api("sendMessage", chat_id=OWNER_CHAT_ID, text=text)
     if not r.get("ok"):
         raise RuntimeError(f"sendMessage: {r.get('description')}")
     return f"OK message_id={r['result']['message_id']}"

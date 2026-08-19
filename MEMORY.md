@@ -59,9 +59,10 @@ _Курируемые воспоминания, свёрнутые из днев
 
 ## Личный Telegram-аккаунт (MTProto / Telethon)
 - Сервис `/root/telegram-user-svc/server.py` (HTTP `127.0.0.1:8765`) — **systemd unit** `telegram-user-svc.service` (важно: systemd перезапускает, pkill бесполезен). Endpoint'ы: /auth/status, /auth/start, /auth/code, /auth/password, /send, /send_file, /dialogs, /history.
-- ⚠️ **ПРАВИЛО ОТПРАВКИ ФОТО (14.08, не путать):** голый `POST /send` = только текст БЕЗ медиа. Фото/картинка ВСЕГДА через `POST /send_file` `{target, path, caption}`. Готовые картинки ВСЕГДА кладём в `/root/.openclaw/workspace/media/outbox/` (человеческое имя, НЕ uuid-хэш-путь). Единая точка — скрипт `/root/telegram_user_send_photo.sh <target> <path> [caption]`. Ошибка 14.08: стих ушёл голым /send без фото.
-- Плагин `~/.openclaw/plugins/tg-user-tools/` → инструменты **tg_send, tg_dialogs, tg_history** (работают; `toolNames:[]` в inspect — это статическая метадата, не рантайм).
-- **Формат плагина**: `definePluginEntry` из `openclaw/plugin-sdk/plugin-entry` + `api.registerTool({name,description,parameters,execute})`; объявить `contracts.tools` в `openclaw.plugin.json` И `package.json` (`openclaw.contracts.tools`).
+- 🔄 **ПЕРЕСОЗДАН на новом сервере 19.08** (по команде Дмитрия): venv + telethon 1.44 + aiohttp 3.14, config.json из telegram-app.json (api_id 33037521, api_hash, password пустой), сервис active на порту 8765. ⚠️ **Авторизация НЕ пройдена** (authorized: false) — нужен вход: номер → /auth/start → код → 2FA. В хвосты.
+- Плагин `~/.openclaw/plugins/tg-user-tools/` → инструменты **tg_send, tg_send_file, tg_dialogs, tg_history** (создан заново, подключён в plugins.load.paths + entries; ⚠️ загрузку проверить).
+- **Формат плагина**: `definePluginEntry` из `openclaw/plugin-sdk/plugin-entry` + `api.registerTool({name,description,parameters,execute})`; объявить `contracts.tools` в `openclaw.plugin.json` И `package.json` (`openclaw.contracts.tools`). Manifest требует `configSchema` (пустой объект).
+- Скрипт отправки фото: `/root/telegram_user_send_photo.sh <target> <path> [caption]`.
 - Саммари диалогов: Вариант 2 (свободный текст через агента) — работает, кнопочный флоу не нужен.
 
 ## Картинки (мем-автоматизация УБРАНА 11.08 по решению Дмитрия)
@@ -87,13 +88,14 @@ _Курируемые воспоминания, свёрнутые из днев
 - Приватный репо: **https://github.com/Dmgromov01/openclaw-workspace** (private), ветка main, первый коммит `2e2e689`. Секреты вычищены до пуша (2FA/phone/code/sk-or → плейсхолдеры), .gitignore исключает .env/.session/tg-mtproto/media/_trash_/state-json/node_modules. Токен почищен из env/remote.
 
 ## 🔴 АКТИВНЫЕ ХВОСТЫ (по приоритету)
-1. **Личный TG re-login / разбан** — flood-ban (FLOOD_WAIT ~80134s с 08:40 11.08) спадает ~06:56 UTC 12.08 (09:56 МСК). `telegram-user-svc` ОСТАНОВЛЕН (`systemctl stop/disable`) до успешного входа. **НЕ ретраить до бана.** План на ~07:30 UTC 12.08: один чистый code-login через NL-прокси, 2FA из конфига, затем `systemctl enable --now`, перезапуск server.py.
-2. **Дайджест @de574574 (Екатерина)** — недоступен до авторизации личного TG. Сделать после релогина (1 день).
+1. **Личный TG: вход в telegram-user-svc** — сервис ПЕРЕСОЗДАН на новом сервере 19.08 (активен, порт 8765), но авторизация НЕ пройдена (`authorized: false`). Нужен вход: номер телефона → `POST /auth/start` → код → 2FA (пароль вписать в `config.json`). Новый app id 33037521, старый flood-ban неактуален.
+2. **Дайджест @de574574 (Екатерина)** — недоступен до авторизации личного TG. Сделать после входа.
 3. **Image-gen через `image_generate` tool** — ретушь Gemini ждёт квоты (429). Открытые HF-сервисы нестабильны. (qwen-image — закрыто решением Дмитрия, убрано.)
 4. `_collect_news` в orchestrator.py — всё ещё **заглушка** (дайджест собран вручную). Реализовать реальный сбор.
+5. ⚠️ **R2D2 (19.08): billing error — у какого-то ключа кончились кредиты** — проверить балансы OpenRouter/Google/DeepSeek.
 6. ~~meme_fetcher.py~~ — УДАЛЁН (мем-автоматизация убрана 11.08).
 7. MiMo v2.5 и Hy3 :free — добавлять ли в каталог OpenRouter (Дмитрий рассматривал, не подтвердил). Vision-чтение после удаления gpt-4o-mini — чем читать скрины.
-8. Проверить device-pair 18789 после закрытия файрвола на весь мир.
+8. Проверить, что плагин tg-user-tools реально загрузился (после рестарта).
 
 ## Расписание/календарь (последнее известное, Google)
 - По Google Calendar на 11.08: событие «Тест: подключение календаря OpenClaw» 13:00 (проверка подключения).

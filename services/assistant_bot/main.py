@@ -1,12 +1,14 @@
 import os
 import re
 import json
+import sqlite3
 import asyncio
 import logging
 import subprocess
 from datetime import datetime
 import aiohttp
 import trafilatura
+from pypdf import PdfReader
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, FSInputFile
 from aiogram.filters import Command
@@ -28,6 +30,11 @@ try:
     from ai_image_editor import process_ai_photo
 except ImportError:
     process_ai_photo = None
+
+try:
+    from caldav_client import add_event_to_calendar
+except ImportError:
+    add_event_to_calendar = None
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("assistant_bot")
@@ -57,6 +64,7 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "REDACTED-TELEGRAM-TOK
 
 VOICE_DIR = "/root/openclaw/workspace/media/voice"
 PHOTO_DIR = "/root/openclaw/workspace/media/photos"
+DOCS_DIR = "/root/openclaw/workspace/media/docs"
 OUTBOX_DIR = "/root/openclaw/workspace/media/outbox"
 DB_PATH = "/root/openclaw/data/app.db"
 URL_REGEX = re.compile(r"https?://[^\s]+")
@@ -95,16 +103,13 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
 gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
-# --- СИНХРОНИЗАЦИЯ С AI-MEMORY ---
-
 def sync_to_ai_memory(category: str, text_content: str):
-    """Фоновая передача фактов и заметок в ai-memory через OpenClaw CLI"""
     try:
         clean_text = text_content.replace('"', '\\"').replace("\n", " ")
         cmd = f'openclaw agent --agent main -m "Запомни в ai-memory в раздел {category}: {clean_text}"'
         subprocess.run(cmd, shell=True, timeout=15, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception as e:
-        logger.warning(f"Не удалось записать в ai-memory: {e}")
+        logger.warning(f"ai-memory sync error: {e}")
 
 async def call_deepseek(prompt: str) -> str:
     url = "https://api.deepseek.com/chat/completions"
@@ -128,19 +133,52 @@ async def call_deepseek(prompt: str) -> str:
             err = await resp.text()
             raise RuntimeError(f"DeepSeek API Error ({resp.status}): {err}")
 
-# --- ОБРАБОТЧИКИ ---
+# --- ПОЛНОТЕКСТОВЫЙ ПОИСК (FTS5) ---
+
+@dp.message(Command("find"))
+@dp.message(Command("search"))
+async def handle_search(message: Message):
+    parts = (message.text or "").split(maxsplit=1)
+    if len(parts) < 2:
+        await message.reply("Укажите поисковый запрос. Пример:\n`/find титан`")
+        return
+    query = parts[1].strip()
+
+    def db_search(q: str):
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        results = []
+        try:
+            # Поиск по статьям
+            cur.execute("SELECT title, summary FROM articles_fts WHERE articles_fts MATCH ? LIMIT 2", (q,))
+            for r in cur.fetchall():
+                results.append(f"📰 *Статья:* {r[0]}\n{r[1][:200]}...")
+            
+            # Поиск по голосовым
+            cur.execute("SELECT action_item, transcript FROM voice_fts WHERE voice_fts MATCH ? LIMIT 2", (q,))
+            for r in cur.fetchall():
+                results.append(f"🗣 *Заметка:* {r[0]}\n_{r[1][:150]}..._")
+        except Exception as e:
+            logger.error(f"FTS error: {e}")
+        finally:
+            conn.close()
+        return results
+
+    res = await asyncio.to_thread(db_search, query)
+    if not res:
+        await message.reply(f"🔍 По запросу `{query}` ничего не найдено в локальной базе.")
+        return
+
+    out = f"🔍 *Найдено в базе ({query}):*\n\n" + "\n\n---\n\n".join(res)
+    await message.reply(out)
+
+# --- ГЕНЕРАЦИЯ ИЗОБРАЖЕНИЙ (FLUX) ---
 
 @dp.message(Command("draw"))
 @dp.message(F.text.lower().startswith("нарисуй"))
 async def handle_draw(message: Message):
     text = message.text or ""
-    if text.startswith("/draw"):
-        prompt = text[5:].strip()
-    elif text.lower().startswith("нарисуй"):
-        prompt = text[7:].strip()
-    else:
-        prompt = ""
-
+    prompt = text[5:].strip() if text.startswith("/draw") else (text[7:].strip() if text.lower().startswith("нарисуй") else "")
     if not prompt:
         await message.reply("Укажите промпт. Пример:\n`/draw спорткар в неоновом городе`")
         return
@@ -162,10 +200,12 @@ async def handle_draw(message: Message):
         logger.error(f"Error drawing image: {e}")
         await status_msg.edit_text("❌ Ошибка генерации.")
 
+# --- AI РЕСТАЙЛИНГ ФОТО ---
+
 @dp.message(F.photo)
 async def handle_photo(message: Message):
     user_instruction = message.caption or ""
-    status_text = "🪄 Выполняю AI-рестайлинг по вашей инструкции..." if user_instruction else "📸 Применяю студийный свет..."
+    status_text = "🪄 Выполняю AI-рестайлинг..." if user_instruction else "📸 Применяю студийный свет..."
     status_msg = await message.reply(status_text)
     
     try:
@@ -191,16 +231,53 @@ async def handle_photo(message: Message):
         await loop.run_in_executor(None, process_ai_photo, raw_path, ai_out_path, en_instruction)
 
         enhanced_file = FSInputFile(ai_out_path)
-        caption_out = f"✨ **Готово!**\nПромпт: _{user_instruction or 'Студийный свет и грейдинг'}_"
-        await message.reply_photo(photo=enhanced_file, caption=caption_out)
+        await message.reply_photo(photo=enhanced_file, caption=f"✨ **Готово!**\n_{user_instruction or 'Студийный свет'}_")
         await status_msg.delete()
 
         if os.path.exists(raw_path): os.remove(raw_path)
         if os.path.exists(ai_out_path): os.remove(ai_out_path)
-
     except Exception as e:
         logger.error(f"Error AI photo refiner: {e}")
         await status_msg.edit_text("❌ Ошибка при AI-обработке фото.")
+
+# --- ОБРАБОТКА PDF И ДОКУМЕНТОВ ---
+
+@dp.message(F.document)
+async def handle_document(message: Message):
+    doc = message.document
+    if not (doc.file_name.endswith(".pdf") or doc.file_name.endswith(".txt")):
+        return
+
+    status_msg = await message.reply("📄 Анализирую документ...")
+    try:
+        os.makedirs(DOCS_DIR, exist_ok=True)
+        file_info = await bot.get_file(doc.file_id)
+        local_path = os.path.join(DOCS_DIR, doc.file_name)
+        await bot.download_file(file_info.file_path, local_path)
+
+        text_content = ""
+        if doc.file_name.endswith(".pdf"):
+            reader = PdfReader(local_path)
+            for page in reader.pages[:10]:
+                text_content += page.extract_text() or ""
+        else:
+            with open(local_path, "r", encoding="utf-8", errors="ignore") as f:
+                text_content = f.read()
+
+        prompt = (
+            f"Сделай емкую аналитическую выжимку документа '{doc.file_name}':\n"
+            f"- Суть документа\n- Ключевые цифры и условия\n- Главный вывод\n\n"
+            f"Текст:\n{text_content[:8000]}"
+        )
+        summary = await call_deepseek(prompt)
+        await status_msg.edit_text(f"📊 *Анализ документа {doc.file_name}:*\n\n{summary}")
+
+        if os.path.exists(local_path): os.remove(local_path)
+    except Exception as e:
+        logger.error(f"Error reading document: {e}")
+        await status_msg.edit_text("❌ Не удалось обработать документ.")
+
+# --- САММАРИ СТАТЕЙ ---
 
 async def summarize_url(url: str) -> str:
     async with AsyncSessionLocal() as session:
@@ -216,12 +293,7 @@ async def summarize_url(url: str) -> str:
     if not text or len(text.strip()) < 100:
         return "❌ Не удалось извлечь текст статьи."
 
-    prompt = (
-        f"Сделай структурированное саммари статьи:\n"
-        f"- 3-5 ключевых тезисов (списком)\n"
-        f"- Главный вывод\n\n"
-        f"Текст:\n{text[:6000]}"
-    )
+    prompt = f"Сделай структурированное саммари статьи:\n- 3-5 ключевых тезисов\n- Главный вывод\n\nТекст:\n{text[:6000]}"
     summary = await call_deepseek(prompt)
 
     async with AsyncSessionLocal() as session:
@@ -229,29 +301,26 @@ async def summarize_url(url: str) -> str:
         session.add(article)
         await session.commit()
 
-    # Запись выжимки в ai-memory
     asyncio.create_task(asyncio.to_thread(sync_to_ai_memory, "read_articles", f"Статья {url}: {summary}"))
-
     return summary
 
 @dp.message(F.text.regexp(URL_REGEX))
 async def handle_url(message: Message):
     urls = URL_REGEX.findall(message.text)
-    if not urls:
-        return
-    url = urls[0]
+    if not urls: return
     processing_msg = await message.reply("⏳ Извлекаю суть статьи...")
     try:
-        summary = await summarize_url(url)
+        summary = await summarize_url(urls[0])
         await processing_msg.edit_text(f"📰 **Выжимка:**\n\n{summary}")
     except Exception as e:
         logger.error(f"Error URL: {e}")
         await processing_msg.edit_text("❌ Ошибка при обработке ссылки.")
 
-async def process_voice(ogg_path: str) -> tuple[str, str]:
+# --- ГОЛОС + АВТО-КАЛЕНДАРЬ ---
+
+async def process_voice(ogg_path: str) -> tuple[str, str, bool]:
     mp3_path = ogg_path.replace(".ogg", ".mp3")
-    cmd = f"ffmpeg -y -i {ogg_path} -vn -ar 16000 -ac 1 -b:a 32k {mp3_path} >/dev/null 2>&1"
-    os.system(cmd)
+    os.system(f"ffmpeg -y -i {ogg_path} -vn -ar 16000 -ac 1 -b:a 32k {mp3_path} >/dev/null 2>&1")
 
     with open(mp3_path, "rb") as f:
         audio_bytes = f.read()
@@ -260,57 +329,62 @@ async def process_voice(ogg_path: str) -> tuple[str, str]:
     gemini_resp = await asyncio.to_thread(
         gemini_client.models.generate_content,
         model="gemini-2.5-flash",
-        contents=[
-            genai.types.Part.from_bytes(data=audio_bytes, mime_type="audio/mp3"),
-            gemini_prompt
-        ]
+        contents=[genai.types.Part.from_bytes(data=audio_bytes, mime_type="audio/mp3"), gemini_prompt]
     )
     transcript = gemini_resp.text.strip()
 
-    deepseek_prompt = (
-        f"На основе транскрипции выдели главную суть или сформулируй конкретную задачу/чек-лист:\n\n"
-        f"Текст: {transcript}"
+    prompt = (
+        f"Текущая дата: {datetime.now().strftime('%Y-%m-%d %H:%M')}.\n"
+        f"Текст транскрипта: '{transcript}'\n\n"
+        f"Ответь строго JSON-объектом:\n"
+        f"{{\n"
+        f'  "action_item": "Краткая суть задачи",\n'
+        f'  "is_calendar_event": true/false,\n'
+        f'  "event_title": "Название события (если есть)",\n'
+        f'  "event_datetime": "YYYY-MM-DD HH:MM (если указано точное время, иначе null)"\n'
+        f"}}"
     )
-    action_item = await call_deepseek(deepseek_prompt)
+    res_raw = await call_deepseek(prompt)
+    is_saved_to_cal = False
+    try:
+        data = json.loads(res_raw.replace("```json", "").replace("```", "").strip())
+        action_item = data.get("action_item", transcript)
+        if data.get("is_calendar_event") and data.get("event_datetime") and add_event_to_calendar:
+            dt_obj = datetime.strptime(data["event_datetime"], "%Y-%m-%d %H:%M")
+            is_saved_to_cal = await asyncio.to_thread(
+                add_event_to_calendar, data.get("event_title", action_item), dt_obj, 60, transcript
+            )
+    except Exception:
+        action_item = res_raw
 
     async with AsyncSessionLocal() as session:
-        note = VoiceNote(transcript=transcript, action_item=action_item)
-        session.add(note)
+        session.add(VoiceNote(transcript=transcript, action_item=action_item))
         await session.commit()
 
-    # Запись задачи в ai-memory
-    asyncio.create_task(asyncio.to_thread(sync_to_ai_memory, "voice_tasks", f"Заметка/Задача: {action_item} (Транскрипт: {transcript})"))
+    asyncio.create_task(asyncio.to_thread(sync_to_ai_memory, "voice_tasks", f"Заметка: {action_item}"))
 
     if os.path.exists(ogg_path): os.remove(ogg_path)
     if os.path.exists(mp3_path): os.remove(mp3_path)
-
-    return transcript, action_item
+    return transcript, action_item, is_saved_to_cal
 
 @dp.message(F.voice)
 async def handle_voice(message: Message):
-    voice = message.voice
-    file_id = voice.file_id
-    file = await bot.get_file(file_id)
-    
+    file = await bot.get_file(message.voice.file_id)
     os.makedirs(VOICE_DIR, exist_ok=True)
-    local_ogg = os.path.join(VOICE_DIR, f"{file_id}.ogg")
-
+    local_ogg = os.path.join(VOICE_DIR, f"{message.voice.file_id}.ogg")
     await bot.download_file(file.file_path, local_ogg)
-    processing_msg = await message.reply("🎙 Распознаю...")
-
+    
+    status = await message.reply("🎙 Распознаю...")
     try:
-        transcript, action = await process_voice(local_ogg)
-        response_text = (
-            f"🗣 **Текст:**\n{transcript}\n\n"
-            f"🎯 **Суть / Задача:**\n{action}"
-        )
-        await processing_msg.edit_text(response_text)
+        transcript, action, cal_saved = await process_voice(local_ogg)
+        cal_tag = "\n📅 *Событие автоматически добавлено в календарь!*" if cal_saved else ""
+        await status.edit_text(f"🗣 **Текст:**\n{transcript}\n\n🎯 **Суть:**\n{action}{cal_tag}")
     except Exception as e:
         logger.error(f"Error Voice: {e}")
-        await processing_msg.edit_text("❌ Ошибка обработки голосового сообщения.")
+        await status.edit_text("❌ Ошибка обработки голосового сообщения.")
 
 async def main():
-    logger.info("Assistant Bot запущен с автосинхронизацией в ai-memory...")
+    logger.info("Assistant Bot запущен со всеми расширениями...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

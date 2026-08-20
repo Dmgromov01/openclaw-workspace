@@ -142,3 +142,14 @@ _Курируемые воспоминания, свёрнутые из днев
   - Установка MenuButtonWebApp в строку ввода Telegram.
   - Инлайн-клавиатура с WebAppInfo для быстрого доступа к Personal Hub.
   - Интеграция переменной окружения `MINIAPP_URL`.
+
+## Module: Telegram Mini App v3
+- **Tasks & Archive**:
+  - Direct checkbox toggle into archive with animated strike-through.
+  - Separate archive view with task restore and full wipe options.
+  - Persistent storage in `localStorage`.
+- **Precipitation Radar**:
+  - Integrated RainViewer radar tile layers + Leaflet.js.
+  - Hourly time scrubber (-2h to +30m).
+- **Sources Management**:
+  - Live list of connected TG channels & RSS feeds with 1-click delete.

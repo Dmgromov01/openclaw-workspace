@@ -10,6 +10,10 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <!-- Leaflet Map CSS & JS for Interactive Precipitation Radar -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
     body {
       background-color: #F8FAFC;
@@ -22,98 +26,194 @@
       border: 1.5px solid #E2E8F0;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
     }
+    .leaflet-container {
+      border-radius: 1rem;
+      z-index: 10;
+    }
   </style>
 </head>
 <body class="min-h-screen font-sans antialiased">
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
 
     function App() {
-      const [view, setView] = useState('main'); // 'main' | 'digest' | 'add_source' | 'archive'
+      const [view, setView] = useState('main'); // 'main' | 'archive' | 'sources' | 'digest'
 
-      // Погода
+      // ================= 1. ПОГОДА & РАДАР ОСАДКОВ =================
       const [weather, setWeather] = useState({ temp: 24, condition: 'Ясно, без осадков', wind: '2.8 м/с', city: 'Москва' });
+      const [showRadar, setShowRadar] = useState(false);
+      const [radarTimeIndex, setRadarTimeIndex] = useState(0);
+      const [radarFrames, setRadarFrames] = useState([]);
+      const mapRef = useRef(null);
+      const radarLayerRef = useRef(null);
 
-      // Календарь (Google Calendar)
-      const [events, setEvents] = useState([]);
-      const [calConnected, setCalConnected] = useState(false);
+      useEffect(() => {
+        fetch('https://api.rainviewer.com/public/weather-maps.json')
+          .then(r => r.json())
+          .then(data => {
+            if (data?.radar?.past) {
+              const frames = [...data.radar.past, ...(data.radar.nowcast || [])];
+              setRadarFrames(frames);
+              setRadarTimeIndex(data.radar.past.length - 1);
+            }
+          })
+          .catch(() => {});
+      }, []);
 
-      // Задачи (с сохранением в localStorage)
+      useEffect(() => {
+        if (showRadar && !mapRef.current && document.getElementById('radar-map')) {
+          const map = L.map('radar-map', {
+            zoomControl: false,
+            attributionControl: false
+          }).setView([55.751244, 37.618423], 7);
+
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 12
+          }).addTo(map);
+
+          mapRef.current = map;
+        }
+
+        if (mapRef.current && radarFrames.length > 0) {
+          const frame = radarFrames[radarTimeIndex];
+          if (frame) {
+            if (radarLayerRef.current) {
+              mapRef.current.removeLayer(radarLayerRef.current);
+            }
+            const radarLayer = L.tileLayer(`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
+              opacity: 0.75,
+              zIndex: 100
+            });
+            radarLayer.addTo(mapRef.current);
+            radarLayerRef.current = radarLayer;
+          }
+        }
+      }, [showRadar, radarTimeIndex, radarFrames]);
+
+      // ================= 2. ЗАДАЧИ & АРХИВ =================
       const [tasks, setTasks] = useState(() => {
         try {
-          const saved = localStorage.getItem('hub_tasks');
+          const saved = localStorage.getItem('hub_tasks_v2');
           return saved ? JSON.parse(saved) : [
-            { id: 1, text: 'Согласовать спецификацию с юристами', done: false, date: 'Сегодня' }
+            { id: 1, text: 'Согласовать спецификацию с юристами', done: false, createdAt: '10:15' },
+            { id: 2, text: 'Проверить выгрузку реестра оплат', done: true, createdAt: 'Вчера, 18:30' }
           ];
         } catch {
           return [];
         }
       });
-      const [newTaskText, setNewTaskText] = useState('');
+      const [taskInput, setTaskInput] = useState('');
 
-      // Курсы валют ЦБ РФ
-      const [rates, setRates] = useState({
-        USD: 91.20, EUR: 98.40, CNY: 12.65, JPY: 0.62, GBP: 116.50, RUB: 1.00
+      useEffect(() => {
+        localStorage.setItem('hub_tasks_v2', JSON.stringify(tasks));
+      }, [tasks]);
+
+      const handleAddTask = () => {
+        const text = taskInput.trim();
+        if (!text) return;
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const newTask = {
+          id: Date.now(),
+          text: text,
+          done: false,
+          createdAt: timeStr
+        };
+        setTasks(prev => [newTask, ...prev]);
+        setTaskInput('');
+        haptic('medium');
+      };
+
+      const toggleTask = (id) => {
+        haptic('light');
+        setTasks(prev => prev.map(t => {
+          if (t.id === id) {
+            return { ...t, done: !t.done };
+          }
+          return t;
+        }));
+      };
+
+      const deleteTask = (id) => {
+        haptic('light');
+        setTasks(prev => prev.filter(t => t.id !== id));
+      };
+
+      const clearArchive = () => {
+        haptic('heavy');
+        setTasks(prev => prev.filter(t => !t.done));
+      };
+
+      const activeTasks = tasks.filter(t => !t.done);
+      const completedTasks = tasks.filter(t => t.done);
+
+      // ================= 3. ИСТОЧНИКИ & RSS =================
+      const [sources, setSources] = useState(() => {
+        try {
+          const saved = localStorage.getItem('hub_sources_v2');
+          return saved ? JSON.parse(saved) : [
+            { id: 1, type: 'TG', name: '@industry_metals', title: 'Металлургия & ВЭД' },
+            { id: 2, type: 'TG', name: '@tech_ai_hub', title: 'AI & Локальные модели' },
+            { id: 3, type: 'RSS', name: 'https://cbr.ru/rss/news', title: 'Пресс-центр ЦБ РФ' }
+          ];
+        } catch {
+          return [];
+        }
       });
+      const [sourceName, setSourceName] = useState('');
+      const [sourceType, setSourceType] = useState('TG');
+
+      useEffect(() => {
+        localStorage.setItem('hub_sources_v2', JSON.stringify(sources));
+      }, [sources]);
+
+      const handleAddSource = () => {
+        const val = sourceName.trim();
+        if (!val) return;
+        const newSrc = {
+          id: Date.now(),
+          type: sourceType,
+          name: val,
+          title: val
+        };
+        setSources(prev => [...prev, newSrc]);
+        setSourceName('');
+        setView('sources');
+        haptic('medium');
+      };
+
+      const deleteSource = (id) => {
+        haptic('light');
+        setSources(prev => prev.filter(s => s.id !== id));
+      };
+
+      // ================= 4. ВАЛЮТЫ & ПАРОЛИ =================
+      const [rates, setRates] = useState({ USD: 91.20, EUR: 98.40, CNY: 12.65, JPY: 0.62, GBP: 116.50, RUB: 1.00 });
       const [calcAmount, setCalcAmount] = useState(1000);
       const [fromCurr, setFromCurr] = useState('CNY');
       const [toCurr, setToCurr] = useState('RUB');
 
-      // Пароли
       const [passLength, setPassLength] = useState(16);
       const [password, setPassword] = useState('k9#vL@8$qP2!mZ7x');
       const [copied, setCopied] = useState(false);
-
-      // RSS / Новости
-      const [sources, setSources] = useState([
-        { id: 1, type: 'TG', name: '@industry_metals', title: 'Металлургия & ВЭД' },
-        { id: 2, type: 'TG', name: '@tech_ai_hub', title: 'AI & Локальные модели' }
-      ]);
-      const [newSourceInput, setNewSourceInput] = useState('');
-      const [newSourceType, setNewSourceType] = useState('TG');
-
-      const [digestItems, setDigestItems] = useState([
-        {
-          id: 1,
-          tag: 'Рынки металлов & ВЭД',
-          title: 'Динамика экспорта титана и специальных сплавов во 2-м полугодии',
-          summary: 'Азиатский коридор поставок демонстрирует устойчивый рост. Логистические цепочки стабилизировались, спрос на прокат высокой чистоты сохраняется.',
-          source: 'TG: @industry_metals',
-          time: '35 мин назад'
-        },
-        {
-          id: 2,
-          tag: 'Технологии & AI',
-          title: 'Оптимизация локального инференса LLM на выделенных серверах',
-          summary: 'Новые методы квантования позволяют разворачивать reasoning-модели на потребительских чипах без потери точности при выполнении SQL-запросов.',
-          source: 'TG: @tech_ai_hub',
-          time: '1.5 ч назад'
-        }
-      ]);
-
-      // Сохранение задач
-      useEffect(() => {
-        localStorage.setItem('hub_tasks', JSON.stringify(tasks));
-      }, [tasks]);
 
       useEffect(() => {
         if (window.Telegram?.WebApp) {
           window.Telegram.WebApp.ready();
           window.Telegram.WebApp.expand();
         }
-        // Загрузка реальных курсов ЦБ
         fetch('https://www.cbr-xml-daily.ru/daily_json.js')
-          .then(res => res.json())
-          .then(data => {
-            if (data?.Valute) {
+          .then(r => r.json())
+          .then(d => {
+            if (d?.Valute) {
               setRates({
-                USD: data.Valute.USD.Value,
-                EUR: data.Valute.EUR.Value,
-                CNY: data.Valute.CNY.Value,
-                JPY: data.Valute.JPY.Value / data.Valute.JPY.Nominal,
-                GBP: data.Valute.GBP.Value,
+                USD: d.Valute.USD.Value,
+                EUR: d.Valute.EUR.Value,
+                CNY: d.Valute.CNY.Value,
+                JPY: d.Valute.JPY.Value / d.Valute.JPY.Nominal,
+                GBP: d.Valute.GBP.Value,
                 RUB: 1.00
               });
             }
@@ -127,8 +227,8 @@
 
       const convertValue = () => {
         const inRub = calcAmount * rates[fromCurr];
-        const result = inRub / rates[toCurr];
-        return result.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const res = inRub / rates[toCurr];
+        return res.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       };
 
       const generatePassword = () => {
@@ -149,49 +249,31 @@
         setTimeout(() => setCopied(false), 2000);
       };
 
-      // Управление задачами
-      const toggleTask = (id) => {
-        haptic('medium');
-        setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+      const getFrameTimeLabel = (timestamp) => {
+        if (!timestamp) return 'Сейчас';
+        const d = new Date(timestamp * 1000);
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
       };
-
-      const handleAddTask = (e) => {
-        if (e) e.preventDefault();
-        if (!newTaskText.trim()) return;
-        const item = {
-          id: Date.now(),
-          text: newTaskText.trim(),
-          done: false,
-          date: 'Сегодня'
-        };
-        setTasks([item, ...tasks]);
-        setNewTaskText('');
-        haptic('heavy');
-      };
-
-      const deleteTask = (id) => {
-        haptic('light');
-        setTasks(tasks.filter(t => t.id !== id));
-      };
-
-      const clearCompletedTasks = () => {
-        haptic('medium');
-        setTasks(tasks.filter(t => !t.done));
-      };
-
-      const activeTasks = tasks.filter(t => !t.done);
-      const completedTasks = tasks.filter(t => t.done);
 
       return (
         <div className="max-w-xl mx-auto px-5 py-4 font-sans">
 
-          {/* ================= ЭКРАН 1: ГЛАВНАЯ ПАНЕЛЬ ================= */}
+          {/* ================= 1. ГЛАВНЫЙ ЭКРАН ================= */}
           {view === 'main' && (
             <div className="space-y-5">
 
-              {/* 1. Погода */}
-              <div className="card-white rounded-3xl p-5">
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1">Погода сейчас</div>
+              {/* 1. Погода + Радар осадков */}
+              <div className="card-white rounded-3xl p-5 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Погода & Радар</span>
+                  <button
+                    onClick={() => { haptic(); setShowRadar(!showRadar); }}
+                    className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 active:scale-95 transition"
+                  >
+                    {showRadar ? 'Скрыть карту ▲' : 'Карта осадков ▼'}
+                  </button>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="text-4xl font-black text-slate-900">{weather.temp}°C</div>
                   <div className="text-right">
@@ -199,102 +281,95 @@
                     <div className="text-xs text-slate-500 mt-0.5">Ветер {weather.wind} • {weather.city}</div>
                   </div>
                 </div>
+
+                {/* Интерактивный радар с ползунком по часам */}
+                {showRadar && (
+                  <div className="pt-2 border-t border-slate-100 space-y-3">
+                    <div id="radar-map" className="w-full h-52 bg-slate-100 rounded-2xl border border-slate-200"></div>
+
+                    <div className="space-y-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-slate-700">Прокрутка времени:</span>
+                        <span className="font-mono font-black text-blue-600">
+                          {radarFrames[radarTimeIndex] ? getFrameTimeLabel(radarFrames[radarTimeIndex].time) : 'Сейчас'}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max={Math.max(0, radarFrames.length - 1)}
+                        value={radarTimeIndex}
+                        onChange={(e) => setRadarTimeIndex(Number(e.target.value))}
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
+                        <span>-2 часа</span>
+                        <span>Сейчас</span>
+                        <span>+30 мин</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* 2. Календарь встреч & Быстрые дела */}
+              {/* 2. Дела на сегодня & Архив */}
               <div className="card-white rounded-3xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="text-base font-black text-slate-900">📅 Календарь & Быстрые дела</div>
+                  <div className="text-base font-black text-slate-900">Дела на сегодня</div>
                   <button
-                    onClick={() => {
-                      haptic();
-                      setCalConnected(!calConnected);
-                    }}
-                    className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition ${
-                      calConnected 
-                        ? 'text-emerald-700 bg-emerald-50 border-emerald-200' 
-                        : 'text-blue-600 bg-blue-50 border-blue-200'
-                    }`}
+                    onClick={() => { haptic(); setView('archive'); }}
+                    className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 hover:bg-blue-100 transition active:scale-95"
                   >
-                    {calConnected ? '✓ Google Cal Подключен' : '+ Подключить Календарь'}
+                    📦 Архив ({completedTasks.length}) →
                   </button>
                 </div>
 
-                {/* Блок встреч */}
-                {calConnected && events.length > 0 ? (
-                  <div className="space-y-2">
-                    {events.map(ev => (
-                      <div key={ev.id} className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl">
-                        <div className="text-xs font-black text-blue-700 font-mono">{ev.time}</div>
-                        <div className="text-xs font-bold text-slate-900 mt-0.5">{ev.title}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-500 flex justify-between items-center">
-                    <span>{calConnected ? 'Нет запланированных встреч на сегодня' : 'События Google Календаря не загружены'}</span>
-                    <span className="text-slate-400 font-mono text-[11px]">{calConnected ? '0 встреч' : 'OAuth 2.0'}</span>
-                  </div>
-                )}
-
-                {/* Дела на сегодня */}
-                <div className="pt-2 border-t border-slate-100 space-y-2.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
-                      Дела на сегодня ({activeTasks.length})
-                    </span>
-                    {completedTasks.length > 0 && (
-                      <button
-                        onClick={() => { haptic(); setView('archive'); }}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-700"
-                      >
-                        Архив ({completedTasks.length}) →
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Список активных задач */}
-                  <div className="space-y-2">
-                    {activeTasks.map(t => (
+                {/* Список активных задач */}
+                <div className="space-y-2">
+                  {activeTasks.map(t => (
+                    <div
+                      key={t.id}
+                      className="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-2xl transition"
+                    >
                       <div
-                        key={t.id}
                         onClick={() => toggleTask(t.id)}
-                        className="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-2xl cursor-pointer active:scale-98 transition"
+                        className="flex items-center gap-3 flex-1 cursor-pointer"
                       >
-                        <div className="w-5 h-5 rounded-md border-2 border-slate-300 flex items-center justify-center bg-white shrink-0">
+                        <div className="w-6 h-6 rounded-lg border-2 border-slate-300 flex items-center justify-center bg-white shrink-0 active:scale-90 transition">
                           {t.done && <span className="text-blue-600 text-xs font-black">✓</span>}
                         </div>
-                        <span className="text-xs font-semibold text-slate-800 flex-1 leading-snug">
+                        <span className="text-xs font-bold text-slate-800 leading-snug">
                           {t.text}
                         </span>
                       </div>
-                    ))}
+                      <span className="text-[10px] font-mono text-slate-400 ml-2">{t.createdAt}</span>
+                    </div>
+                  ))}
 
-                    {activeTasks.length === 0 && (
-                      <div className="text-center py-2 text-xs text-slate-400">
-                        Все задачи выполнены! Добавьте новую ниже.
-                      </div>
-                    )}
-                  </div>
+                  {activeTasks.length === 0 && (
+                    <div className="text-center py-4 text-xs text-slate-400">
+                      Все текущие дела выполнены! Добавьте новую задачу ниже.
+                    </div>
+                  )}
+                </div>
 
-                  {/* Поле добавления задачи */}
-                  <div className="flex gap-2 pt-1">
-                    <input
-                      type="text"
-                      placeholder="Быстрая задача..."
-                      value={newTaskText}
-                      onChange={(e) => setNewTaskText(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddTask(e); }}
-                      className="flex-1 bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddTask}
-                      className="px-4 py-2.5 bg-slate-900 hover:bg-black text-white rounded-2xl font-black text-base active:scale-95 transition"
-                    >
-                      +
-                    </button>
-                  </div>
+                {/* Добавление задачи */}
+                <div className="flex gap-2 pt-1">
+                  <input
+                    type="text"
+                    placeholder="Новая задача..."
+                    value={taskInput}
+                    onChange={(e) => setTaskInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddTask(); }}
+                    className="flex-1 bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddTask}
+                    className="px-5 py-3 bg-slate-900 hover:bg-black active:scale-95 text-white rounded-2xl font-black text-lg transition flex items-center justify-center"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
 
@@ -303,16 +378,18 @@
                 <div className="flex items-center justify-between">
                   <div className="text-base font-black text-slate-900">Лента каналов & RSS</div>
                   <button
-                    onClick={() => { haptic(); setView('add_source'); }}
+                    onClick={() => { haptic(); setView('sources'); }}
                     className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs border border-blue-200 active:scale-95 transition"
                   >
-                    + Добавить источник
+                    ⚙ Источники ({sources.length})
                   </button>
                 </div>
 
                 <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                  <div className="text-xs font-bold text-blue-600 mb-0.5">● Новые посты из {sources.length} каналов</div>
-                  <div className="text-xs text-slate-600">Темы: Рынки металлов, B2B контракты, релизы LLM моделей...</div>
+                  <div className="text-xs font-bold text-blue-600 mb-0.5">● Подключено источников: {sources.length}</div>
+                  <div className="text-xs text-slate-600 truncate">
+                    {sources.map(s => s.name).join(', ')}
+                  </div>
                 </div>
 
                 <button
@@ -394,7 +471,7 @@
             </div>
           )}
 
-          {/* ================= ЭКРАН 2: АРХИВ ЗАДАЧ ================= */}
+          {/* ================= 2. ЭКРАН: АРХИВ ВЫПОЛНЕННЫХ ДЕЛ ================= */}
           {view === 'archive' && (
             <div className="space-y-5 animate-fade-in">
               <div className="flex justify-between items-center">
@@ -402,34 +479,34 @@
                   onClick={() => { haptic(); setView('main'); }}
                   className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition"
                 >
-                  ← Назад к списку
+                  ← Назад к делам
                 </button>
                 {completedTasks.length > 0 && (
                   <button
-                    onClick={clearCompletedTasks}
-                    className="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200"
+                    onClick={clearArchive}
+                    className="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 active:scale-95"
                   >
-                    Очистить архив
+                    Очистить весь архив
                   </button>
                 )}
               </div>
 
               <div>
                 <h1 className="text-xl font-black text-slate-900">Архив выполненных дел</h1>
-                <div className="text-xs text-slate-500 mt-0.5">История завершённых задач. Кликните для возврата в активные.</div>
+                <div className="text-xs text-slate-500 mt-0.5">Кликните на задачу, чтобы вернуть её обратно в список дел.</div>
               </div>
 
               <div className="space-y-2.5">
                 {completedTasks.map(t => (
                   <div
                     key={t.id}
-                    className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-2xl"
+                    className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-2xl shadow-sm"
                   >
                     <div
                       onClick={() => toggleTask(t.id)}
                       className="flex items-center gap-3 flex-1 cursor-pointer"
                     >
-                      <div className="w-5 h-5 rounded-md bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
                         ✓
                       </div>
                       <span className="text-xs font-semibold text-slate-400 line-through">
@@ -438,7 +515,7 @@
                     </div>
                     <button
                       onClick={() => deleteTask(t.id)}
-                      className="text-slate-300 hover:text-red-500 text-xs px-2 py-1 font-bold"
+                      className="text-slate-300 hover:text-red-500 text-sm px-2 py-1 font-bold active:scale-90"
                     >
                       ✕
                     </button>
@@ -446,27 +523,104 @@
                 ))}
 
                 {completedTasks.length === 0 && (
-                  <div className="text-center py-8 text-xs text-slate-400 card-white rounded-3xl p-6">
-                    В архиве пока нет выполненных задач.
+                  <div className="text-center py-10 text-xs text-slate-400 card-white rounded-3xl p-6">
+                    В архиве нет выполненных задач.
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* ================= ЭКРАН 3: ПОЛНЫЙ ДАЙДЖЕСТ ================= */}
+          {/* ================= 3. ЭКРАН: УПРАВЛЕНИЕ ИСТОЧНИКАМИ ================= */}
+          {view === 'sources' && (
+            <div className="space-y-5 animate-fade-in">
+              <button
+                onClick={() => { haptic(); setView('main'); }}
+                className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition"
+              >
+                ← Назад на главную
+              </button>
+
+              <div>
+                <h1 className="text-xl font-black text-slate-900">Подключенные источники</h1>
+                <div className="text-xs text-slate-500 mt-0.5">Каналы и RSS-ленты, с которых собирается AI-Дайджест.</div>
+              </div>
+
+              {/* Список текущих источников */}
+              <div className="space-y-2">
+                {sources.map(s => (
+                  <div key={s.id} className="card-white rounded-2xl p-3.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-50 text-blue-600 border border-blue-200">
+                        {s.type}
+                      </span>
+                      <div>
+                        <div className="text-xs font-bold text-slate-900">{s.name}</div>
+                        <div className="text-[10px] text-slate-400">{s.title}</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => deleteSource(s.id)}
+                      className="text-slate-300 hover:text-red-500 text-sm font-bold px-2 py-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Форма добавления */}
+              <div className="card-white rounded-3xl p-5 space-y-3.5">
+                <div className="text-xs font-bold text-slate-800">Добавить новый канал или ленту</div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSourceType('TG')}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold border ${sourceType === 'TG' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
+                  >
+                    Telegram
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSourceType('RSS')}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold border ${sourceType === 'RSS' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
+                  >
+                    RSS URL
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder={sourceType === 'TG' ? '@channel_name или t.me/...' : 'https://site.com/rss'}
+                  value={sourceName}
+                  onChange={(e) => setSourceName(e.target.value)}
+                  className="w-full bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
+                />
+
+                <button
+                  type="button"
+                  onClick={handleAddSource}
+                  className="w-full py-3 bg-blue-600 active:scale-98 text-white rounded-2xl font-bold text-xs transition"
+                >
+                  + Подключить источник
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ================= 4. ЭКРАН: AI-ДАЙДЖЕСТ ================= */}
           {view === 'digest' && (
             <div className="space-y-5 animate-fade-in">
               <button
                 onClick={() => { haptic(); setView('main'); }}
                 className="px-3.5 py-1.5 bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition"
               >
-                ← Назад
+                ← Назад на главную
               </button>
 
               <div>
                 <h1 className="text-xl font-black text-slate-900">AI-Дайджест новостей</h1>
-                <div className="text-xs text-slate-500 mt-0.5">Автоматическая выжимка ключевых событий</div>
+                <div className="text-xs text-slate-500 mt-0.5">Сформирован на основе ваших {sources.length} подключенных источников.</div>
               </div>
 
               <div className="space-y-3.5">
@@ -485,42 +639,6 @@
                     <div className="text-[10px] font-bold text-slate-400">{item.source}</div>
                   </div>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {/* ================= ЭКРАН 4: ДОБАВЛЕНИЕ КАНАЛА ================= */}
-          {view === 'add_source' && (
-            <div className="space-y-5 animate-fade-in">
-              <button
-                onClick={() => { haptic(); setView('main'); }}
-                className="px-3.5 py-1.5 bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition"
-              >
-                ← Назад
-              </button>
-
-              <div className="card-white rounded-3xl p-5 space-y-4">
-                <div className="text-base font-black text-slate-900">Добавить источник</div>
-                <input
-                  type="text"
-                  placeholder="@channel_name или URL RSS"
-                  value={newSourceInput}
-                  onChange={(e) => setNewSourceInput(e.target.value)}
-                  className="w-full bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (newSourceInput.trim()) {
-                      setSources([...sources, { id: Date.now(), type: 'TG', name: newSourceInput.trim() }]);
-                      setNewSourceInput('');
-                      setView('main');
-                    }
-                  }}
-                  className="w-full py-3 bg-blue-600 text-white rounded-2xl font-bold text-xs"
-                >
-                  Сохранить
-                </button>
               </div>
             </div>
           )}

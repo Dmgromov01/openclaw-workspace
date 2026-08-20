@@ -126,3 +126,12 @@ _Курируемые воспоминания, свёрнутые из днев
 - **Capabilities**:
   - Прием и автоматический аудит структуры таблиц при загрузке.
   - Двусторонняя доставка сгенерированных отчетов и диаграмм напрямую в чат.
+
+## Module: Telegram Mini App Final Spec
+- **Target Device**: iPhone 17 Pro Max (Large typography, light theme).
+- **Core Widgets**:
+  1. Weather Widget (Real-time).
+  2. Calendar & Quick Tasks (Google Calendar / Tasks integration).
+  3. Channels & RSS Hub with full AI-Digest reader.
+  4. CBR Multi-Currency Converter (USD, EUR, CNY, JPY, GBP, RUB).
+  5. Password Generator (12-32 chars).

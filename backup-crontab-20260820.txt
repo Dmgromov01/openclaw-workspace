@@ -1,0 +1,2 @@
+30 8 * * * /usr/bin/python3 /root/openclaw/services/assistant_bot/morning_digest.py >/dev/null 2>&1
+0 3 * * 0 /usr/bin/python3 /root/openclaw/services/assistant_bot/memory_compactor.py >/dev/null 2>&1

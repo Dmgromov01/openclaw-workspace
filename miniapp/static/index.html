@@ -41,56 +41,77 @@
     function App() {
       const [view, setView] = useState('main'); // 'main' | 'archive' | 'sources' | 'digest'
 
-      // ================= 1. ПОГОДА & РАДАР ОСАДКОВ =================
+      // ================= 1. ПОГОДА & КАРТА =================
       const [weather, setWeather] = useState({ temp: 24, condition: 'Ясно, без осадков', wind: '2.8 м/с', city: 'Москва' });
-      const [showRadar, setShowRadar] = useState(false);
-      const [radarTimeIndex, setRadarTimeIndex] = useState(0);
-      const [radarFrames, setRadarFrames] = useState([]);
+      const [showMap, setShowMap] = useState(false);
+      const [cityWeather, setCityWeather] = useState([]);
       const mapRef = useRef(null);
-      const radarLayerRef = useRef(null);
+      const cityMarkersRef = useRef([]);
 
+      // Температура по городам (Open-Meteo, без ключей) — альтернатива радару
       useEffect(() => {
-        fetch('https://api.rainviewer.com/public/weather-maps.json')
+        const cities = [
+          { name: 'Москва', lat: 55.7558, lon: 37.6173 },
+          { name: 'Химки', lat: 55.897, lon: 37.43 },
+          { name: 'Мытищи', lat: 55.91, lon: 37.76 },
+          { name: 'Балашиха', lat: 55.81, lon: 37.96 },
+          { name: 'Подольск', lat: 55.43, lon: 37.54 },
+          { name: 'Люберцы', lat: 55.68, lon: 37.89 },
+          { name: 'Одинцово', lat: 55.68, lon: 37.27 },
+          { name: 'Домодедово', lat: 55.44, lon: 37.75 },
+          { name: 'Зеленоград', lat: 55.99, lon: 37.18 },
+          { name: 'Королёв', lat: 55.91, lon: 37.82 }
+        ];
+        const lats = cities.map(c => c.lat).join(',');
+        const lons = cities.map(c => c.lon).join(',');
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current_weather=true&timezone=Europe%2FMoscow`)
           .then(r => r.json())
           .then(data => {
-            if (data?.radar?.past) {
-              const frames = [...data.radar.past, ...(data.radar.nowcast || [])];
-              setRadarFrames(frames);
-              setRadarTimeIndex(data.radar.past.length - 1);
+            if (Array.isArray(data)) {
+              setCityWeather(cities.map((c, i) => ({
+                ...c,
+                temp: Math.round(data[i]?.current_weather?.temperature ?? '—'),
+                code: data[i]?.current_weather?.weathercode
+              })));
             }
           })
           .catch(() => {});
       }, []);
 
       useEffect(() => {
-        if (showRadar && !mapRef.current && document.getElementById('radar-map')) {
-          const map = L.map('radar-map', {
+        if (showMap && !mapRef.current && document.getElementById('weather-map')) {
+          const map = L.map('weather-map', {
             zoomControl: false,
-            attributionControl: false
-          }).setView([55.751244, 37.618423], 7);
+            attributionControl: false,
+            minZoom: 7,
+            maxZoom: 10,
+            maxBounds: [[53.5, 33.0], [58.0, 42.0]], // Москва + МО + ближайшие регионы
+            maxBoundsViscosity: 0.8
+          }).setView([55.75, 37.62], 7);
 
           L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 12
+            maxZoom: 10
           }).addTo(map);
 
           mapRef.current = map;
         }
 
-        if (mapRef.current && radarFrames.length > 0) {
-          const frame = radarFrames[radarTimeIndex];
-          if (frame) {
-            if (radarLayerRef.current) {
-              mapRef.current.removeLayer(radarLayerRef.current);
-            }
-            const radarLayer = L.tileLayer(`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
-              opacity: 0.75,
-              zIndex: 100
+        if (mapRef.current && cityWeather.length > 0) {
+          cityMarkersRef.current.forEach(m => mapRef.current.removeLayer(m));
+          cityMarkersRef.current = [];
+          cityWeather.forEach(c => {
+            const icon = L.divIcon({
+              className: '',
+              html: `<div style="background:#2563eb;color:#fff;border-radius:10px;padding:2px 7px;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35);white-space:nowrap">${c.temp}°</div>`,
+              iconSize: [38, 22],
+              iconAnchor: [19, 11]
             });
-            radarLayer.addTo(mapRef.current);
-            radarLayerRef.current = radarLayer;
-          }
+            const m = L.marker([c.lat, c.lon], { icon }).addTo(mapRef.current)
+              .bindPopup(`<b>${c.name}</b><br>${c.temp}°C`);
+            cityMarkersRef.current.push(m);
+          });
         }
-      }, [showRadar, radarTimeIndex, radarFrames]);
+      }, [showMap, cityWeather]);
 
       // ================= 2. ЗАДАЧИ & АРХИВ =================
       const [tasks, setTasks] = useState(() => {
@@ -149,47 +170,81 @@
       const activeTasks = tasks.filter(t => !t.done);
       const completedTasks = tasks.filter(t => t.done);
 
-      // ================= 3. ИСТОЧНИКИ & RSS =================
-      const [sources, setSources] = useState(() => {
-        try {
-          const saved = localStorage.getItem('hub_sources_v2');
-          return saved ? JSON.parse(saved) : [
-            { id: 1, type: 'TG', name: '@industry_metals', title: 'Металлургия & ВЭД' },
-            { id: 2, type: 'TG', name: '@tech_ai_hub', title: 'AI & Локальные модели' },
-            { id: 3, type: 'RSS', name: 'https://cbr.ru/rss/news', title: 'Пресс-центр ЦБ РФ' }
-          ];
-        } catch {
-          return [];
-        }
-      });
+      // ================= 3. ИСТОЧНИКИ & RSS (через серверный API) =================
+      const [sources, setSources] = useState([]);
       const [sourceName, setSourceName] = useState('');
       const [sourceType, setSourceType] = useState('TG');
+      const [sourceError, setSourceError] = useState('');
 
-      useEffect(() => {
-        localStorage.setItem('hub_sources_v2', JSON.stringify(sources));
-      }, [sources]);
+      const loadSources = () => {
+        fetch('/api/sources')
+          .then(r => r.json())
+          .then(d => { if (d?.sources) setSources(d.sources); })
+          .catch(() => {});
+      };
 
-      const handleAddSource = () => {
+      useEffect(() => { loadSources(); }, []);
+
+      const handleAddSource = async () => {
         const val = sourceName.trim();
         if (!val) return;
-        const newSrc = {
-          id: Date.now(),
-          type: sourceType,
-          name: val,
-          title: val
-        };
-        setSources(prev => [...prev, newSrc]);
-        setSourceName('');
-        setView('sources');
-        haptic('medium');
+        setSourceError('');
+        try {
+          const r = await fetch('/api/sources', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: sourceType, name: val, title: val })
+          });
+          const d = await r.json();
+          if (d?.sources) setSources(d.sources);
+          setSourceName('');
+          setView('sources');
+          haptic('medium');
+        } catch {
+          setSourceError('Не удалось добавить источник');
+        }
       };
 
-      const deleteSource = (id) => {
+      const deleteSource = async (id) => {
         haptic('light');
-        setSources(prev => prev.filter(s => s.id !== id));
+        try {
+          const r = await fetch('/api/sources?id=' + id, { method: 'DELETE' });
+          const d = await r.json();
+          if (d?.sources) setSources(d.sources);
+        } catch {}
       };
 
-      // ================= 4. ВАЛЮТЫ & ПАРОЛИ =================
+      // ================= 4. ДАЙДЖЕСТ (живой, через API) =================
+      const [digestData, setDigestData] = useState(null);
+      const [digestLoading, setDigestLoading] = useState(false);
+      const [digestError, setDigestError] = useState('');
+
+      // ================= 4.5. GOOGLE КАЛЕНДАРЬ (через /api/calendar) =================
+      const [calendarData, setCalendarData] = useState(null);
+      const [calendarError, setCalendarError] = useState('');
+
+      useEffect(() => {
+        fetch('/api/calendar')
+          .then(r => r.json())
+          .then(d => setCalendarData(d))
+          .catch(() => setCalendarError('Календарь недоступен'));
+      }, []);
+
+      const loadDigest = () => {
+        setDigestLoading(true);
+        setDigestError('');
+        fetch('/api/digest')
+          .then(r => r.json())
+          .then(d => setDigestData(d))
+          .catch(() => setDigestError('Не удалось загрузить дайджест'))
+          .finally(() => setDigestLoading(false));
+      };
+
+      useEffect(() => {
+        if (view === 'digest' && !digestData) loadDigest();
+      }, [view]);
+
+      // ================= 5. ВАЛЮТЫ & ПАРОЛИ =================
       const [rates, setRates] = useState({ USD: 91.20, EUR: 98.40, CNY: 12.65, JPY: 0.62, GBP: 116.50, RUB: 1.00 });
       const [calcAmount, setCalcAmount] = useState(1000);
       const [fromCurr, setFromCurr] = useState('CNY');
@@ -217,6 +272,28 @@
                 RUB: 1.00
               });
             }
+          })
+          .catch(() => {});
+        // Реальная погода для Москвы (Open-Meteo, без ключа)
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&current_weather=true&timezone=Europe%2FMoscow')
+          .then(r => r.json())
+          .then(d => {
+            const cw = d?.current_weather;
+            if (!cw) return;
+            const codes = {
+              0: '☀️ Ясно', 1: '🌤 Почти ясно', 2: '⛅ Переменная облачность', 3: '☁️ Пасмурно',
+              45: '🌫 Туман', 48: '🌫 Изморозь', 51: '🌦 Морось', 53: '🌦 Морось', 55: '🌧 Морось',
+              61: '🌧 Небольшой дождь', 63: '🌧 Дождь', 65: '🌧 Сильный дождь',
+              71: '🌨 Небольшой снег', 73: '🌨 Снег', 75: '❄️ Сильный снег',
+              80: '🌦 Ливень', 81: '🌧 Ливень', 82: '⛈ Сильный ливень',
+              95: '⛈ Гроза', 96: '⛈ Гроза с градом', 99: '⛈ Гроза с градом'
+            };
+            setWeather({
+              temp: Math.round(cw.temperature),
+              condition: codes[cw.weathercode] || '🌡 ' + cw.weathercode,
+              wind: cw.windspeed + ' м/с',
+              city: 'Москва'
+            });
           })
           .catch(() => {});
       }, []);
@@ -262,15 +339,15 @@
           {view === 'main' && (
             <div className="space-y-5">
 
-              {/* 1. Погода + Радар осадков */}
+              {/* 1. Погода + Карта температур */}
               <div className="card-white rounded-3xl p-5 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Погода & Радар</span>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Погода & Карта</span>
                   <button
-                    onClick={() => { haptic(); setShowRadar(!showRadar); }}
+                    onClick={() => { haptic(); setShowMap(!showMap); }}
                     className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 active:scale-95 transition"
                   >
-                    {showRadar ? 'Скрыть карту ▲' : 'Карта осадков ▼'}
+                    {showMap ? 'Скрыть карту ▲' : 'Карта температур ▼'}
                   </button>
                 </div>
 
@@ -282,32 +359,46 @@
                   </div>
                 </div>
 
-                {/* Интерактивный радар с ползунком по часам */}
-                {showRadar && (
+                {/* Карта: температура по городам МО (Open-Meteo, без ключей) */}
+                {showMap && (
                   <div className="pt-2 border-t border-slate-100 space-y-3">
-                    <div id="radar-map" className="w-full h-52 bg-slate-100 rounded-2xl border border-slate-200"></div>
+                    <div id="weather-map" className="w-full h-52 bg-slate-100 rounded-2xl border border-slate-200"></div>
+                    <div className="text-[10px] text-slate-400 font-semibold text-center">Температура сейчас по городам МО — кликните по метке для деталей</div>
+                  </div>
+                )}
+              </div>
 
-                    <div className="space-y-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-slate-700">Прокрутка времени:</span>
-                        <span className="font-mono font-black text-blue-600">
-                          {radarFrames[radarTimeIndex] ? getFrameTimeLabel(radarFrames[radarTimeIndex].time) : 'Сейчас'}
-                        </span>
+              {/* 1.5. Google Календарь */}
+              <div className="card-white rounded-3xl p-5 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">📅 Google Календарь</span>
+                  <span className="text-[10px] font-bold text-slate-400">7 дней</span>
+                </div>
+                {calendarError ? (
+                  <div className="text-xs text-red-500">{calendarError}</div>
+                ) : !calendarData ? (
+                  <div className="text-center py-2 text-xs text-slate-400">Загружаем события…</div>
+                ) : (
+                  <div className="space-y-2">
+                    {calendarData.days && calendarData.days.filter(d => d.events.length > 0).length === 0 && (
+                      <div className="text-center py-2 text-xs text-slate-400">На ближайшие 7 дней событий нет.</div>
+                    )}
+                    {calendarData.days && calendarData.days.map(d => d.events.length > 0 && (
+                      <div key={d.date} className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">{d.label}</div>
+                        <div className="space-y-1.5">
+                          {d.events.map((ev, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                              <span className="font-mono text-xs font-black text-blue-600 shrink-0 mt-0.5">{ev.time}</span>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-bold text-slate-800 leading-snug">{ev.summary}</div>
+                                {ev.location && <div className="text-[10px] text-slate-400 truncate">📍 {ev.location}</div>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max={Math.max(0, radarFrames.length - 1)}
-                        value={radarTimeIndex}
-                        onChange={(e) => setRadarTimeIndex(Number(e.target.value))}
-                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                      />
-                      <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
-                        <span>-2 часа</span>
-                        <span>Сейчас</span>
-                        <span>+30 мин</span>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -402,37 +493,37 @@
 
               {/* 4. Конвертер валют */}
               <div className="card-white rounded-3xl p-5 space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <div className="text-base font-black text-slate-900">💱 Конвертер валют</div>
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">ЦБ РФ Официальный</span>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap">ЦБ РФ Официальный</span>
                 </div>
 
-                <div className="flex gap-2 items-center">
+                <div className="flex flex-wrap gap-1.5 items-stretch">
                   <input
                     type="number"
                     value={calcAmount}
                     onChange={(e) => setCalcAmount(Number(e.target.value))}
-                    className="flex-1 bg-slate-50 border-2 border-slate-200 text-base font-black rounded-2xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
+                    className="flex-1 min-w-0 basis-24 bg-slate-50 border-2 border-slate-200 text-base font-black rounded-2xl px-3 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
                   />
                   <select
                     value={fromCurr}
                     onChange={(e) => setFromCurr(e.target.value)}
-                    className="bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2.5 py-3 text-slate-800"
+                    className="shrink-0 bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2 py-2.5 text-slate-800"
                   >
                     {['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  <span className="text-slate-400 font-bold">→</span>
+                  <span className="text-slate-400 font-bold self-center shrink-0">→</span>
                   <select
                     value={toCurr}
                     onChange={(e) => setToCurr(e.target.value)}
-                    className="bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2.5 py-3 text-slate-800"
+                    className="shrink-0 bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2 py-2.5 text-slate-800"
                   >
                     {['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
 
-                <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex justify-between items-center">
-                  <span className="text-xs font-bold text-slate-600">Результат:</span>
+                <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex flex-col items-center gap-0.5 text-center">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Результат</span>
                   <span className="text-lg font-black text-emerald-700 font-mono">{convertValue()} {toCurr}</span>
                 </div>
               </div>
@@ -624,22 +715,49 @@
               </div>
 
               <div className="space-y-3.5">
-                {digestItems.map(item => (
-                  <div key={item.id} className="card-white rounded-3xl p-4 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
-                        {item.tag}
-                      </span>
-                      <span className="text-[10px] font-semibold text-slate-400">{item.time}</span>
-                    </div>
-                    <div className="text-sm font-bold text-slate-900">{item.title}</div>
-                    <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl">
-                      {item.summary}
-                    </div>
-                    <div className="text-[10px] font-bold text-slate-400">{item.source}</div>
-                  </div>
-                ))}
+                {digestLoading && (
+                  <div className="text-center py-8 text-xs text-slate-400">Собираем дайджест…</div>
+                )}
+                {digestError && !digestLoading && (
+                  <div className="text-center py-6 text-xs text-red-500">{digestError}</div>
+                )}
+                {!digestLoading && !digestError && digestData && (
+                  <>
+                    {digestData.blocks && digestData.blocks.length > 0 ? digestData.blocks.map((block, bi) => (
+                      <div key={bi} className="card-white rounded-3xl p-4 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
+                            {block.title}
+                          </span>
+                          <span className="text-[10px] font-semibold text-slate-400">{block.posts.length} постов</span>
+                        </div>
+                        <div className="space-y-2">
+                          {block.posts.map((p, pi) => (
+                            <div key={pi} className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl">
+                              • {p}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="text-center py-8 text-xs text-slate-400">За выбранный период свежих постов нет.</div>
+                    )}
+                    {digestData.curs && (
+                      <div className="card-white rounded-3xl p-4 text-center">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">💱 Курс (ЦБ)</div>
+                        <div className="text-xs font-black text-slate-700">{digestData.curs}</div>
+                        <div className="text-[10px] text-slate-400 mt-1">⭐ Всего постов: {digestData.total}</div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
+              <button
+                onClick={() => { haptic('light'); loadDigest(); }}
+                className="w-full py-3 bg-slate-900 active:scale-98 text-white rounded-2xl font-bold text-xs transition"
+              >
+                🔄 Обновить дайджест
+              </button>
             </div>
           )}
 

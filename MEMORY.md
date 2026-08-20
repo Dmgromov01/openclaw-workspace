@@ -135,3 +135,10 @@ _Курируемые воспоминания, свёрнутые из днев
   3. Channels & RSS Hub with full AI-Digest reader.
   4. CBR Multi-Currency Converter (USD, EUR, CNY, JPY, GBP, RUB).
   5. Password Generator (12-32 chars).
+
+## Module: Mini App Telegram Bot Connector
+- **File**: `bot/miniapp_menu.py`
+- **Features**:
+  - Установка MenuButtonWebApp в строку ввода Telegram.
+  - Инлайн-клавиатура с WebAppInfo для быстрого доступа к Personal Hub.
+  - Интеграция переменной окружения `MINIAPP_URL`.

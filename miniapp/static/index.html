@@ -177,7 +177,7 @@
       const [sourceError, setSourceError] = useState('');
 
       const loadSources = () => {
-        fetch('/api/sources')
+        fetch('/miniapp/api/sources')
           .then(r => r.json())
           .then(d => { if (d?.sources) setSources(d.sources); })
           .catch(() => {});
@@ -190,7 +190,7 @@
         if (!val) return;
         setSourceError('');
         try {
-          const r = await fetch('/api/sources', {
+          const r = await fetch('/miniapp/api/sources', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ type: sourceType, name: val, title: val })
@@ -208,7 +208,7 @@
       const deleteSource = async (id) => {
         haptic('light');
         try {
-          const r = await fetch('/api/sources?id=' + id, { method: 'DELETE' });
+          const r = await fetch('/miniapp/api/sources?id=' + id, { method: 'DELETE' });
           const d = await r.json();
           if (d?.sources) setSources(d.sources);
         } catch {}
@@ -224,7 +224,7 @@
       const [calendarError, setCalendarError] = useState('');
 
       useEffect(() => {
-        fetch('/api/calendar')
+        fetch('/miniapp/api/calendar')
           .then(r => r.json())
           .then(d => setCalendarData(d))
           .catch(() => setCalendarError('Календарь недоступен'));
@@ -233,7 +233,7 @@
       const loadDigest = () => {
         setDigestLoading(true);
         setDigestError('');
-        fetch('/api/digest')
+        fetch('/miniapp/api/digest')
           .then(r => r.json())
           .then(d => setDigestData(d))
           .catch(() => setDigestError('Не удалось загрузить дайджест'))

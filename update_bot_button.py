@@ -4,7 +4,7 @@ import re
 from aiogram import Bot
 from aiogram.types import MenuButtonWebApp, WebAppInfo
 
-MINIAPP_URL = "https://score-mba-oasis-royal.trycloudflare.com"
+MINIAPP_URL = "https://gbkz.uk/miniapp/"
 
 def get_token():
     # 1. Проверяем переменную окружения

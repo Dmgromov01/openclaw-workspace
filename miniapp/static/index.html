@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Personal Hub</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      background-color: #F8FAFC;
+      color: #0F172A;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .card-white {
+      background: #FFFFFF;
+      border: 1.5px solid #E2E8F0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [view, setView] = useState('main'); // 'main' | 'digest' | 'add_source'
+
+      // 1. Погода
+      const [weather, setWeather] = useState({ temp: 24, condition: 'Ясно, без осадков', wind: '2.8 м/с', city: 'Москва' });
+
+      // 2. Календарь и задачи
+      const [events, setEvents] = useState([
+        { id: 1, time: '11:00 – 12:00', title: 'Встреча по контракту поставки', tag: 'Встреча' },
+        { id: 2, time: '15:30 – 16:30', title: 'Синхронизация с проектной группой', tag: 'Встреча' }
+      ]);
+      const [tasks, setTasks] = useState([
+        { id: 1, text: 'Согласовать спецификацию с юристами', done: false },
+        { id: 2, text: 'Проверить выгрузку реестра оплат', done: true }
+      ]);
+      const [newTaskText, setNewTaskText] = useState('');
+
+      // 3. Официальные курсы ЦБ РФ
+      const [rates, setRates] = useState({
+        USD: 91.20,
+        EUR: 98.40,
+        CNY: 12.65,
+        JPY: 0.62,
+        GBP: 116.50,
+        RUB: 1.00
+      });
+      const [calcAmount, setCalcAmount] = useState(1000);
+      const [fromCurr, setFromCurr] = useState('CNY');
+      const [toCurr, setToCurr] = useState('RUB');
+
+      // 4. Пароли
+      const [passLength, setPassLength] = useState(16);
+      const [password, setPassword] = useState('k9#vL@8$qP2!mZ7x');
+      const [copied, setCopied] = useState(false);
+
+      // 5. Источники и новости
+      const [sources, setSources] = useState([
+        { id: 1, type: 'TG', name: '@industry_metals', title: 'Металлургия & ВЭД' },
+        { id: 2, type: 'TG', name: '@tech_ai_hub', title: 'AI & Локальные модели' },
+        { id: 3, type: 'RSS', name: 'https://cbr.ru/rss/news', title: 'Пресс-центр ЦБ РФ' }
+      ]);
+      const [newSourceInput, setNewSourceInput] = useState('');
+      const [newSourceType, setNewSourceType] = useState('TG');
+
+      const [digestItems, setDigestItems] = useState([
+        {
+          id: 1,
+          tag: 'Рынки металлов & ВЭД',
+          title: 'Динамика экспорта титана и специальных сплавов во 2-м полугодии',
+          summary: 'Азиатский коридор поставок демонстрирует устойчивый рост. Логистические цепочки стабилизировались, спрос на прокат высокой чистоты сохраняется.',
+          source: 'TG: @industry_metals',
+          time: '35 мин назад'
+        },
+        {
+          id: 2,
+          tag: 'Технологии & AI',
+          title: 'Оптимизация локального инференса LLM на выделенных серверах',
+          summary: 'Новые методы квантования позволяют разворачивать reasoning-модели на потребительских чипах без потери точности при выполнении SQL-запросов.',
+          source: 'TG: @tech_ai_hub',
+          time: '1.5 ч назад'
+        },
+        {
+          id: 3,
+          tag: 'Макроэкономика',
+          title: 'ЦБ РФ обновил структуру трансграничных взаиморасчетов',
+          summary: 'Доля юаня и нацвалют в прямых B2B контрактах достигла нового максимума. Официальные котировки валют пересчитаны по биржевым и внебиржевым срезам.',
+          source: 'RSS: Пресс-центр ЦБ РФ',
+          time: '3 ч назад'
+        }
+      ]);
+
+      useEffect(() => {
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+        }
+        fetch('https://www.cbr-xml-daily.ru/daily_json.js')
+          .then(res => res.json())
+          .then(data => {
+            if (data?.Valute) {
+              setRates({
+                USD: data.Valute.USD.Value,
+                EUR: data.Valute.EUR.Value,
+                CNY: data.Valute.CNY.Value,
+                JPY: data.Valute.JPY.Value / data.Valute.JPY.Nominal,
+                GBP: data.Valute.GBP.Value,
+                RUB: 1.00
+              });
+            }
+          })
+          .catch(() => {});
+      }, []);
+
+      const haptic = (type = 'light') => {
+        window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(type);
+      };
+
+      const convertValue = () => {
+        const inRub = calcAmount * rates[fromCurr];
+        const result = inRub / rates[toCurr];
+        return result.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      };
+
+      const generatePassword = () => {
+        haptic('light');
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~';
+        let res = '';
+        for (let i = 0; i < passLength; i++) {
+          res += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        setPassword(res);
+        setCopied(false);
+      };
+
+      const copyToClipboard = () => {
+        navigator.clipboard.writeText(password);
+        setCopied(true);
+        haptic('notification');
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      const toggleTask = (id) => {
+        haptic('light');
+        setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+      };
+
+      const handleAddTask = (e) => {
+        e.preventDefault();
+        if (!newTaskText.trim()) return;
+        setTasks([...tasks, { id: Date.now(), text: newTaskText, done: false }]);
+        setNewTaskText('');
+        haptic('medium');
+      };
+
+      const handleAddSource = (e) => {
+        e.preventDefault();
+        if (!newSourceInput.trim()) return;
+        setSources([...sources, { id: Date.now(), type: newSourceType, name: newSourceInput, title: newSourceInput }]);
+        setNewSourceInput('');
+        setView('main');
+        haptic('medium');
+      };
+
+      return (
+        <div className="max-w-xl mx-auto px-5 py-6 font-sans">
+
+          {/* ================= ЭКРАН 1: ГЛАВНАЯ ПАНЕЛЬ ================= */}
+          {view === 'main' && (
+            <div className="space-y-6">
+
+              {/* Заголовок */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-slate-500 font-bold">Personal Hub</div>
+                  <h1 className="text-2xl font-black text-slate-900 tracking-tight">Главная панель</h1>
+                </div>
+                <div className="px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 font-bold text-xs">
+                  iPhone 17 PM
+                </div>
+              </div>
+
+              {/* 1. Погода */}
+              <div className="card-white rounded-3xl p-6">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Погода сейчас</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-4xl font-black text-slate-900">{weather.temp}°C</div>
+                  <div className="text-right">
+                    <div className="text-base font-bold text-slate-800">☀️ {weather.condition}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">Ветер {weather.wind} • {weather.city}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Календарь встреч & Быстрые дела */}
+              <div className="card-white rounded-3xl p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-black text-slate-900">📅 Календарь & Быстрые дела</div>
+                  <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">Google Cal</span>
+                </div>
+
+                {/* Встречи */}
+                <div className="space-y-2.5">
+                  {events.map(ev => (
+                    <div key={ev.id} className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-black text-blue-700 font-mono">{ev.time}</div>
+                        <div className="text-sm font-bold text-slate-900 mt-0.5">{ev.title}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Быстрые задачи */}
+                <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">Дела на сегодня</div>
+                  {tasks.map(t => (
+                    <div
+                      key={t.id}
+                      onClick={() => toggleTask(t.id)}
+                      className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer active:scale-98 transition"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={t.done}
+                        readOnly
+                        className="w-5 h-5 rounded-lg text-blue-600 accent-blue-600 cursor-pointer"
+                      />
+                      <span className={`text-xs font-semibold ${t.done ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                        {t.text}
+                      </span>
+                    </div>
+                  ))}
+
+                  {/* Добавление задачи */}
+                  <form onSubmit={handleAddTask} className="flex gap-2 pt-1">
+                    <input
+                      type="text"
+                      placeholder="Быстрая задача..."
+                      value={newTaskText}
+                      onChange={(e) => setNewTaskText(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 text-xs rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-blue-600"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3.5 py-2 bg-slate-900 text-white rounded-xl font-bold text-xs active:scale-95"
+                    >
+                      +
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* 3. Лента каналов & AI-Дайджест */}
+              <div className="card-white rounded-3xl p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-black text-slate-900">Лента каналов & RSS</div>
+                  <button
+                    onClick={() => { haptic(); setView('add_source'); }}
+                    className="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-600 font-bold text-xs transition border border-blue-200"
+                  >
+                    + Добавить источник
+                  </button>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                  <div className="text-xs font-bold text-blue-600 mb-1">● 14 новых постов из {sources.length} источников</div>
+                  <div className="text-xs text-slate-600 line-clamp-2">
+                    Темы: Рынки металлов, B2B контракты, релизы локальных LLM моделей...
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => { haptic('medium'); setView('digest'); }}
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white rounded-2xl font-bold text-sm transition shadow-md shadow-blue-500/20 flex items-center justify-center gap-2"
+                >
+                  <span>📖</span> Читать полный AI-Дайджест →
+                </button>
+              </div>
+
+              {/* 4. Конвертер валют (ЦБ РФ) */}
+              <div className="card-white rounded-3xl p-6 space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="text-base font-black text-slate-900">💱 Конвертер валют</div>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">ЦБ РФ Официальный</span>
+                </div>
+
+                <div className="flex gap-2.5 items-center">
+                  <input
+                    type="number"
+                    value={calcAmount}
+                    onChange={(e) => setCalcAmount(Number(e.target.value))}
+                    className="flex-1 bg-slate-50 border-2 border-slate-200 text-lg font-black rounded-2xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600"
+                  />
+                  <select
+                    value={fromCurr}
+                    onChange={(e) => setFromCurr(e.target.value)}
+                    className="bg-slate-50 border-2 border-slate-200 text-sm font-bold rounded-2xl px-3 py-3.5 text-slate-800"
+                  >
+                    {['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <span className="text-slate-400 font-bold">→</span>
+                  <select
+                    value={toCurr}
+                    onChange={(e) => setToCurr(e.target.value)}
+                    className="bg-slate-50 border-2 border-slate-200 text-sm font-bold rounded-2xl px-3 py-3.5 text-slate-800"
+                  >
+                    {['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-600">Результат конвертации:</span>
+                  <span className="text-xl font-black text-emerald-700 font-mono">{convertValue()} {toCurr}</span>
+                </div>
+              </div>
+
+              {/* 5. Генератор паролей */}
+              <div className="card-white rounded-3xl p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-black text-slate-900">🔐 Генератор паролей</div>
+                  <span className="text-xs font-black text-blue-600 font-mono">{passLength} симв.</span>
+                </div>
+
+                <input
+                  type="range" min="12" max="32" value={passLength}
+                  onChange={(e) => setPassLength(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+
+                <div
+                  onClick={copyToClipboard}
+                  className="p-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-between cursor-pointer active:scale-98 transition"
+                >
+                  <span className="font-mono text-sm font-bold text-slate-900 break-all">{password}</span>
+                  <span className="text-xs font-bold text-blue-600 ml-3 shrink-0">
+                    {copied ? 'Скопировано ✓' : 'Копировать'}
+                  </span>
+                </div>
+
+                <button
+                  onClick={generatePassword}
+                  className="w-full py-3.5 bg-slate-900 hover:bg-black active:scale-98 text-white rounded-2xl font-bold text-xs transition"
+                >
+                  Сгенерировать новый пароль
+                </button>
+              </div>
+
+            </div>
+          )}
+
+          {/* ================= ЭКРАН 2: ПОЛНЫЙ AI-ДАЙДЖЕСТ ================= */}
+          {view === 'digest' && (
+            <div className="space-y-5 animate-fade-in">
+              <button
+                onClick={() => { haptic(); setView('main'); }}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition flex items-center gap-1"
+              >
+                ← Вернуться на главную
+              </button>
+
+              <div>
+                <h1 className="text-2xl font-black text-slate-900">AI-Дайджест новостей</h1>
+                <div className="text-xs text-slate-500 mt-1">Автоматическая выжимка ключевых событий из ваших каналов</div>
+              </div>
+
+              <div className="space-y-4">
+                {digestItems.map(item => (
+                  <div key={item.id} className="card-white rounded-3xl p-5 space-y-2.5">
+                    <div className="flex justify-between items-center">
+                      <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-bold border border-blue-200">
+                        {item.tag}
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-400">{item.time}</span>
+                    </div>
+                    <div className="text-base font-bold text-slate-900 leading-snug">{item.title}</div>
+                    <div className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                      {item.summary}
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-400">{item.source}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ================= ЭКРАН 3: ДОБАВЛЕНИЕ КАНАЛА ================= */}
+          {view === 'add_source' && (
+            <div className="space-y-5 animate-fade-in">
+              <button
+                onClick={() => { haptic(); setView('main'); }}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition"
+              >
+                ← Назад
+              </button>
+
+              <div>
+                <h1 className="text-2xl font-black text-slate-900">Добавить источник</h1>
+                <div className="text-xs text-slate-500 mt-1">Подключение Telegram-канала или RSS-ленты для анализа</div>
+              </div>
+
+              <form onSubmit={handleAddSource} className="card-white rounded-3xl p-6 space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1.5">Тип источника</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewSourceType('TG')}
+                      className={`flex-1 py-2.5 rounded-xl font-bold text-xs border ${newSourceType === 'TG' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
+                    >
+                      Telegram Канал
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewSourceType('RSS')}
+                      className={`flex-1 py-2.5 rounded-xl font-bold text-xs border ${newSourceType === 'RSS' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
+                    >
+                      RSS-лента
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                    {newSourceType === 'TG' ? 'Юзернейм или ссылка канала' : 'URL RSS-ленты'}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={newSourceType === 'TG' ? '@channel_name' : 'https://example.com/rss'}
+                    value={newSourceInput}
+                    onChange={(e) => setNewSourceInput(e.target.value)}
+                    className="w-full bg-slate-50 border-2 border-slate-200 text-sm rounded-2xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600"
+                    autoFocus
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white rounded-2xl font-bold text-sm transition"
+                >
+                  Подключить и индексировать
+                </button>
+              </form>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

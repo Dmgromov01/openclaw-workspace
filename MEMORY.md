@@ -108,3 +108,12 @@ _Курируемые воспоминания, свёрнутые из днев
 - Тестовый контур: `--profile test` изолирует; прод-гейтвей = user-systemd юнит `openclaw-gateway.service` (рестарт `systemctl --user restart`, НЕ SIGUSR1 для tailscale-изменений). Скрипт релиза: `/root/.openclaw/deploy-test-to-prod.sh`.
 - image_generate настроен: primary openrouter/google/gemini-3.1-flash-image, fallback google + openrouter gemini-3-pro (поля protected — править напрямую в openclaw.json + restart).
 - Я нарушил это правило (serve в прод) 15.08.11 — Дмитрий отчитал. Больше не повторять.
+
+## Module: Excel Tools & Function Calling
+- **File**: `skills/excel_skills.py`
+- **Class**: `ExcelSkillsHandler`
+- **Supported Tools**:
+  - `excel_sql_query`: выполнение SQL-запросов DuckDB напрямую по Excel файлам.
+  - `excel_table_search`: поиск по строкам с извлечением метаданных (лист, строка).
+  - `excel_generate_report`: построение форматированных управленческих отчётов с графиками и формулами.
+- **Dependencies**: `openpyxl`, `pandas`, `duckdb`, `tabulate`.

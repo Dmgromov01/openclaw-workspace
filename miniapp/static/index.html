@@ -46,6 +46,14 @@
       const [authError, setAuthError] = useState('');
       const [bioStatus, setBioStatus] = useState(''); // диагностика FaceID: что происходит
 
+      // обёртка fetch: добавляет Authorization: Bearer <token>
+      const apiFetch = (url, opts = {}) => {
+        const token = sessionStorage.getItem('hub_token');
+        const headers = { ...(opts.headers || {}) };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        return fetch(url, { ...opts, headers });
+      };
+
       // при старте: проверить токен + заранее инициализировать биометрию
       useEffect(() => {
         const token = sessionStorage.getItem('hub_token');

@@ -367,12 +367,12 @@
                 {om && om.current && (
                   <div className="pt-2 border-t border-slate-100 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Осадки в Москве</span>
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Осадки в Москве · сутки</span>
                       <span className="text-xs font-bold text-blue-600">💧 {om.current.rain ?? 0} мм/ч · ❄️ {om.current.snowfall ?? 0} см</span>
                     </div>
                     {om.hourly && (
                       <div className="flex gap-1.5 overflow-x-auto pb-1">
-                        {om.hourly.time.slice(0, 8).map((t, i) => (
+                        {om.hourly.time.slice(0, 24).map((t, i) => (
                           <div key={t} className="flex-shrink-0 w-12 rounded-xl bg-slate-50 border border-slate-200 px-1 py-1.5 text-center">
                             <div className="text-[10px] font-bold text-slate-500">{new Date(t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
                             <div className="text-xs font-black text-slate-800">{Math.round(om.hourly.temperature_2m[i])}°</div>

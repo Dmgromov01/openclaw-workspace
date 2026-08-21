@@ -268,11 +268,23 @@ class Handler(SimpleHTTPRequestHandler):
                 body = json.loads(self.rfile.read(length) or b"{}")
             except Exception:
                 return self._send_json({"error": "bad json"}, 400)
-            # установка/смена собственного пароля (нужен Bearer-токен)
+            # установка/смена пароля: по Bearer-токену ИЛИ по initData (с экрана входа)
             if body.get("setPassword"):
-                user = self._require_auth()
+                user = self._auth_user()
                 if user is None:
-                    return
+                    init_data = (body.get("initData") or "").strip()
+                    if init_data:
+                        tg_user = miniapp_auth.verify_init_data(init_data, miniapp_auth.load_bot_token())
+                        if tg_user and int(tg_user.get("id", 0)):
+                            c = miniapp_auth._conn()
+                            row = c.execute("SELECT * FROM users WHERE telegram_id=?", (int(tg_user["id"]),)).fetchone()
+                            c.close()
+                            if row is not None:
+                                ok, err = miniapp_auth.set_password(int(tg_user["id"]), body.get("password") or "")
+                                if not ok:
+                                    return self._send_json({"error": err}, 400)
+                                return self._send_json({"ok": True})
+                    return self._send_json({"error": "unauthorized"}, 401)
                 ok, err = miniapp_auth.set_password(user["telegram_id"], body.get("password") or "")
                 if not ok:
                     return self._send_json({"error": err}, 400)

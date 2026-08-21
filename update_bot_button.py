@@ -1,25 +1,38 @@
 import asyncio
 import os
 import re
+from pathlib import Path
 from aiogram import Bot
 from aiogram.types import MenuButtonWebApp, WebAppInfo
 
 MINIAPP_URL = "https://gbkz.uk/miniapp/"
 
-def get_token():
+
+def get_token(paths=None):
     # 1. Проверяем переменную окружения
     token = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("BOT_TOKEN")
     if token:
         return token
     # 2. Ищем токен в файле .env
-    env_path = "/root/openclaw/.env"
-    if os.path.exists(env_path):
-        with open(env_path, "r", encoding="utf-8") as f:
-            for line in f:
-                if line.startswith("TELEGRAM_BOT_TOKEN=") or line.startswith("BOT_TOKEN="):
-                    return line.strip().split("=", 1)[1].strip(' "\'')
+    if paths is None:
+        script_dir = Path(__file__).resolve().parent
+        env_paths = [script_dir / ".env", "/root/openclaw/.env"]
+        config_paths = [
+            script_dir / "config.json",
+            "/root/openclaw/config.json",
+            "/root/.openclaw/config.json",
+        ]
+    else:
+        env_paths = paths.get("env_paths", [])
+        config_paths = paths.get("config_paths", [])
+    for env_path in env_paths:
+        if os.path.exists(env_path):
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("TELEGRAM_BOT_TOKEN=") or line.startswith("BOT_TOKEN="):
+                        return line.strip().split("=", 1)[1].strip(' "\'')
     # 3. Ищем в config.json или конфигах openclaw
-    for cfg in ["/root/openclaw/config.json", "/root/.openclaw/config.json"]:
+    for cfg in config_paths:
         if os.path.exists(cfg):
             with open(cfg, "r", encoding="utf-8") as f:
                 content = f.read()

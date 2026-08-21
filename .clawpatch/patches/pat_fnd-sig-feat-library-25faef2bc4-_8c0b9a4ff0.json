@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "patchAttemptId": "pat_fnd-sig-feat-library-25faef2bc4-_8c0b9a4ff0",
+  "findingIds": [
+    "fnd_sig-feat-library-25faef2bc4-3e11_0bebeedce7"
+  ],
+  "featureIds": [
+    "feat_library_25faef2bc4"
+  ],
+  "status": "applied",
+  "plan": "Refactored get_token() in update_bot_button.py to resolve token-source paths relative to the script (Path(__file__).resolve().parent) with the old /root/openclaw and /root/.openclaw paths kept as compatibility fallbacks, and added an optional paths parameter for injectable lookup paths. Added focused regression tests using tempfile tmp_path and a script-relative default-path test. All 11 tests pass (8 existing + 3 new).",
+  "filesChanged": [
+    "test_update_bot_button.py",
+    "update_bot_button.py"
+  ],
+  "commandsRun": [],
+  "testResults": [],
+  "provider": {
+    "name": "codex",
+    "model": null,
+    "reasoningEffort": null,
+    "requestId": null,
+    "startedAt": "2026-08-21T11:25:35.546Z",
+    "finishedAt": "2026-08-21T11:26:28.112Z"
+  },
+  "git": {
+    "baseSha": "32111db9ffc585bbb9520f161448c9c1aa25a95d",
+    "commitSha": null,
+    "branchName": "main",
+    "prUrl": null
+  },
+  "createdAt": "2026-08-21T11:25:35.543Z",
+  "updatedAt": "2026-08-21T11:26:28.112Z"
+}

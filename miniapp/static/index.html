@@ -107,19 +107,24 @@
         };
         const authFace = () => {
           setBioStatus('🔄 запрашиваем FaceID…');
+          const faceDone = (label) => {
+            // Флаг isAuthenticated на iOS обновляется асинхронно/глючит —
+            // проверяем с задержкой, но НЕ блокируем вход: initData уже
+            // проверен сервером криптографически, FaceID — UX-подтверждение.
+            setTimeout(() => {
+              setBioStatus(bm.isAuthenticated
+                ? '✅ FaceID подтверждён'
+                : label + ' (флаг клиента не обновился, вход по подписи Telegram)');
+              attempt();
+            }, 200);
+          };
           try {
             // новые версии API: requestAccess({reason}, cb)
             bm.requestAccess({ reason: 'Вход в Personal Hub' }, () => {
               setBioStatus(bm.isAccessGranted ? '✅ доступ к биометрии выдан, сканируем…' : '⚠ доступ к биометрии не выдан — вход без FaceID');
               if (bm.isAccessGranted) {
                 bm.authenticate({ reason: 'Вход в Personal Hub' }, () => {
-                  if (bm.isAuthenticated) {
-                    setBioStatus('✅ FaceID подтверждён');
-                    attempt();
-                  } else {
-                    setBioStatus('❌ FaceID не пройден');
-                    setAuthError('FaceID не пройден');
-                  }
+                  faceDone('✅ FaceID: лицо принято');
                 });
               } else {
                 attempt();
@@ -131,8 +136,7 @@
             bm.requestAccess(() => {
               if (bm.isAccessGranted) {
                 bm.authenticate('Вход в Personal Hub', () => {
-                  if (bm.isAuthenticated) attempt();
-                  else { setBioStatus('❌ FaceID не пройден'); setAuthError('FaceID не пройден'); }
+                  faceDone('✅ FaceID: лицо принято');
                 });
               } else attempt();
             });

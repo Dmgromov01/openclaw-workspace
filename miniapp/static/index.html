@@ -87,20 +87,27 @@
         };
         // сначала FaceID (если доступен), затем initData
         if (bm) {
-          if (bm.isInited === false) bm.init(() => {});
-          if (bm.isInited && bm.isBiometricAvailable) {
-            bm.requestAccess(() => {
-              if (bm.isAccessGranted) {
-                bm.authenticate('Вход в Personal Hub', () => {
-                  if (bm.isAuthenticated) attempt();
-                  else setAuthError('FaceID не пройден');
-                });
-              } else {
-                attempt(); // доступ к биометрии не дали — пробуем по initData
-              }
-            });
+          const tryAuth = () => {
+            if (bm.isBiometricAvailable) {
+              bm.requestAccess(() => {
+                if (bm.isAccessGranted) {
+                  bm.authenticate('Вход в Personal Hub', () => {
+                    if (bm.isAuthenticated) attempt();
+                    else setAuthError('FaceID не пройден');
+                  });
+                } else {
+                  attempt(); // доступ к биометрии не дали — пробуем по initData
+                }
+              });
+            } else {
+              attempt();
+            }
+          };
+          if (bm.isInited) {
+            tryAuth();
           } else {
-            attempt();
+            // init асинхронный — вызываем tryAuth ТОЛЬКО после завершения
+            bm.init(tryAuth);
           }
         } else {
           attempt();

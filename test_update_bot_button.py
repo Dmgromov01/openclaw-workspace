@@ -65,5 +65,27 @@ class ArgvTokenRejectionTest(unittest.TestCase):
         run_mock.assert_called_once()
 
 
+class MainErrorHandlingTest(unittest.TestCase):
+    def setUp(self):
+        self.env = mock.patch.dict(os.environ, {}, clear=True)
+        self.env.start()
+        self.addCleanup(self.env.stop)
+
+    def test_malformed_token_prints_friendly_error(self):
+        with mock.patch.dict(os.environ, {"TELEGRAM_BOT_TOKEN": "not-a-token"}), \
+                mock.patch.object(module, "Bot", side_effect=ValueError("Invalid token")), \
+                mock.patch("builtins.print") as print_mock:
+            module.asyncio.run(module.main())
+        print_mock.assert_called_once_with("Ошибка при загрузке токена или создании бота: Invalid token")
+
+    def test_unreadable_env_file_prints_friendly_error(self):
+        with mock.patch.object(module.os.path, "exists", side_effect=lambda p: p == "/root/openclaw/.env"), \
+                mock.patch("builtins.open", side_effect=PermissionError("Permission denied")), \
+                mock.patch("builtins.print") as print_mock:
+            module.asyncio.run(module.main())
+        print_mock.assert_called_once()
+        self.assertIn("Ошибка при загрузке токена или создании бота", print_mock.call_args[0][0])
+
+
 if __name__ == "__main__":
     unittest.main()

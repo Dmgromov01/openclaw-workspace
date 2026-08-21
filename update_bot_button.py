@@ -29,12 +29,16 @@ def get_token():
     return None
 
 async def main():
-    token = get_token()
-    if not token:
-        print("Ошибка: Токен бота не найден. Задайте TELEGRAM_BOT_TOKEN или BOT_TOKEN в переменной окружения, .env или config.json.")
+    try:
+        token = get_token()
+        if not token:
+            print("Ошибка: Токен бота не найден. Задайте TELEGRAM_BOT_TOKEN или BOT_TOKEN в переменной окружения, .env или config.json.")
+            return
+        bot = Bot(token=token)
+    except Exception as e:
+        print(f"Ошибка при загрузке токена или создании бота: {e}")
         return
 
-    bot = Bot(token=token)
     try:
         await bot.set_chat_menu_button(
             menu_button=MenuButtonWebApp(

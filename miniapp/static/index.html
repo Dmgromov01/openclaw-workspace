@@ -48,7 +48,7 @@
 
       // Текущая погода + почасовой прогноз по Москве (Open-Meteo, без ключей)
       useEffect(() => {
-        fetch('https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&hourly=temperature_2m,rain,snowfall,wind_speed_10m&current=temperature_2m,rain,snowfall,wind_speed_10m&timezone=Europe%2FMoscow&forecast_days=1')
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&hourly=temperature_2m,rain,snowfall,wind_speed_10m,weathercode&current=temperature_2m,rain,snowfall,wind_speed_10m,weathercode&timezone=Europe%2FMoscow&forecast_days=1')
           .then(r => r.json())
           .then(d => setOm(d))
           .catch(() => {});
@@ -310,27 +310,40 @@
                     </div>
 
                     <div className="flex gap-1.5 overflow-x-auto pb-1">
-                      {om.hourly.time.slice(hourOffset, hourOffset + 12).map((t, i) => {
-                        const j = hourOffset + i;
-                        const r = om.hourly.rain?.[j] || 0;
-                        const s = om.hourly.snowfall?.[j] || 0;
-                        const total = r + s;
-                        // визуализация: сухо → морось → мелкий → дождь → сильный → ливень
-                        const lvl = total <= 0 ? 0 : total < 0.3 ? 1 : total < 1 ? 2 : total < 3 ? 3 : total < 6 ? 4 : 5;
-                        const icons = ['☀️', '💧', '💧', '🌧️', '🌧️', '⛈️'];
-                        const labels = ['сухо', 'морось', 'мелкий', 'дождь', 'сильный', 'ливень'];
-                        const bg = ['bg-slate-50', 'bg-sky-100', 'bg-sky-200', 'bg-blue-200', 'bg-indigo-300', 'bg-red-300'];
-                        const txt = ['text-slate-400', 'text-sky-700', 'text-sky-800', 'text-blue-900', 'text-indigo-900', 'text-red-900'];
-                        return (
-                          <div key={t} className={`flex-shrink-0 w-14 rounded-xl ${bg[lvl]} border border-slate-200 px-1 py-1.5 text-center`}>
-                            <div className="text-[10px] font-bold text-slate-500">{new Date(t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
-                            <div className="text-sm leading-none my-0.5">{icons[lvl]}</div>
-                            <div className={`text-[9px] font-bold ${txt[lvl]}`}>{s > 0 ? '❄ ' + s.toFixed(1) : labels[lvl]}</div>
-                            <div className="text-xs font-black text-slate-800">{Math.round(om.hourly.temperature_2m[j])}°</div>
-                            <div className="text-[9px] font-semibold text-slate-500">{Math.round(om.hourly.wind_speed_10m?.[j] || 0)} м/с</div>
-                          </div>
-                        );
-                      })}
+                      {(() => {
+                        // старт окна: текущий час (не 00:00) + ползунок
+                        const nowTs = Date.now();
+                        let startIdx = om.hourly.time.findIndex(t => new Date(t).getTime() >= nowTs - 60 * 60 * 1000);
+                        if (startIdx < 0) startIdx = 0;
+                        return om.hourly.time.slice(startIdx + hourOffset, startIdx + hourOffset + 12).map((t, i) => {
+                          const j = startIdx + hourOffset + i;
+                          const r = om.hourly.rain?.[j] || 0;
+                          const s = om.hourly.snowfall?.[j] || 0;
+                          const wc = om.hourly.weathercode?.[j] ?? 0;
+                          const total = r + s;
+                          // иконка неба: сухо → по облачности (☀️/⛅/☁️), осадки → дождь/ливень
+                          let icon;
+                          if (total > 0) {
+                            icon = total < 0.3 ? '💧' : total < 3 ? '🌧️' : '⛈️';
+                          } else {
+                            icon = wc === 0 ? '☀️' : wc <= 2 ? '⛅' : wc >= 95 ? '⛈️' : wc >= 80 ? '🌧️' : wc >= 71 ? '🌨️' : wc >= 61 ? '🌧️' : wc >= 51 ? '🌦️' : wc >= 45 ? '🌫️' : '☁️';
+                          }
+                          // визуализация: сухо → морось → мелкий → дождь → сильный → ливень
+                          const lvl = total <= 0 ? 0 : total < 0.3 ? 1 : total < 1 ? 2 : total < 3 ? 3 : total < 6 ? 4 : 5;
+                          const labels = ['сухо', 'морось', 'мелкий', 'дождь', 'сильный', 'ливень'];
+                          const bg = ['bg-slate-50', 'bg-sky-100', 'bg-sky-200', 'bg-blue-200', 'bg-indigo-300', 'bg-red-300'];
+                          const txt = ['text-slate-400', 'text-sky-700', 'text-sky-800', 'text-blue-900', 'text-indigo-900', 'text-red-900'];
+                          return (
+                            <div key={t} className={`flex-shrink-0 w-14 rounded-xl ${bg[lvl]} border border-slate-200 px-1 py-1.5 text-center`}>
+                              <div className="text-[10px] font-bold text-slate-500">{new Date(t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+                              <div className="text-sm leading-none my-0.5">{icon}</div>
+                              <div className={`text-[9px] font-bold ${txt[lvl]}`}>{s > 0 ? '❄ ' + s.toFixed(1) : labels[lvl]}</div>
+                              <div className="text-xs font-black text-slate-800">{Math.round(om.hourly.temperature_2m[j])}°</div>
+                              <div className="text-[9px] font-semibold text-slate-500">{Math.round(om.hourly.wind_speed_10m?.[j] || 0)} м/с</div>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                     <div className="text-[10px] text-slate-400 font-semibold text-center">Ползунок: прогноз на +12 часов · каждая ячейка: осадки, температура, ветер</div>
                   </div>

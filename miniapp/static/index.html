@@ -72,19 +72,47 @@
         localStorage.setItem('hub_tasks_v2', JSON.stringify(tasks));
       }, [tasks]);
 
-      const handleAddTask = () => {
-        const text = taskInput.trim();
+      const handleAddTask = (textOverride) => {
+        const text = (textOverride || taskInput).trim();
         if (!text) return;
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const dateStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
         const newTask = {
           id: Date.now(),
           text: text,
           done: false,
-          createdAt: timeStr
+          createdAt: `${dateStr}, ${timeStr}`
         };
         setTasks(prev => [newTask, ...prev]);
         setTaskInput('');
+        haptic('medium');
+      };
+
+      // Голосовой ввод задачи (Web Speech API, где поддерживается)
+      const [voiceError, setVoiceError] = useState('');
+      const startVoiceInput = () => {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+          setVoiceError('Голосовой ввод не поддерживается в этом браузере');
+          setTimeout(() => setVoiceError(''), 3000);
+          return;
+        }
+        setVoiceError('');
+        const rec = new SR();
+        rec.lang = 'ru-RU';
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
+        rec.onresult = (e) => {
+          const text = e.results[0][0].transcript;
+          setTaskInput(text);
+          handleAddTask(text);
+        };
+        rec.onerror = () => {
+          setVoiceError('Не удалось распознать речь, попробуйте ещё раз');
+          setTimeout(() => setVoiceError(''), 3000);
+        };
+        rec.start();
         haptic('medium');
       };
 
@@ -388,10 +416,10 @@
                 )}
               </div>
 
-              {/* 2. Дела на сегодня & Архив */}
+              {/* 2. Запланированные дела & Архив */}
               <div className="card-white rounded-3xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="text-base font-black text-slate-900">Дела на сегодня</div>
+                  <div className="text-base font-black text-slate-900">📋 Запланированные дела</div>
                   <button
                     onClick={() => { haptic(); setView('archive'); }}
                     className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 hover:bg-blue-100 transition active:scale-95"
@@ -405,47 +433,62 @@
                   {activeTasks.map(t => (
                     <div
                       key={t.id}
-                      className="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-2xl transition"
+                      className="p-3.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-2xl transition"
                     >
+                      <div className="text-[10px] font-mono text-slate-400 mb-1">🕒 {t.createdAt}</div>
                       <div
                         onClick={() => toggleTask(t.id)}
-                        className="flex items-center gap-3 flex-1 cursor-pointer"
+                        className="flex items-center gap-3 cursor-pointer"
                       >
                         <div className="w-6 h-6 rounded-lg border-2 border-slate-300 flex items-center justify-center bg-white shrink-0 active:scale-90 transition">
                           {t.done && <span className="text-blue-600 text-xs font-black">✓</span>}
                         </div>
-                        <span className="text-xs font-bold text-slate-800 leading-snug">
+                        <span className="text-xs font-bold text-slate-800 leading-snug flex-1">
                           {t.text}
                         </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}
+                          className="text-slate-300 hover:text-red-500 text-sm font-black shrink-0 px-1"
+                        >×</button>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400 ml-2">{t.createdAt}</span>
                     </div>
                   ))}
 
                   {activeTasks.length === 0 && (
                     <div className="text-center py-4 text-xs text-slate-400">
-                      Все текущие дела выполнены! Добавьте новую задачу ниже.
+                      Все запланированные дела выполнены! Добавьте новую задачу ниже.
                     </div>
                   )}
                 </div>
 
-                {/* Добавление задачи */}
-                <div className="flex gap-2 pt-1">
-                  <input
-                    type="text"
-                    placeholder="Новая задача..."
-                    value={taskInput}
-                    onChange={(e) => setTaskInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddTask(); }}
-                    className="flex-1 bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddTask}
-                    className="px-5 py-3 bg-slate-900 hover:bg-black active:scale-95 text-white rounded-2xl font-black text-lg transition flex items-center justify-center"
-                  >
-                    +
-                  </button>
+                {/* Добавление задачи: текст + микрофон + плюс */}
+                <div className="space-y-1.5 pt-1">
+                  {voiceError && <div className="text-[10px] font-bold text-red-500">{voiceError}</div>}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Новая задача..."
+                      value={taskInput}
+                      onChange={(e) => setTaskInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddTask(); }}
+                      className="flex-1 bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={startVoiceInput}
+                      title="Надиктовать голосом"
+                      className="px-4 py-3 bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-600 rounded-2xl font-black text-lg transition flex items-center justify-center border border-blue-200"
+                    >
+                      🎤
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddTask()}
+                      className="px-5 py-3 bg-slate-900 hover:bg-black active:scale-95 text-white rounded-2xl font-black text-lg transition flex items-center justify-center"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
 

@@ -27,10 +27,6 @@ CACHE_TTL = 900  # 15 минут
 sys.path.insert(0, "/root/openclaw/calendar")
 import digest  # переиспользуем парсеры каналов/RSS и курс ЦБ
 
-# ---------- Auth (Telegram WebApp initData + пользователи) ----------
-sys.path.insert(0, BASE)
-import auth as miniapp_auth
-
 # ---------- Google Calendar (OAuth, чтение) ----------
 GCAL_DIR = "/root/.openclaw/credentials/gcal"
 CAL_ID = "dmgromov03@gmail.com"
@@ -185,55 +181,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _auth_user(self):
-        """Токен из Authorization: Bearer <token> → строка пользователя или None."""
-        h = self.headers.get("Authorization", "")
-        if not h.startswith("Bearer "):
-            return None
-        return miniapp_auth.auth(h[7:].strip())
-
-    def _require_auth(self):
-        """401, если нет валидного токена. Возвращает пользователя или None (ответ уже отправлен)."""
-        user = self._auth_user()
-        if user is None:
-            self._send_json({"error": "unauthorized"}, 401)
-            return None
-        return user
-
-    def _require_admin(self):
-        user = self._require_auth()
-        if user is None:
-            return None
-        if user["role"] != "admin":
-            self._send_json({"error": "forbidden"}, 403)
-            return None
-        return user
-
     # ---------- routes ----------
     def do_GET(self):
         p = urlparse(self.path)
-        if p.path == "/api/auth/me":
-            user = self._require_auth()
-            if user is None:
-                return
-            return self._send_json({"ok": True, "user": {
-                "id": user["id"], "telegram_id": user["telegram_id"],
-                "username": user["username"], "first_name": user["first_name"],
-                "role": user["role"], "allowed": bool(user["allowed"]),
-            }})
-        if p.path == "/api/admin/users":
-            user = self._require_admin()
-            if user is None:
-                return
-            return self._send_json({"ok": True, "users": miniapp_auth.list_users()})
-        if p.path == "/api/admin/audit":
-            user = self._require_admin()
-            if user is None:
-                return
-            return self._send_json({"ok": True, "audit": miniapp_auth.audit(limit=50)})
         if p.path == "/api/digest":
-            if self._require_auth() is None:
-                return
             now = time.time()
             with CACHE_LOCK:
                 if DIGEST_CACHE["data"] is None or now - DIGEST_CACHE["ts"] > CACHE_TTL:
@@ -242,12 +193,8 @@ class Handler(SimpleHTTPRequestHandler):
                 data = DIGEST_CACHE["data"]
             return self._send_json(data)
         if p.path == "/api/sources":
-            if self._require_auth() is None:
-                return
             return self._send_json({"sources": load_sources()})
         if p.path == "/api/calendar":
-            if self._require_auth() is None:
-                return
             now = time.time()
             with CACHE_LOCK:
                 if CAL_CACHE["data"] is None or now - CAL_CACHE["ts"] > 300:
@@ -262,48 +209,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         p = urlparse(self.path)
-        if p.path == "/api/auth":
-            try:
-                length = int(self.headers.get("Content-Length", 0))
-                body = json.loads(self.rfile.read(length) or b"{}")
-            except Exception:
-                return self._send_json({"error": "bad json"}, 400)
-            init_data = (body.get("initData") or "").strip()
-            if not init_data:
-                return self._send_json({"error": "initData required"}, 400)
-            token = miniapp_auth.load_bot_token()
-            payload, err = miniapp_auth.login(init_data, token)
-            if err:
-                return self._send_json({"error": err}, 403)
-            return self._send_json(payload)
-        if p.path == "/api/auth/logout":
-            user = self._require_auth()
-            if user is None:
-                return
-            h = self.headers.get("Authorization", "")
-            miniapp_auth.logout(h[7:].strip())
-            return self._send_json({"ok": True})
-        if p.path == "/api/admin/users":
-            user = self._require_admin()
-            if user is None:
-                return
-            try:
-                length = int(self.headers.get("Content-Length", 0))
-                body = json.loads(self.rfile.read(length) or b"{}")
-            except Exception:
-                return self._send_json({"error": "bad json"}, 400)
-            tid = int(body.get("telegram_id") or 0)
-            ok = miniapp_auth.set_user(
-                tid,
-                allowed=body.get("allowed"),
-                role=body.get("role"),
-            )
-            if not ok:
-                return self._send_json({"error": "cannot update (owner or not found)"}, 400)
-            return self._send_json({"ok": True, "users": miniapp_auth.list_users()})
         if p.path == "/api/sources":
-            if self._require_auth() is None:
-                return
             try:
                 length = int(self.headers.get("Content-Length", 0))
                 body = json.loads(self.rfile.read(length) or b"{}")
@@ -327,21 +233,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_DELETE(self):
         p = urlparse(self.path)
-        if p.path == "/api/admin/users":
-            user = self._require_admin()
-            if user is None:
-                return
-            q = parse_qs(p.query)
-            try:
-                tid = int(q.get("telegram_id", ["0"])[0])
-            except Exception:
-                return self._send_json({"error": "bad id"}, 400)
-            if not miniapp_auth.delete_user(tid):
-                return self._send_json({"error": "cannot delete (owner or not found)"}, 400)
-            return self._send_json({"ok": True, "users": miniapp_auth.list_users()})
         if p.path == "/api/sources":
-            if self._require_auth() is None:
-                return
             q = parse_qs(p.query)
             try:
                 sid = int(q.get("id", ["0"])[0])
@@ -358,7 +250,6 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    miniapp_auth.init_db()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
     server = HTTPServer(("0.0.0.0", port), Handler)
     print(f"MiniApp server on :{port} (static: {STATIC})", flush=True)

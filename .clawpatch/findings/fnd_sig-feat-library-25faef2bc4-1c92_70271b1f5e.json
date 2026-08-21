@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "findingId": "fnd_sig-feat-library-25faef2bc4-1c92_70271b1f5e",
+  "featureId": "feat_library_25faef2bc4",
+  "title": "Bot token accepted via command-line argument is exposed in process list and shell history",
+  "category": "security",
+  "severity": "medium",
+  "confidence": "high",
+  "triage": "confirmed-bug",
+  "evidence": [
+    {
+      "path": "update_bot_button.py",
+      "startLine": 34,
+      "endLine": 35,
+      "symbol": "main",
+      "quote": null
+    },
+    {
+      "path": "update_bot_button.py",
+      "startLine": 53,
+      "endLine": 56,
+      "symbol": null,
+      "quote": null
+    }
+  ],
+  "reasoning": "The failure message instructs the user to pass the bot token as a positional CLI argument, and the __main__ block writes sys.argv[1] into TELEGRAM_BOT_TOKEN. Credentials passed via argv are visible in ps/top output for the process lifetime, persist in shell history, and are echoed into CI logs and shell wrappers. The script already supports TELEGRAM_BOT_TOKEN/BOT_TOKEN env vars plus .env and config.json fallbacks, so the argv path is an unnecessary credential-exposure vector. The argv value also mutates the process environment, so any child process inherits the secret.",
+  "reproduction": "Run `python3 update_bot_button.py 1234567890:ABCD...` and observe the full token in `ps aux` output and in shell history; any CI step that echoes the command will also log the token.",
+  "recommendation": "Remove the argv token path (lines 53-56) and the usage hint (line 35). Require the token via TELEGRAM_BOT_TOKEN/BOT_TOKEN env vars or the existing .env/config.json fallbacks, or read it from stdin without echoing (e.g., getpass).",
+  "whyTestsDoNotAlreadyCoverThis": "The feature ships with no tests (tests: []), and the argv override is only exercised in ad-hoc manual runs.",
+  "suggestedRegressionTest": "A unit test that monkeypatches os.environ and asserts get_token() prefers TELEGRAM_BOT_TOKEN over .env/config.json and that no token is accepted from sys.argv, so the argv path can be removed without regressing env-based resolution.",
+  "minimumFixScope": "update_bot_button.py lines 34-35 and 53-56",
+  "status": "uncertain",
+  "history": [],
+  "signature": "sig_feat-library-25faef2bc4_1c92cba51d",
+  "linkedPatchAttemptIds": [
+    "pat_fnd-sig-feat-library-25faef2bc4-_cfc1e6e1de"
+  ],
+  "createdByRunId": "20260821T111454-85e4bb",
+  "createdAt": "2026-08-21T11:16:40.567Z",
+  "updatedAt": "2026-08-21T11:23:15.461Z"
+}

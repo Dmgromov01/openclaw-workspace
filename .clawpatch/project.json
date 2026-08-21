@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "projectId": "prj_git-github-com-dmgromov01-opencl_e583f69aa9",
+  "name": "openclaw-workspace",
+  "rootPath": "/root/openclaw",
+  "git": {
+    "remoteUrl": "git@github.com:Dmgromov01/openclaw-workspace.git",
+    "defaultBranch": "main",
+    "currentBranch": "main",
+    "headSha": "d337c7e8f05cec968f68104e50b4cf933ef7a10d"
+  },
+  "detected": {
+    "languages": [
+      "python"
+    ],
+    "frameworks": [],
+    "packageManagers": [
+      "python"
+    ],
+    "commands": {
+      "typecheck": null,
+      "lint": null,
+      "format": null,
+      "test": null
+    }
+  },
+  "createdAt": "2026-08-21T11:14:15.827Z",
+  "updatedAt": "2026-08-21T11:14:15.827Z"
+}

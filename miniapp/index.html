@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Personal Hub</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      background-color: #F8FAFC;
+      color: #0F172A;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .card-white {
+      background: #FFFFFF;
+      border: 1.5px solid #E2E8F0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [view, setView] = useState('main'); // 'main' | 'digest' | 'add_source' | 'archive'
+
+      // Погода
+      const [weather, setWeather] = useState({ temp: 24, condition: 'Ясно, без осадков', wind: '2.8 м/с', city: 'Москва' });
+
+      // Календарь (Google Calendar)
+      const [events, setEvents] = useState([]);
+      const [calConnected, setCalConnected] = useState(false);
+
+      // Задачи (с сохранением в localStorage)
+      const [tasks, setTasks] = useState(() => {
+        try {
+          const saved = localStorage.getItem('hub_tasks');
+          return saved ? JSON.parse(saved) : [
+            { id: 1, text: 'Согласовать спецификацию с юристами', done: false, date: 'Сегодня' }
+          ];
+        } catch {
+          return [];
+        }
+      });
+      const [newTaskText, setNewTaskText] = useState('');
+
+      // Курсы валют ЦБ РФ
+      const [rates, setRates] = useState({
+        USD: 91.20, EUR: 98.40, CNY: 12.65, JPY: 0.62, GBP: 116.50, RUB: 1.00
+      });
+      const [calcAmount, setCalcAmount] = useState(1000);
+      const [fromCurr, setFromCurr] = useState('CNY');
+      const [toCurr, setToCurr] = useState('RUB');
+
+      // Пароли
+      const [passLength, setPassLength] = useState(16);
+      const [password, setPassword] = useState('k9#vL@8$qP2!mZ7x');
+      const [copied, setCopied] = useState(false);
+
+      // RSS / Новости
+      const [sources, setSources] = useState([
+        { id: 1, type: 'TG', name: '@industry_metals', title: 'Металлургия & ВЭД' },
+        { id: 2, type: 'TG', name: '@tech_ai_hub', title: 'AI & Локальные модели' }
+      ]);
+      const [newSourceInput, setNewSourceInput] = useState('');
+      const [newSourceType, setNewSourceType] = useState('TG');
+
+      const [digestItems, setDigestItems] = useState([
+        {
+          id: 1,
+          tag: 'Рынки металлов & ВЭД',
+          title: 'Динамика экспорта титана и специальных сплавов во 2-м полугодии',
+          summary: 'Азиатский коридор поставок демонстрирует устойчивый рост. Логистические цепочки стабилизировались, спрос на прокат высокой чистоты сохраняется.',
+          source: 'TG: @industry_metals',
+          time: '35 мин назад'
+        },
+        {
+          id: 2,
+          tag: 'Технологии & AI',
+          title: 'Оптимизация локального инференса LLM на выделенных серверах',
+          summary: 'Новые методы квантования позволяют разворачивать reasoning-модели на потребительских чипах без потери точности при выполнении SQL-запросов.',
+          source: 'TG: @tech_ai_hub',
+          time: '1.5 ч назад'
+        }
+      ]);
+
+      // Сохранение задач
+      useEffect(() => {
+        localStorage.setItem('hub_tasks', JSON.stringify(tasks));
+      }, [tasks]);
+
+      useEffect(() => {
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+        }
+        // Загрузка реальных курсов ЦБ
+        fetch('https://www.cbr-xml-daily.ru/daily_json.js')
+          .then(res => res.json())
+          .then(data => {
+            if (data?.Valute) {
+              setRates({
+                USD: data.Valute.USD.Value,
+                EUR: data.Valute.EUR.Value,
+                CNY: data.Valute.CNY.Value,
+                JPY: data.Valute.JPY.Value / data.Valute.JPY.Nominal,
+                GBP: data.Valute.GBP.Value,
+                RUB: 1.00
+              });
+            }
+          })
+          .catch(() => {});
+      }, []);
+
+      const haptic = (type = 'light') => {
+        window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(type);
+      };
+
+      const convertValue = () => {
+        const inRub = calcAmount * rates[fromCurr];
+        const result = inRub / rates[toCurr];
+        return result.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      };
+
+      const generatePassword = () => {
+        haptic('light');
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~';
+        let res = '';
+        for (let i = 0; i < passLength; i++) {
+          res += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        setPassword(res);
+        setCopied(false);
+      };
+
+      const copyToClipboard = () => {
+        navigator.clipboard.writeText(password);
+        setCopied(true);
+        haptic('notification');
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      // Управление задачами
+      const toggleTask = (id) => {
+        haptic('medium');
+        setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+      };
+
+      const handleAddTask = (e) => {
+        if (e) e.preventDefault();
+        if (!newTaskText.trim()) return;
+        const item = {
+          id: Date.now(),
+          text: newTaskText.trim(),
+          done: false,
+          date: 'Сегодня'
+        };
+        setTasks([item, ...tasks]);
+        setNewTaskText('');
+        haptic('heavy');
+      };
+
+      const deleteTask = (id) => {
+        haptic('light');
+        setTasks(tasks.filter(t => t.id !== id));
+      };
+
+      const clearCompletedTasks = () => {
+        haptic('medium');
+        setTasks(tasks.filter(t => !t.done));
+      };
+
+      const activeTasks = tasks.filter(t => !t.done);
+      const completedTasks = tasks.filter(t => t.done);
+
+      return (
+        <div className="max-w-xl mx-auto px-5 py-4 font-sans">
+
+          {/* ================= ЭКРАН 1: ГЛАВНАЯ ПАНЕЛЬ ================= */}
+          {view === 'main' && (
+            <div className="space-y-5">
+
+              {/* 1. Погода */}
+              <div className="card-white rounded-3xl p-5">
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1">Погода сейчас</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-4xl font-black text-slate-900">{weather.temp}°C</div>
+                  <div className="text-right">
+                    <div className="text-base font-bold text-slate-800">☀️ {weather.condition}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">Ветер {weather.wind} • {weather.city}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Календарь встреч & Быстрые дела */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-black text-slate-900">📅 Календарь & Быстрые дела</div>
+                  <button
+                    onClick={() => {
+                      haptic();
+                      setCalConnected(!calConnected);
+                    }}
+                    className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition ${
+                      calConnected 
+                        ? 'text-emerald-700 bg-emerald-50 border-emerald-200' 
+                        : 'text-blue-600 bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    {calConnected ? '✓ Google Cal Подключен' : '+ Подключить Календарь'}
+                  </button>
+                </div>
+
+                {/* Блок встреч */}
+                {calConnected && events.length > 0 ? (
+                  <div className="space-y-2">
+                    {events.map(ev => (
+                      <div key={ev.id} className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl">
+                        <div className="text-xs font-black text-blue-700 font-mono">{ev.time}</div>
+                        <div className="text-xs font-bold text-slate-900 mt-0.5">{ev.title}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-500 flex justify-between items-center">
+                    <span>{calConnected ? 'Нет запланированных встреч на сегодня' : 'События Google Календаря не загружены'}</span>
+                    <span className="text-slate-400 font-mono text-[11px]">{calConnected ? '0 встреч' : 'OAuth 2.0'}</span>
+                  </div>
+                )}
+
+                {/* Дела на сегодня */}
+                <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+                      Дела на сегодня ({activeTasks.length})
+                    </span>
+                    {completedTasks.length > 0 && (
+                      <button
+                        onClick={() => { haptic(); setView('archive'); }}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-700"
+                      >
+                        Архив ({completedTasks.length}) →
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Список активных задач */}
+                  <div className="space-y-2">
+                    {activeTasks.map(t => (
+                      <div
+                        key={t.id}
+                        onClick={() => toggleTask(t.id)}
+                        className="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-2xl cursor-pointer active:scale-98 transition"
+                      >
+                        <div className="w-5 h-5 rounded-md border-2 border-slate-300 flex items-center justify-center bg-white shrink-0">
+                          {t.done && <span className="text-blue-600 text-xs font-black">✓</span>}
+                        </div>
+                        <span className="text-xs font-semibold text-slate-800 flex-1 leading-snug">
+                          {t.text}
+                        </span>
+                      </div>
+                    ))}
+
+                    {activeTasks.length === 0 && (
+                      <div className="text-center py-2 text-xs text-slate-400">
+                        Все задачи выполнены! Добавьте новую ниже.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Поле добавления задачи */}
+                  <div className="flex gap-2 pt-1">
+                    <input
+                      type="text"
+                      placeholder="Быстрая задача..."
+                      value={newTaskText}
+                      onChange={(e) => setNewTaskText(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddTask(e); }}
+                      className="flex-1 bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddTask}
+                      className="px-4 py-2.5 bg-slate-900 hover:bg-black text-white rounded-2xl font-black text-base active:scale-95 transition"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Лента каналов & RSS */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-black text-slate-900">Лента каналов & RSS</div>
+                  <button
+                    onClick={() => { haptic(); setView('add_source'); }}
+                    className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs border border-blue-200 active:scale-95 transition"
+                  >
+                    + Добавить источник
+                  </button>
+                </div>
+
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div className="text-xs font-bold text-blue-600 mb-0.5">● Новые посты из {sources.length} каналов</div>
+                  <div className="text-xs text-slate-600">Темы: Рынки металлов, B2B контракты, релизы LLM моделей...</div>
+                </div>
+
+                <button
+                  onClick={() => { haptic('medium'); setView('digest'); }}
+                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white rounded-2xl font-bold text-xs transition shadow-md shadow-blue-500/20"
+                >
+                  📖 Читать полный AI-Дайджест →
+                </button>
+              </div>
+
+              {/* 4. Конвертер валют */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="text-base font-black text-slate-900">💱 Конвертер валют</div>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">ЦБ РФ Официальный</span>
+                </div>
+
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="number"
+                    value={calcAmount}
+                    onChange={(e) => setCalcAmount(Number(e.target.value))}
+                    className="flex-1 bg-slate-50 border-2 border-slate-200 text-base font-black rounded-2xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
+                  />
+                  <select
+                    value={fromCurr}
+                    onChange={(e) => setFromCurr(e.target.value)}
+                    className="bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2.5 py-3 text-slate-800"
+                  >
+                    {['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <span className="text-slate-400 font-bold">→</span>
+                  <select
+                    value={toCurr}
+                    onChange={(e) => setToCurr(e.target.value)}
+                    className="bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2.5 py-3 text-slate-800"
+                  >
+                    {['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-600">Результат:</span>
+                  <span className="text-lg font-black text-emerald-700 font-mono">{convertValue()} {toCurr}</span>
+                </div>
+              </div>
+
+              {/* 5. Генератор паролей */}
+              <div className="card-white rounded-3xl p-5 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-black text-slate-900">🔐 Генератор паролей</div>
+                  <span className="text-xs font-black text-blue-600 font-mono">{passLength} симв.</span>
+                </div>
+
+                <input
+                  type="range" min="12" max="32" value={passLength}
+                  onChange={(e) => setPassLength(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+
+                <div
+                  onClick={copyToClipboard}
+                  className="p-3.5 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-between cursor-pointer active:scale-98 transition"
+                >
+                  <span className="font-mono text-xs font-bold text-slate-900 break-all">{password}</span>
+                  <span className="text-xs font-bold text-blue-600 ml-2 shrink-0">
+                    {copied ? 'Скопировано ✓' : 'Копировать'}
+                  </span>
+                </div>
+
+                <button
+                  onClick={generatePassword}
+                  className="w-full py-3 bg-slate-900 hover:bg-black active:scale-98 text-white rounded-2xl font-bold text-xs transition"
+                >
+                  Сгенерировать новый пароль
+                </button>
+              </div>
+
+            </div>
+          )}
+
+          {/* ================= ЭКРАН 2: АРХИВ ЗАДАЧ ================= */}
+          {view === 'archive' && (
+            <div className="space-y-5 animate-fade-in">
+              <div className="flex justify-between items-center">
+                <button
+                  onClick={() => { haptic(); setView('main'); }}
+                  className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition"
+                >
+                  ← Назад к списку
+                </button>
+                {completedTasks.length > 0 && (
+                  <button
+                    onClick={clearCompletedTasks}
+                    className="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200"
+                  >
+                    Очистить архив
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <h1 className="text-xl font-black text-slate-900">Архив выполненных дел</h1>
+                <div className="text-xs text-slate-500 mt-0.5">История завершённых задач. Кликните для возврата в активные.</div>
+              </div>
+
+              <div className="space-y-2.5">
+                {completedTasks.map(t => (
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-2xl"
+                  >
+                    <div
+                      onClick={() => toggleTask(t.id)}
+                      className="flex items-center gap-3 flex-1 cursor-pointer"
+                    >
+                      <div className="w-5 h-5 rounded-md bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                        ✓
+                      </div>
+                      <span className="text-xs font-semibold text-slate-400 line-through">
+                        {t.text}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => deleteTask(t.id)}
+                      className="text-slate-300 hover:text-red-500 text-xs px-2 py-1 font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+
+                {completedTasks.length === 0 && (
+                  <div className="text-center py-8 text-xs text-slate-400 card-white rounded-3xl p-6">
+                    В архиве пока нет выполненных задач.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ================= ЭКРАН 3: ПОЛНЫЙ ДАЙДЖЕСТ ================= */}
+          {view === 'digest' && (
+            <div className="space-y-5 animate-fade-in">
+              <button
+                onClick={() => { haptic(); setView('main'); }}
+                className="px-3.5 py-1.5 bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition"
+              >
+                ← Назад
+              </button>
+
+              <div>
+                <h1 className="text-xl font-black text-slate-900">AI-Дайджест новостей</h1>
+                <div className="text-xs text-slate-500 mt-0.5">Автоматическая выжимка ключевых событий</div>
+              </div>
+
+              <div className="space-y-3.5">
+                {digestItems.map(item => (
+                  <div key={item.id} className="card-white rounded-3xl p-4 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
+                        {item.tag}
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-400">{item.time}</span>
+                    </div>
+                    <div className="text-sm font-bold text-slate-900">{item.title}</div>
+                    <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl">
+                      {item.summary}
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-400">{item.source}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ================= ЭКРАН 4: ДОБАВЛЕНИЕ КАНАЛА ================= */}
+          {view === 'add_source' && (
+            <div className="space-y-5 animate-fade-in">
+              <button
+                onClick={() => { haptic(); setView('main'); }}
+                className="px-3.5 py-1.5 bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition"
+              >
+                ← Назад
+              </button>
+
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <div className="text-base font-black text-slate-900">Добавить источник</div>
+                <input
+                  type="text"
+                  placeholder="@channel_name или URL RSS"
+                  value={newSourceInput}
+                  onChange={(e) => setNewSourceInput(e.target.value)}
+                  className="w-full bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newSourceInput.trim()) {
+                      setSources([...sources, { id: Date.now(), type: 'TG', name: newSourceInput.trim() }]);
+                      setNewSourceInput('');
+                      setView('main');
+                    }
+                  }}
+                  className="w-full py-3 bg-blue-600 text-white rounded-2xl font-bold text-xs"
+                >
+                  Сохранить
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

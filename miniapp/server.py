@@ -268,6 +268,15 @@ class Handler(SimpleHTTPRequestHandler):
                 body = json.loads(self.rfile.read(length) or b"{}")
             except Exception:
                 return self._send_json({"error": "bad json"}, 400)
+            # установка/смена собственного пароля (нужен Bearer-токен)
+            if body.get("setPassword"):
+                user = self._require_auth()
+                if user is None:
+                    return
+                ok, err = miniapp_auth.set_password(user["telegram_id"], body.get("password") or "")
+                if not ok:
+                    return self._send_json({"error": err}, 400)
+                return self._send_json({"ok": True})
             init_data = (body.get("initData") or "").strip()
             # диагностика: сохраняем КАЖДЫЙ initData с таймстампом + полный в лог
             ts = int(time.time())
@@ -281,6 +290,15 @@ class Handler(SimpleHTTPRequestHandler):
             sys.stderr.write("[auth] initData len=%d ts=%d head=%s tail=%s\n" % (
                 len(init_data), ts, init_data[:120], init_data[-60:] if len(init_data) > 60 else ""))
             if not init_data:
+                # десктоп/браузер без Telegram: вход по логину + мастер-паролю
+                username = (body.get("username") or "").strip()
+                password = body.get("password") or ""
+                if username and password:
+                    payload, err = miniapp_auth.login_password(username, password)
+                    if err:
+                        sys.stderr.write("[auth] password login error: %s\n" % err)
+                        return self._send_json({"error": err}, 403)
+                    return self._send_json(payload)
                 return self._send_json({"error": "initData required"}, 400)
             token = miniapp_auth.load_bot_token()
             payload, err = miniapp_auth.login(init_data, token)

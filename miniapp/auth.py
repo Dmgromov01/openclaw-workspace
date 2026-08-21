@@ -35,9 +35,14 @@ def init_db():
         first_name TEXT,
         role TEXT DEFAULT 'user',
         allowed INTEGER DEFAULT 0,
+        password_hash TEXT,
         created_at INTEGER,
         last_login INTEGER
     )""")
+    # миграция: колонка password_hash могла отсутствовать (старые базы)
+    cols = [r[1] for r in c.execute("PRAGMA table_info(users)").fetchall()]
+    if "password_hash" not in cols:
+        c.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
     c.execute("""CREATE TABLE IF NOT EXISTS sessions (
         token TEXT PRIMARY KEY,
         telegram_id INTEGER,
@@ -141,6 +146,85 @@ def login(init_data, bot_token):
         "user": {
             "id": row["id"],
             "telegram_id": tid,
+            "username": row["username"],
+            "first_name": row["first_name"],
+            "role": row["role"],
+            "allowed": bool(row["allowed"]),
+        },
+    }, None
+
+
+def set_password(telegram_id, password):
+    """Пользователь сам задаёт/меняет свой пароль. Хэш — sha256(соль+пароль)."""
+    if not password or len(password) < 4:
+        return False, "Пароль слишком короткий (мин. 4 символа)"
+    salt = secrets.token_hex(8)
+    ph = salt + "$" + hashlib.sha256((salt + password).encode()).hexdigest()
+    c = _conn()
+    row = c.execute("SELECT * FROM users WHERE telegram_id=?", (telegram_id,)).fetchone()
+    if row is None:
+        c.close()
+        return False, "Пользователь не найден"
+    c.execute("UPDATE users SET password_hash=? WHERE telegram_id=?", (ph, telegram_id))
+    c.execute("INSERT INTO audit_log (ts, telegram_id, action) VALUES (?,?,?)",
+              (int(time.time()), telegram_id, "password_set"))
+    c.commit()
+    c.close()
+    return True, None
+
+
+def check_password(username, password):
+    """Проверка пароля пользователя. username = username Telegram или telegram_id."""
+    tid = None
+    if str(username).strip().isdigit():
+        tid = int(username)
+    c = _conn()
+    row = None
+    if tid:
+        row = c.execute("SELECT * FROM users WHERE telegram_id=?", (tid,)).fetchone()
+    if row is None and username:
+        row = c.execute("SELECT * FROM users WHERE username=?", (username.strip().lstrip("@"),)).fetchone()
+    if row is None or not row["password_hash"]:
+        c.close()
+        return None, "Пользователь не найден или пароль не задан"
+    salt, _, h = (row["password_hash"] or "").partition("$")
+    if not salt or not h:
+        c.close()
+        return None, "Пароль не задан"
+    calc = hashlib.sha256((salt + password).encode()).hexdigest()
+    if not hmac.compare_digest(calc, h):
+        c.close()
+        return None, "Неверный пароль"
+    return row, None
+
+
+def login_password(username, password):
+    """Вход по логину Telegram + собственному паролю пользователя (десктоп/браузер)."""
+    row, err = check_password(username, password)
+    if err:
+        return None, err
+    if not row["allowed"]:
+        c = _conn()
+        c.execute("INSERT INTO audit_log (ts, telegram_id, action) VALUES (?,?,?)",
+                  (int(time.time()), row["telegram_id"], "login_password_denied"))
+        c.commit()
+        c.close()
+        return None, "Доступ запрещён: обратитесь к администратору"
+    token = secrets.token_urlsafe(32)
+    exp = int(time.time()) + SESSION_TTL
+    c = _conn()
+    c.execute("INSERT INTO sessions (token, telegram_id, created_at, expires_at) VALUES (?,?,?,?)",
+              (token, row["telegram_id"], int(time.time()), exp))
+    c.execute("UPDATE users SET last_login=? WHERE telegram_id=?", (int(time.time()), row["telegram_id"]))
+    c.execute("INSERT INTO audit_log (ts, telegram_id, action) VALUES (?,?,?)",
+              (int(time.time()), row["telegram_id"], "login_password_ok"))
+    c.commit()
+    c.close()
+    return {
+        "token": token,
+        "user": {
+            "id": row["id"],
+            "telegram_id": row["telegram_id"],
             "username": row["username"],
             "first_name": row["first_name"],
             "role": row["role"],

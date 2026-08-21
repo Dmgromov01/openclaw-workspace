@@ -188,6 +188,45 @@
         setAuth({ state: 'login', user: null });
       };
 
+      // ================= ПАРОЛЬ (для входа на десктопе/браузере) =================
+      const [passState, setPassState] = useState({ showSet: false, showLogin: false, newPass: '', login: '', pwd: '', msg: '' });
+      const setMyPassword = () => {
+        const p = passState.newPass;
+        if (p.length < 4) { setPassState(s => ({ ...s, msg: 'Пароль слишком короткий (мин. 4)' })); return; }
+        apiFetch('/miniapp/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ setPassword: true, password: p }),
+        })
+          .then(r => r.json())
+          .then(d => {
+            setPassState(s => ({ ...s, msg: d.ok ? '✅ Пароль сохранён' : (d.error || 'Ошибка'), newPass: d.ok ? '' : s.newPass }));
+          })
+          .catch(() => setPassState(s => ({ ...s, msg: 'Сервер недоступен' })));
+        haptic('light');
+      };
+      const doLoginPassword = () => {
+        const { login, pwd } = passState;
+        if (!login || !pwd) { setPassState(s => ({ ...s, msg: 'Введите логин и пароль' })); return; }
+        setPassState(s => ({ ...s, msg: '' }));
+        fetch('/miniapp/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: login, password: pwd }),
+        })
+          .then(r => r.json())
+          .then(d => {
+            if (d.token) {
+              sessionStorage.setItem('hub_token', d.token);
+              setAuth({ state: 'ok', user: d.user });
+            } else {
+              setPassState(s => ({ ...s, msg: d.error || 'Ошибка входа' }));
+            }
+          })
+          .catch(() => setPassState(s => ({ ...s, msg: 'Сервер недоступен' })));
+        haptic('medium');
+      };
+
       // ================= 1. ПОГОДА =================
       const [weather, setWeather] = useState({ temp: 24, condition: 'Ясно, без осадков', wind: '2.8 м/с', city: 'Москва' });
       const [om, setOm] = useState(null); // Open-Meteo: текущие + почасовой прогноз (Москва)
@@ -475,6 +514,40 @@
                   {bioStatus}
                 </div>
               )}
+
+              {/* Вход по паролю (десктоп/браузер без FaceID) */}
+              <button
+                onClick={() => { haptic('light'); setPassState(s => ({ ...s, showLogin: !s.showLogin, msg: '' })); }}
+                className="text-xs font-bold text-blue-600 underline underline-offset-2 active:scale-95 transition"
+              >
+                {passState.showLogin ? 'Скрыть' : '🔑 Войти с паролем (десктоп)'}
+              </button>
+              {passState.showLogin && (
+                <div className="w-full max-w-60 space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Логин (username Telegram)"
+                    value={passState.login}
+                    onChange={e => setPassState(s => ({ ...s, login: e.target.value }))}
+                    className="w-full bg-slate-50 border-2 border-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-600"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Пароль"
+                    value={passState.pwd}
+                    onChange={e => setPassState(s => ({ ...s, pwd: e.target.value }))}
+                    onKeyDown={e => { if (e.key === 'Enter') doLoginPassword(); }}
+                    className="w-full bg-slate-50 border-2 border-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-600"
+                  />
+                  {passState.msg && <div className="text-[10px] font-bold text-red-500">{passState.msg}</div>}
+                  <button
+                    onClick={doLoginPassword}
+                    className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-bold text-xs transition active:scale-95"
+                  >
+                    Войти
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -501,12 +574,40 @@
                       </button>
                     )}
                     <button
+                      onClick={() => { haptic('light'); setPassState(s => ({ ...s, showSet: !s.showSet, msg: '' })); }}
+                      className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 active:scale-95 transition"
+                    >
+                      🔑 Пароль
+                    </button>
+                    <button
                       onClick={doLogout}
                       className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 active:scale-95 transition"
                     >
                       Выйти
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Установка пароля (вход на десктопе/браузере) */}
+              {auth.state === 'ok' && view === 'main' && passState.showSet && (
+                <div className="card-white rounded-3xl p-4 space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">🔑 Пароль для входа на десктопе</div>
+                  <div className="text-[10px] text-slate-500">Задай свой пароль — им будешь входить на Mac/браузере (логин: твой username Telegram, например Dm_GRM)</div>
+                  <input
+                    type="password"
+                    placeholder="Новый пароль (мин. 4 символа)"
+                    value={passState.newPass}
+                    onChange={e => setPassState(s => ({ ...s, newPass: e.target.value }))}
+                    className="w-full bg-slate-50 border-2 border-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-600"
+                  />
+                  {passState.msg && <div className="text-[10px] font-bold text-blue-600">{passState.msg}</div>}
+                  <button
+                    onClick={setMyPassword}
+                    className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs transition active:scale-95"
+                  >
+                    Сохранить пароль
+                  </button>
                 </div>
               )}
 

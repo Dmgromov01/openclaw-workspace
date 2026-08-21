@@ -48,7 +48,7 @@
 
       // Текущая погода + почасовой прогноз по Москве (Open-Meteo, без ключей)
       useEffect(() => {
-        fetch('https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&hourly=temperature_2m,rain,snowfall,wind_speed_10m,weathercode&current=temperature_2m,rain,snowfall,wind_speed_10m,weathercode&timezone=Europe%2FMoscow&forecast_days=1')
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&hourly=temperature_2m,rain,snowfall,wind_speed_10m,weathercode&current=temperature_2m,rain,snowfall,wind_speed_10m,weathercode&timezone=Europe%2FMoscow&forecast_days=2')
           .then(r => r.json())
           .then(d => setOm(d))
           .catch(() => {});

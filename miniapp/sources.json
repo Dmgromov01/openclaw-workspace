@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "type": "TG",
+    "name": "meduzalive",
+    "title": "Медуза"
+  },
+  {
+    "id": 2,
+    "type": "TG",
+    "name": "istories_media",
+    "title": "Важные истории"
+  },
+  {
+    "id": 3,
+    "type": "TG",
+    "name": "thebell_io",
+    "title": "The Bell"
+  },
+  {
+    "id": 4,
+    "type": "TG",
+    "name": "bazabazon",
+    "title": "BAZA"
+  },
+  {
+    "id": 5,
+    "type": "RSS",
+    "name": "https://rssexport.rbc.ru/rbcnews/news/30/full.rss",
+    "title": "РБК"
+  },
+  {
+    "id": 6,
+    "type": "RSS",
+    "name": "https://www.kommersant.ru/rss/news.xml",
+    "title": "Коммерсантъ"
+  }
+]

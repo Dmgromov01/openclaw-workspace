@@ -44,23 +44,35 @@
       // ================= 0. АВТОРИЗАЦИЯ (Telegram WebApp initData + FaceID) =================
       const [auth, setAuth] = useState({ state: 'loading', user: null }); // loading | login | ok
       const [authError, setAuthError] = useState('');
+      const [bioStatus, setBioStatus] = useState(''); // диагностика FaceID: что происходит
 
-      // обёртка fetch: добавляет Authorization: Bearer <token>
-      const apiFetch = (url, opts = {}) => {
-        const token = sessionStorage.getItem('hub_token');
-        const headers = { ...(opts.headers || {}) };
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        return fetch(url, { ...opts, headers });
-      };
-
-      // при старте: проверить сохранённый токен
+      // при старте: проверить токен + заранее инициализировать биометрию
       useEffect(() => {
         const token = sessionStorage.getItem('hub_token');
-        if (!token) { setAuth({ state: 'login', user: null }); return; }
-        apiFetch('/miniapp/api/auth/me')
-          .then(r => r.ok ? r.json() : Promise.reject())
-          .then(d => setAuth({ state: 'ok', user: d.user }))
-          .catch(() => { sessionStorage.removeItem('hub_token'); setAuth({ state: 'login', user: null }); });
+        if (!token) { setAuth({ state: 'login', user: null }); } else {
+          apiFetch('/miniapp/api/auth/me')
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(d => setAuth({ state: 'ok', user: d.user }))
+            .catch(() => { sessionStorage.removeItem('hub_token'); setAuth({ state: 'login', user: null }); });
+        }
+        // заранее инициализируем BiometricManager, чтобы к моменту клика он был готов
+        const tg = window.Telegram?.WebApp;
+        const bm = tg?.BiometricManager;
+        if (tg && !tg.initData) setBioStatus('⚠ нет initData (открыто не из Telegram?)');
+        if (bm && !bm.isInited) {
+          setBioStatus('⏳ инициализация биометрии…');
+          bm.init(() => {
+            setBioStatus(bm.isBiometricAvailable
+              ? `✅ биометрия доступна (тип: ${bm.biometricType || '?'}${bm.isAccessGranted ? ', доступ ✓' : ', доступ не выдан'})`
+              : '❌ биометрия НЕдоступна на этом устройстве');
+          });
+        } else if (bm) {
+          setBioStatus(bm.isBiometricAvailable
+            ? `✅ биометрия доступна (тип: ${bm.biometricType || '?'}${bm.isAccessGranted ? ', доступ ✓' : ', доступ не выдан'})`
+            : '❌ биометрия НЕдоступна на этом устройстве');
+        } else {
+          setBioStatus('— BiometricManager не найден (старый клиент?)');
+        }
       }, []);
 
       const doLogin = () => {
@@ -85,31 +97,49 @@
             })
             .catch(() => setAuthError('Сервер недоступен'));
         };
+        const authFace = () => {
+          setBioStatus('🔄 запрашиваем FaceID…');
+          try {
+            // новые версии API: requestAccess({reason}, cb)
+            bm.requestAccess({ reason: 'Вход в Personal Hub' }, () => {
+              setBioStatus(bm.isAccessGranted ? '✅ доступ к биометрии выдан, сканируем…' : '⚠ доступ к биометрии не выдан — вход без FaceID');
+              if (bm.isAccessGranted) {
+                bm.authenticate({ reason: 'Вход в Personal Hub' }, () => {
+                  if (bm.isAuthenticated) {
+                    setBioStatus('✅ FaceID подтверждён');
+                    attempt();
+                  } else {
+                    setBioStatus('❌ FaceID не пройден');
+                    setAuthError('FaceID не пройден');
+                  }
+                });
+              } else {
+                attempt();
+              }
+            });
+          } catch (e) {
+            // старые версии API: requestAccess(cb), authenticate(cb)
+            setBioStatus('⚠ старый API биометрии');
+            bm.requestAccess(() => {
+              if (bm.isAccessGranted) {
+                bm.authenticate('Вход в Personal Hub', () => {
+                  if (bm.isAuthenticated) attempt();
+                  else { setBioStatus('❌ FaceID не пройден'); setAuthError('FaceID не пройден'); }
+                });
+              } else attempt();
+            });
+          }
+        };
         // сначала FaceID (если доступен), затем initData
         if (bm) {
-          const tryAuth = () => {
-            if (bm.isBiometricAvailable) {
-              bm.requestAccess(() => {
-                if (bm.isAccessGranted) {
-                  bm.authenticate('Вход в Personal Hub', () => {
-                    if (bm.isAuthenticated) attempt();
-                    else setAuthError('FaceID не пройден');
-                  });
-                } else {
-                  attempt(); // доступ к биометрии не дали — пробуем по initData
-                }
-              });
-            } else {
-              attempt();
-            }
-          };
           if (bm.isInited) {
-            tryAuth();
+            authFace();
           } else {
-            // init асинхронный — вызываем tryAuth ТОЛЬКО после завершения
-            bm.init(tryAuth);
+            setBioStatus('⏳ инициализация биометрии…');
+            bm.init(authFace);
           }
         } else {
+          setBioStatus('— биометрия недоступна, вход по подписи Telegram');
           attempt();
         }
         haptic && haptic('medium');
@@ -404,6 +434,11 @@
               >
                 👁 Войти с FaceID
               </button>
+              {bioStatus && (
+                <div className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 max-w-60 leading-relaxed">
+                  {bioStatus}
+                </div>
+              )}
             </div>
           )}
 

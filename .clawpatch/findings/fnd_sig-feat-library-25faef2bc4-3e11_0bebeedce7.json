@@ -29,11 +29,13 @@
   "whyTestsDoNotAlreadyCoverThis": "No tests exercise token resolution outside this machine's fixed paths; behavior is only validated manually on this host.",
   "suggestedRegressionTest": "Refactor get_token(paths=None) to accept paths as parameters and add tests using tmp_path to verify resolution without /root/openclaw.",
   "minimumFixScope": "update_bot_button.py lines 15 and 22",
-  "status": "open",
+  "status": "uncertain",
   "history": [],
   "signature": "sig_feat-library-25faef2bc4_3e11a90f94",
-  "linkedPatchAttemptIds": [],
+  "linkedPatchAttemptIds": [
+    "pat_fnd-sig-feat-library-25faef2bc4-_8c0b9a4ff0"
+  ],
   "createdByRunId": "20260821T111454-85e4bb",
   "createdAt": "2026-08-21T11:16:40.567Z",
-  "updatedAt": "2026-08-21T11:16:40.567Z"
+  "updatedAt": "2026-08-21T11:26:28.113Z"
 }

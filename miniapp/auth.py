@@ -69,13 +69,14 @@ def load_bot_token():
     return ""
 
 
-def verify_init_data(init_data, bot_token):
+def verify_init_data(init_data, bot_token, max_age=86400):
     """Проверяет подпись initData (стандартный алгоритм Telegram Mini Apps).
 
     secret_key = HMAC_SHA256(key="WebAppData", msg=bot_token)
     data_check_string = все поля КРОМЕ hash (включая signature),
         отсортированные по ключу, key=value через \n, значения URL-декодированы.
     hash = HMAC_SHA256(key=secret_key, msg=data_check_string).hexdigest()
+    Плюс проверка свежести auth_date (защита от replay-атак).
     """
     try:
         params = dict(parse_qsl(init_data, keep_blank_values=True))
@@ -86,6 +87,13 @@ def verify_init_data(init_data, bot_token):
         check_string = "\n".join(f"{k}={v}" for k, v in sorted(params.items()))
         calc = hmac.new(secret_key, check_string.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(calc, received):
+            return None
+        # защита от replay: auth_date не старше max_age секунд
+        try:
+            ad = int(params.get("auth_date", 0))
+        except (TypeError, ValueError):
+            ad = 0
+        if not ad or time.time() - ad > max_age:
             return None
         user = json.loads(params.get("user", "{}"))
         return user if isinstance(user, dict) else None

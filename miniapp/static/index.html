@@ -106,6 +106,13 @@
             .catch(() => setAuthError('Сервер недоступен'));
         };
         const authFace = () => {
+          // на десктопе (Telegram Desktop/Mac) биометрия часто недоступна —
+          // не идём в requestAccess, сразу вход по подписи Telegram
+          if (!bm.isBiometricAvailable) {
+            setBioStatus('— биометрия недоступна на этом устройстве, вход по подписи Telegram');
+            attempt();
+            return;
+          }
           setBioStatus('🔄 запрашиваем FaceID…');
           const faceDone = (label) => {
             // Флаг isAuthenticated на iOS обновляется асинхронно/глючит —
@@ -148,7 +155,24 @@
             authFace();
           } else {
             setBioStatus('⏳ инициализация биометрии…');
-            bm.init(authFace);
+            // на десктопе init может не вызвать колбэк — страховка: таймаут
+            let done = false;
+            const fallback = () => {
+              if (done) return;
+              done = true;
+              setBioStatus('— биометрия не ответила, вход по подписи Telegram');
+              attempt();
+            };
+            setTimeout(fallback, 2500);
+            try {
+              bm.init(() => {
+                if (done) return;
+                done = true;
+                authFace();
+              });
+            } catch (e) {
+              fallback();
+            }
           }
         } else {
           setBioStatus('— биометрия недоступна, вход по подписи Telegram');

@@ -189,7 +189,7 @@
       };
 
       // ================= ПАРОЛЬ (для входа на десктопе/браузере) =================
-      const [passState, setPassState] = useState({ showSet: false, showLogin: false, newPass: '', login: '', pwd: '', msg: '' });
+      const [passState, setPassState] = useState({ showSet: false, showLogin: false, newPass: '', login: '', pwd: '', setPwd: '', msg: '' });
       const setMyPassword = () => {
         const p = passState.newPass;
         if (p.length < 4) { setPassState(s => ({ ...s, msg: 'Пароль слишком короткий (мин. 4)' })); return; }
@@ -201,6 +201,23 @@
           .then(r => r.json())
           .then(d => {
             setPassState(s => ({ ...s, msg: d.ok ? '✅ Пароль сохранён' : (d.error || 'Ошибка'), newPass: d.ok ? '' : s.newPass }));
+          })
+          .catch(() => setPassState(s => ({ ...s, msg: 'Сервер недоступен' })));
+        haptic('light');
+      };
+      // установка пароля прямо с экрана входа (по initData, работает и на Mac в Telegram)
+      const setPasswordOnLogin = () => {
+        const p = passState.setPwd;
+        if (p.length < 4) { setPassState(s => ({ ...s, msg: 'Пароль слишком короткий (мин. 4)' })); return; }
+        setPassState(s => ({ ...s, msg: '' }));
+        fetch('/miniapp/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ setPassword: true, password: p, initData: window.Telegram?.WebApp?.initData || '' }),
+        })
+          .then(r => r.json())
+          .then(d => {
+            setPassState(s => ({ ...s, msg: d.ok ? '✅ Пароль сохранён! Теперь войдите по нему' : (d.error || 'Ошибка'), setPwd: d.ok ? '' : s.setPwd }));
           })
           .catch(() => setPassState(s => ({ ...s, msg: 'Сервер недоступен' })));
         haptic('light');
@@ -546,6 +563,22 @@
                   >
                     Войти
                   </button>
+                  <div className="pt-2 border-t border-slate-200 space-y-2">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Впервые? Задайте пароль</div>
+                    <input
+                      type="password"
+                      placeholder="Новый пароль (мин. 4 символа)"
+                      value={passState.setPwd}
+                      onChange={e => setPassState(s => ({ ...s, setPwd: e.target.value }))}
+                      className="w-full bg-slate-50 border-2 border-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-600"
+                    />
+                    <button
+                      onClick={setPasswordOnLogin}
+                      className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs transition active:scale-95"
+                    >
+                      Задать пароль
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

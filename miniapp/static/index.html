@@ -192,6 +192,7 @@
       const [toCurr, setToCurr] = useState('RUB');
       const [showRates, setShowRates] = useState(false); // конвертер валют: развернуть по клику на значок
       const [showPass, setShowPass] = useState(false); // генератор паролей: развернуть по клику на значок
+      const [showFeed, setShowFeed] = useState(false); // лента каналов & RSS: развернуть по клику на значок
 
       const [passLength, setPassLength] = useState(16);
       const [password, setPassword] = useState('k9#vL@8$qP2!mZ7x');
@@ -448,22 +449,30 @@
                 </div>
               </div>
 
-              {/* 3. Лента каналов & RSS */}
+              {/* 3. Лента каналов & RSS (по клику на значок) */}
               <div className="card-white rounded-3xl p-5 space-y-4">
+                <button
+                  onClick={() => { haptic(); setShowFeed(!showFeed); }}
+                  className="w-full flex items-center justify-between gap-1.5 active:scale-98 transition"
+                >
+                  <div className="text-base font-black text-slate-900">📡 Лента каналов & RSS</div>
+                  <span className="text-xs font-bold text-blue-600">{showFeed ? '▲' : '▼'}</span>
+                </button>
+
+                {showFeed && (<>
                 <div className="flex items-center justify-between">
-                  <div className="text-base font-black text-slate-900">Лента каналов & RSS</div>
+                  <div className="text-xs font-bold text-blue-600 mb-0">● Подключено источников: {sources.length}</div>
                   <button
                     onClick={() => { haptic(); setView('sources'); }}
                     className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs border border-blue-200 active:scale-95 transition"
                   >
-                    ⚙ Источники ({sources.length})
+                    ⚙ Источники
                   </button>
                 </div>
 
                 <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                  <div className="text-xs font-bold text-blue-600 mb-0.5">● Подключено источников: {sources.length}</div>
                   <div className="text-xs text-slate-600 truncate">
-                    {sources.map(s => s.name).join(', ')}
+                    {sources.map(s => s.name).join(', ') || 'Нет источников — добавьте в ⚙'}
                   </div>
                 </div>
 
@@ -473,6 +482,7 @@
                 >
                   📖 Читать полный AI-Дайджест →
                 </button>
+                </>)}
               </div>
 
               {/* 4. Конвертер валют (по клику на значок) */}

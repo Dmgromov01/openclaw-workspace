@@ -46,10 +46,10 @@
       const [showMap, setShowMap] = useState(false);
       const [om, setOm] = useState(null); // Open-Meteo: текущие осадки + почасовой прогноз (Москва)
       const [rainIdx, setRainIdx] = useState(0); // выбранный час (0..23) на карте осадков
+      const [omGrid, setOmGrid] = useState(null); // сетка городов МО с почасовыми осадками (state, чтобы ре-рендер был)
+      const [omTimes, setOmTimes] = useState([]); // массив времени (часы)
       const mapRef = useRef(null);
-      const omGridRef = useRef(null); // сетка городов МО с почасовыми осадками
       const omMarkersRef = useRef([]); // круги осадков на карте
-      const omTimesRef = useRef([]); // массив времени (часы)
 
       // Текущие осадки и почасовой прогноз по Москве (Open-Meteo, без ключей)
       useEffect(() => {
@@ -95,12 +95,12 @@
           .then(r => r.json())
           .then(data => {
             if (Array.isArray(data)) {
-              omGridRef.current = cities.map((c, i) => ({
+              setOmGrid(cities.map((c, i) => ({
                 ...c,
                 rain: data[i]?.hourly?.rain || [],
                 snow: data[i]?.hourly?.snowfall || []
-              }));
-              omTimesRef.current = data[0]?.hourly?.time || [];
+              })));
+              setOmTimes(data[0]?.hourly?.time || []);
             }
           })
           .catch(() => {});
@@ -125,11 +125,11 @@
           mapRef.current = map;
         }
 
-        if (mapRef.current && omGridRef.current) {
+        if (mapRef.current && omGrid) {
           const map = mapRef.current;
           omMarkersRef.current.forEach(m => map.removeLayer(m));
           omMarkersRef.current = [];
-          omGridRef.current.forEach(c => {
+          omGrid.forEach(c => {
             const r = c.rain[rainIdx] || 0;
             const s = c.snow[rainIdx] || 0;
             const total = r + s;
@@ -145,7 +145,7 @@
             omMarkersRef.current.push(circle);
           });
         }
-      }, [showMap, rainIdx]);
+      }, [showMap, rainIdx, omGrid]);
 
       // ================= 2. ЗАДАЧИ & АРХИВ =================
       const [tasks, setTasks] = useState(() => {
@@ -395,13 +395,13 @@
                       <input
                         type="range"
                         min="0"
-                        max={omTimesRef.current.length ? omTimesRef.current.length - 1 : 23}
+                        max={omTimes.length ? omTimes.length - 1 : 23}
                         value={rainIdx}
                         onChange={e => setRainIdx(parseInt(e.target.value))}
                         className="flex-1 h-1.5 accent-blue-600"
                       />
                       <span className="text-[11px] font-bold text-slate-600 w-12 text-right">
-                        {omTimesRef.current[rainIdx] ? new Date(omTimesRef.current[rainIdx]).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                        {omTimes[rainIdx] ? new Date(omTimes[rainIdx]).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                       </span>
                     </div>
                     <div className="flex items-center justify-center gap-2 text-[9px] text-slate-500 font-semibold">

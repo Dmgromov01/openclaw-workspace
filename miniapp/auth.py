@@ -70,18 +70,19 @@ def load_bot_token():
 
 
 def verify_init_data(init_data, bot_token):
-    """Проверяет подпись initData (стандартный алгоритм Telegram).
+    """Проверяет подпись initData (стандартный алгоритм Telegram Mini Apps).
 
-    data_check_string строится из ДЕКОДИРОВАННЫХ значений (parse_qsl),
-    отсортированных по ключу, в формате key=value с разделителем \n.
-    Секрет: HMAC_SHA256(bot_token, "WebAppData").
+    secret_key = HMAC_SHA256(key="WebAppData", msg=bot_token)
+    data_check_string = все поля КРОМЕ hash (включая signature),
+        отсортированные по ключу, key=value через \n, значения URL-декодированы.
+    hash = HMAC_SHA256(key=secret_key, msg=data_check_string).hexdigest()
     """
     try:
         params = dict(parse_qsl(init_data, keep_blank_values=True))
         received = params.pop("hash", None)
         if not received:
             return None
-        secret_key = hmac.new(bot_token.encode(), b"WebAppData", hashlib.sha256).digest()
+        secret_key = hmac.new(b"WebAppData", bot_token.encode(), hashlib.sha256).digest()
         check_string = "\n".join(f"{k}={v}" for k, v in sorted(params.items()))
         calc = hmac.new(secret_key, check_string.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(calc, received):

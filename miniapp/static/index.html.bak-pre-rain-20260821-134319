@@ -44,18 +44,36 @@
       // ================= 1. ПОГОДА & КАРТА =================
       const [weather, setWeather] = useState({ temp: 24, condition: 'Ясно, без осадков', wind: '2.8 м/с', city: 'Москва' });
       const [showMap, setShowMap] = useState(false);
+      const [cityWeather, setCityWeather] = useState([]);
       const mapRef = useRef(null);
-      const rainLayerRef = useRef(null);
-      const rainFramesRef = useRef([]);
+      const cityMarkersRef = useRef([]);
 
-      // Загрузка кадров радара осадков (RainViewer, без ключей)
+      // Температура по городам (Open-Meteo, без ключей) — альтернатива радару
       useEffect(() => {
-        fetch('https://api.rainviewer.com/public/weather-maps.json')
+        const cities = [
+          { name: 'Москва', lat: 55.7558, lon: 37.6173 },
+          { name: 'Химки', lat: 55.897, lon: 37.43 },
+          { name: 'Мытищи', lat: 55.91, lon: 37.76 },
+          { name: 'Балашиха', lat: 55.81, lon: 37.96 },
+          { name: 'Подольск', lat: 55.43, lon: 37.54 },
+          { name: 'Люберцы', lat: 55.68, lon: 37.89 },
+          { name: 'Одинцово', lat: 55.68, lon: 37.27 },
+          { name: 'Домодедово', lat: 55.44, lon: 37.75 },
+          { name: 'Зеленоград', lat: 55.99, lon: 37.18 },
+          { name: 'Королёв', lat: 55.91, lon: 37.82 }
+        ];
+        const lats = cities.map(c => c.lat).join(',');
+        const lons = cities.map(c => c.lon).join(',');
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current_weather=true&timezone=Europe%2FMoscow`)
           .then(r => r.json())
-          .then(d => {
-            const past = (d.radar?.past || []).map(f => ({ time: f.time }));
-            const nowcast = (d.radar?.nowcast || []).map(f => ({ time: f.time }));
-            rainFramesRef.current = [...past, ...nowcast];
+          .then(data => {
+            if (Array.isArray(data)) {
+              setCityWeather(cities.map((c, i) => ({
+                ...c,
+                temp: Math.round(data[i]?.current_weather?.temperature ?? '—'),
+                code: data[i]?.current_weather?.weathercode
+              })));
+            }
           })
           .catch(() => {});
       }, []);
@@ -78,32 +96,22 @@
           mapRef.current = map;
         }
 
-        // Слой осадков: последний кадр + слайдер времени (−2ч → +30м)
-        if (mapRef.current && rainFramesRef.current.length > 0 && !rainLayerRef.current) {
-          const idx = rainFramesRef.current.length - 1;
-          const f = rainFramesRef.current[idx];
-          rainLayerRef.current = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${f.time}/256/{z}/{x}/{y}/2/1_1.png`, {
-            opacity: 0.65,
-            maxZoom: 10,
-            zIndex: 500
-          }).addTo(mapRef.current);
-
-          const slider = document.getElementById('rain-slider');
-          const timeLabel = document.getElementById('rain-time');
-          const setFrame = (i) => {
-            const fr = rainFramesRef.current[i];
-            if (!fr || !rainLayerRef.current) return;
-            rainLayerRef.current.setUrl(`https://tilecache.rainviewer.com/v2/radar/${fr.time}/256/{z}/{x}/{y}/2/1_1.png`);
-            if (timeLabel) timeLabel.textContent = new Date(fr.time * 1000).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-          };
-          if (slider) {
-            slider.max = rainFramesRef.current.length - 1;
-            slider.value = idx;
-            slider.oninput = (e) => setFrame(parseInt(e.target.value));
-          }
-          setFrame(idx);
+        if (mapRef.current && cityWeather.length > 0) {
+          cityMarkersRef.current.forEach(m => mapRef.current.removeLayer(m));
+          cityMarkersRef.current = [];
+          cityWeather.forEach(c => {
+            const icon = L.divIcon({
+              className: '',
+              html: `<div style="background:#2563eb;color:#fff;border-radius:10px;padding:2px 7px;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35);white-space:nowrap">${c.temp}°</div>`,
+              iconSize: [38, 22],
+              iconAnchor: [19, 11]
+            });
+            const m = L.marker([c.lat, c.lon], { icon }).addTo(mapRef.current)
+              .bindPopup(`<b>${c.name}</b><br>${c.temp}°C`);
+            cityMarkersRef.current.push(m);
+          });
         }
-      }, [showMap]);
+      }, [showMap, cityWeather]);
 
       // ================= 2. ЗАДАЧИ & АРХИВ =================
       const [tasks, setTasks] = useState(() => {
@@ -333,7 +341,7 @@
                     onClick={() => { haptic(); setShowMap(!showMap); }}
                     className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 active:scale-95 transition"
                   >
-                    {showMap ? 'Скрыть карту ▲' : 'Карта осадков ▼'}
+                    {showMap ? 'Скрыть карту ▲' : 'Карта температур ▼'}
                   </button>
                 </div>
 
@@ -345,12 +353,11 @@
                   </div>
                 </div>
 
-                {/* Карта: радар осадков (RainViewer, без ключей) */}
+                {/* Карта: температура по городам МО (Open-Meteo, без ключей) */}
                 {showMap && (
                   <div className="pt-2 border-t border-slate-100 space-y-3">
                     <div id="weather-map" className="w-full h-52 bg-slate-100 rounded-2xl border border-slate-200"></div>
-                    <input id="rain-slider" type="range" min="0" max="0" defaultValue="0" className="w-full h-1.5 accent-blue-600" />
-                    <div className="text-[10px] text-slate-400 font-semibold text-center">Осадки <span id="rain-time">--:--</span> · RainViewer · двигайте ползунок (прошлые 2ч → прогноз +30м)</div>
+                    <div className="text-[10px] text-slate-400 font-semibold text-center">Температура сейчас по городам МО — кликните по метке для деталей</div>
                   </div>
                 )}
               </div>

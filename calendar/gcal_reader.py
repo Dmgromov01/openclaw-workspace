@@ -11,16 +11,20 @@
 Вывод в человекочитаемом виде.
 """
 import argparse
+import json
+import os
 import sys
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 # pip install google-api-python-client google-auth
 
-from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
-KEY = "/root/.openclaw/credentials/gcal/service-account.json"
+CLIENT = "/root/.openclaw/credentials/gcal/oauth-client.json"
+TOKENS = "/root/.openclaw/credentials/gcal/tokens.json"
 CAL = "dmgromov03@gmail.com"
 TZ = ZoneInfo("Europe/Moscow")
 
@@ -147,9 +151,26 @@ def main():
     ap.add_argument("--description")
     a = ap.parse_args()
 
-    creds = service_account.Credentials.from_service_account_file(
-        KEY, scopes=["https://www.googleapis.com/auth/calendar"]
-    )
+    creds = None
+    if os.path.exists(TOKENS) and os.path.exists(CLIENT):
+        tinfo = json.load(open(TOKENS, encoding="utf-8"))
+        cinfo = json.load(open(CLIENT, encoding="utf-8")).get("web", {})
+        creds = Credentials(
+            token=tinfo.get("access_token"),
+            refresh_token=tinfo.get("refresh_token"),
+            token_uri=cinfo.get("token_uri") or "https://oauth2.googleapis.com/token",
+            client_id=cinfo.get("client_id"),
+            client_secret=cinfo.get("client_secret"),
+            scopes=["https://www.googleapis.com/auth/calendar"],
+        )
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+        tinfo["access_token"] = creds.token
+        with open(TOKENS, "w", encoding="utf-8") as tf:
+            json.dump(tinfo, tf)
+    if not creds or not creds.valid:
+        print("Ошибка: нет валидных OAuth-токенов (" + TOKENS + ")")
+        sys.exit(2)
     svc = _build(creds)
     now = datetime.now(TZ)
 

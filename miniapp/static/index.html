@@ -41,111 +41,18 @@
     function App() {
       const [view, setView] = useState('main'); // 'main' | 'archive' | 'sources' | 'digest'
 
-      // ================= 1. ПОГОДА & КАРТА =================
+      // ================= 1. ПОГОДА =================
       const [weather, setWeather] = useState({ temp: 24, condition: 'Ясно, без осадков', wind: '2.8 м/с', city: 'Москва' });
-      const [showMap, setShowMap] = useState(false);
-      const [om, setOm] = useState(null); // Open-Meteo: текущие осадки + почасовой прогноз (Москва)
-      const [rainIdx, setRainIdx] = useState(0); // выбранный час (0..23) на карте осадков
-      const [omGrid, setOmGrid] = useState(null); // сетка городов МО с почасовыми осадками (state, чтобы ре-рендер был)
-      const [omTimes, setOmTimes] = useState([]); // массив времени (часы)
-      const mapRef = useRef(null);
-      const omMarkersRef = useRef([]); // круги осадков на карте
+      const [om, setOm] = useState(null); // Open-Meteo: текущие + почасовой прогноз (Москва)
+      const [hourOffset, setHourOffset] = useState(0); // прокрутка прогноза: +0..12 ч
 
-      // Текущие осадки и почасовой прогноз по Москве (Open-Meteo, без ключей)
+      // Текущая погода + почасовой прогноз по Москве (Open-Meteo, без ключей)
       useEffect(() => {
-        fetch('https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&hourly=temperature_2m,rain,snowfall,snow_depth&current=temperature_2m,rain,snowfall&timezone=Europe%2FMoscow&forecast_days=1')
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&hourly=temperature_2m,rain,snowfall,wind_speed_10m&current=temperature_2m,rain,snowfall,wind_speed_10m&timezone=Europe%2FMoscow&forecast_days=1')
           .then(r => r.json())
           .then(d => setOm(d))
           .catch(() => {});
       }, []);
-
-      // Сетка городов МО для карты осадков (Open-Meteo, без ключей)
-      useEffect(() => {
-        const cities = [
-          { name: 'Москва', lat: 55.7558, lon: 37.6173 },
-          { name: 'Химки', lat: 55.897, lon: 37.43 },
-          { name: 'Мытищи', lat: 55.91, lon: 37.76 },
-          { name: 'Балашиха', lat: 55.81, lon: 37.96 },
-          { name: 'Подольск', lat: 55.43, lon: 37.54 },
-          { name: 'Люберцы', lat: 55.68, lon: 37.89 },
-          { name: 'Одинцово', lat: 55.68, lon: 37.27 },
-          { name: 'Домодедово', lat: 55.44, lon: 37.75 },
-          { name: 'Зеленоград', lat: 55.99, lon: 37.18 },
-          { name: 'Королёв', lat: 55.91, lon: 37.82 },
-          { name: 'Пушкино', lat: 56.01, lon: 37.85 },
-          { name: 'Щёлково', lat: 55.92, lon: 37.99 },
-          { name: 'Раменское', lat: 55.57, lon: 38.23 },
-          { name: 'Жуковский', lat: 55.6, lon: 38.12 },
-          { name: 'Электросталь', lat: 55.79, lon: 38.45 },
-          { name: 'Ногинск', lat: 55.85, lon: 38.44 },
-          { name: 'Серпухов', lat: 54.92, lon: 37.41 },
-          { name: 'Коломна', lat: 55.08, lon: 38.78 },
-          { name: 'Сергиев Посад', lat: 56.3, lon: 38.13 },
-          { name: 'Клин', lat: 56.33, lon: 36.71 },
-          { name: 'Истра', lat: 55.91, lon: 36.86 },
-          { name: 'Чехов', lat: 55.15, lon: 37.48 },
-          { name: 'Воскресенск', lat: 55.32, lon: 38.7 },
-          { name: 'Дмитров', lat: 56.34, lon: 37.52 },
-          { name: 'Наро-Фоминск', lat: 55.39, lon: 36.73 },
-          { name: 'Лобня', lat: 56.01, lon: 37.48 }
-        ];
-        const lats = cities.map(c => c.lat).join(',');
-        const lons = cities.map(c => c.lon).join(',');
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=rain,snowfall&timezone=Europe%2FMoscow&forecast_days=1`)
-          .then(r => r.json())
-          .then(data => {
-            if (Array.isArray(data)) {
-              setOmGrid(cities.map((c, i) => ({
-                ...c,
-                rain: data[i]?.hourly?.rain || [],
-                snow: data[i]?.hourly?.snowfall || []
-              })));
-              setOmTimes(data[0]?.hourly?.time || []);
-            }
-          })
-          .catch(() => {});
-      }, []);
-
-      // Карта: инициализация + круги осадков по городам МО (Open-Meteo)
-      useEffect(() => {
-        if (showMap && !mapRef.current && document.getElementById('weather-map')) {
-          const map = L.map('weather-map', {
-            zoomControl: false,
-            attributionControl: false,
-            minZoom: 7,
-            maxZoom: 10,
-            maxBounds: [[53.5, 33.0], [58.0, 42.0]], // Москва + МО + ближайшие регионы
-            maxBoundsViscosity: 0.8
-          }).setView([55.75, 37.62], 7);
-
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 10
-          }).addTo(map);
-
-          mapRef.current = map;
-        }
-
-        if (mapRef.current && omGrid) {
-          const map = mapRef.current;
-          omMarkersRef.current.forEach(m => map.removeLayer(m));
-          omMarkersRef.current = [];
-          omGrid.forEach(c => {
-            const r = c.rain[rainIdx] || 0;
-            const s = c.snow[rainIdx] || 0;
-            const total = r + s;
-            const color = total <= 0 ? '#94a3b8' : total < 0.5 ? '#38bdf8' : total < 2 ? '#2563eb' : total < 5 ? '#7c3aed' : '#dc2626';
-            const radius = total <= 0 ? 1200 : 2500 + total * 1800;
-            const circle = L.circle([c.lat, c.lon], {
-              radius,
-              color: total > 0 ? '#fff' : '#cbd5e1',
-              weight: 1.5,
-              fillColor: color,
-              fillOpacity: total > 0 ? 0.6 : 0.15
-            }).addTo(map).bindPopup(`<b>${c.name}</b><br>${total > 0 ? '💧 ' + total.toFixed(1) + ' мм/ч' : 'сухо'}`);
-            omMarkersRef.current.push(circle);
-          });
-        }
-      }, [showMap, rainIdx, omGrid]);
 
       // ================= 2. ЗАДАЧИ & АРХИВ =================
       const [tasks, setTasks] = useState(() => {
@@ -367,16 +274,10 @@
           {view === 'main' && (
             <div className="space-y-5">
 
-              {/* 1. Погода + Карта осадков */}
+              {/* 1. Погода */}
               <div className="card-white rounded-3xl p-5 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Погода & Карта</span>
-                  <button
-                    onClick={() => { haptic(); setShowMap(!showMap); }}
-                    className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 active:scale-95 transition"
-                  >
-                    {showMap ? 'Скрыть карту ▲' : 'Карта осадков ▼'}
-                  </button>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Погода</span>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -387,52 +288,51 @@
                   </div>
                 </div>
 
-                {/* Карта: осадки по городам МО (Open-Meteo + Leaflet) */}
-                {showMap && (
-                  <div className="pt-2 border-t border-slate-100 space-y-3">
-                    <div id="weather-map" className="w-full h-52 bg-slate-100 rounded-2xl border border-slate-200"></div>
+                {/* Осадки по Москве (Open-Meteo): сейчас + ближайшие 12ч, визуализация мелкий дождь → ливень */}
+                {om && om.hourly && (
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Осадки в Москве · 12ч</span>
+                      <span className="text-xs font-bold text-blue-600">{om.current ? (om.current.rain > 0 ? '💧 ' + om.current.rain.toFixed(1) + ' мм/ч' : om.current.snowfall > 0 ? '❄️ ' + om.current.snowfall.toFixed(1) + ' см' : 'сухо') : ''}</span>
+                    </div>
+
+                    {/* Ползунок: +0..+12 часов вперёд */}
                     <div className="flex items-center gap-2">
                       <input
                         type="range"
                         min="0"
-                        max={omTimes.length ? omTimes.length - 1 : 23}
-                        value={rainIdx}
-                        onChange={e => setRainIdx(parseInt(e.target.value))}
+                        max="12"
+                        value={hourOffset}
+                        onChange={e => setHourOffset(parseInt(e.target.value))}
                         className="flex-1 h-1.5 accent-blue-600"
                       />
-                      <span className="text-[11px] font-bold text-slate-600 w-12 text-right">
-                        {omTimes[rainIdx] ? new Date(omTimes[rainIdx]).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                      </span>
+                      <span className="text-[11px] font-bold text-slate-600 w-12 text-right whitespace-nowrap">+{hourOffset} ч</span>
                     </div>
-                    <div className="flex items-center justify-center gap-2 text-[9px] text-slate-500 font-semibold">
-                      <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-slate-300"></span>сухо</span>
-                      <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-sky-400"></span>&lt;0.5</span>
-                      <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-blue-600"></span>&lt;2</span>
-                      <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-purple-600"></span>&lt;5</span>
-                      <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-red-600"></span>≥5 мм/ч</span>
-                    </div>
-                    <div className="text-[10px] text-slate-400 font-semibold text-center">Осадки по городам МО (Open-Meteo) — слайдер: прогноз на сутки</div>
-                  </div>
-                )}
 
-                {/* Осадки по Москве (Open-Meteo): сейчас + ближайшие часы */}
-                {om && om.current && (
-                  <div className="pt-2 border-t border-slate-100 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Осадки в Москве · сутки</span>
-                      <span className="text-xs font-bold text-blue-600">💧 {om.current.rain ?? 0} мм/ч · ❄️ {om.current.snowfall ?? 0} см</span>
-                    </div>
-                    {om.hourly && (
-                      <div className="flex gap-1.5 overflow-x-auto pb-1">
-                        {om.hourly.time.slice(0, 24).map((t, i) => (
-                          <div key={t} className="flex-shrink-0 w-12 rounded-xl bg-slate-50 border border-slate-200 px-1 py-1.5 text-center">
+                    <div className="flex gap-1.5 overflow-x-auto pb-1">
+                      {om.hourly.time.slice(hourOffset, hourOffset + 12).map((t, i) => {
+                        const j = hourOffset + i;
+                        const r = om.hourly.rain?.[j] || 0;
+                        const s = om.hourly.snowfall?.[j] || 0;
+                        const total = r + s;
+                        // визуализация: сухо → морось → мелкий → дождь → сильный → ливень
+                        const lvl = total <= 0 ? 0 : total < 0.3 ? 1 : total < 1 ? 2 : total < 3 ? 3 : total < 6 ? 4 : 5;
+                        const icons = ['☀️', '💧', '💧', '🌧️', '🌧️', '⛈️'];
+                        const labels = ['сухо', 'морось', 'мелкий', 'дождь', 'сильный', 'ливень'];
+                        const bg = ['bg-slate-50', 'bg-sky-100', 'bg-sky-200', 'bg-blue-200', 'bg-indigo-300', 'bg-red-300'];
+                        const txt = ['text-slate-400', 'text-sky-700', 'text-sky-800', 'text-blue-900', 'text-indigo-900', 'text-red-900'];
+                        return (
+                          <div key={t} className={`flex-shrink-0 w-14 rounded-xl ${bg[lvl]} border border-slate-200 px-1 py-1.5 text-center`}>
                             <div className="text-[10px] font-bold text-slate-500">{new Date(t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
-                            <div className="text-xs font-black text-slate-800">{Math.round(om.hourly.temperature_2m[i])}°</div>
-                            <div className="text-[10px] font-semibold text-blue-500">{om.hourly.rain[i] > 0 ? om.hourly.rain[i].toFixed(1) + 'мм' : om.hourly.snowfall[i] > 0 ? '❄' + om.hourly.snowfall[i].toFixed(1) : '—'}</div>
+                            <div className="text-sm leading-none my-0.5">{icons[lvl]}</div>
+                            <div className={`text-[9px] font-bold ${txt[lvl]}`}>{s > 0 ? '❄ ' + s.toFixed(1) : labels[lvl]}</div>
+                            <div className="text-xs font-black text-slate-800">{Math.round(om.hourly.temperature_2m[j])}°</div>
+                            <div className="text-[9px] font-semibold text-slate-500">{Math.round(om.hourly.wind_speed_10m?.[j] || 0)} м/с</div>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        );
+                      })}
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-semibold text-center">Ползунок: прогноз на +12 часов · каждая ячейка: осадки, температура, ветер</div>
                   </div>
                 )}
               </div>

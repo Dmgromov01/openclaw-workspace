@@ -105,8 +105,8 @@
         rec.maxAlternatives = 1;
         rec.onresult = (e) => {
           const text = e.results[0][0].transcript;
+          // сначала — в поле ввода, пользователь сам жмёт «+» для добавления
           setTaskInput(text);
-          handleAddTask(text);
         };
         rec.onerror = () => {
           setVoiceError('Не удалось распознать речь, попробуйте ещё раз');

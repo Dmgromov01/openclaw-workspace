@@ -70,7 +70,12 @@ def load_bot_token():
 
 
 def verify_init_data(init_data, bot_token):
-    """Проверяет подпись initData. Возвращает dict пользователя или None."""
+    """Проверяет подпись initData (стандартный алгоритм Telegram).
+
+    data_check_string строится из ДЕКОДИРОВАННЫХ значений (parse_qsl),
+    отсортированных по ключу, в формате key=value с разделителем \n.
+    Секрет: HMAC_SHA256(bot_token, "WebAppData").
+    """
     try:
         params = dict(parse_qsl(init_data, keep_blank_values=True))
         received = params.pop("hash", None)
@@ -81,7 +86,8 @@ def verify_init_data(init_data, bot_token):
         calc = hmac.new(secret_key, check_string.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(calc, received):
             return None
-        return json.loads(params.get("user", "{}"))
+        user = json.loads(params.get("user", "{}"))
+        return user if isinstance(user, dict) else None
     except Exception:
         return None
 

@@ -29,11 +29,13 @@
   "whyTestsDoNotAlreadyCoverThis": "No tests exist for the script, so the malformed-token and unreadable-file paths are never exercised.",
   "suggestedRegressionTest": "A pytest test that monkeypatches Bot to raise ValueError on construction and asserts main() prints the friendly error instead of propagating a traceback.",
   "minimumFixScope": "update_bot_button.py lines 16-25 and 38",
-  "status": "open",
+  "status": "uncertain",
   "history": [],
   "signature": "sig_feat-library-25faef2bc4_99cb5c06b2",
-  "linkedPatchAttemptIds": [],
+  "linkedPatchAttemptIds": [
+    "pat_fnd-sig-feat-library-25faef2bc4-_e30af8c89a"
+  ],
   "createdByRunId": "20260821T111454-85e4bb",
   "createdAt": "2026-08-21T11:16:40.567Z",
-  "updatedAt": "2026-08-21T11:16:40.567Z"
+  "updatedAt": "2026-08-21T11:24:19.089Z"
 }

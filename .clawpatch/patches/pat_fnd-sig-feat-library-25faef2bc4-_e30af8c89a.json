@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "patchAttemptId": "pat_fnd-sig-feat-library-25faef2bc4-_e30af8c89a",
+  "findingIds": [
+    "fnd_sig-feat-library-25faef2bc4-99cb_41f9950f67"
+  ],
+  "featureIds": [
+    "feat_library_25faef2bc4"
+  ],
+  "status": "applied",
+  "plan": "Moved token loading and Bot(token=...) construction inside the try/except in main() so unreadable .env/config.json files and malformed or stale tokens print the friendly error message instead of raising a raw traceback. Session cleanup in the finally block now only runs when the bot was constructed successfully, since a construction failure returns before the close block. Added two focused unittest cases: one monkeypatching Bot to raise ValueError and asserting main() prints the friendly error, and one simulating PermissionError on .env read.",
+  "filesChanged": [
+    "test_update_bot_button.py",
+    "update_bot_button.py"
+  ],
+  "commandsRun": [],
+  "testResults": [],
+  "provider": {
+    "name": "codex",
+    "model": null,
+    "reasoningEffort": null,
+    "requestId": null,
+    "startedAt": "2026-08-21T11:23:49.009Z",
+    "finishedAt": "2026-08-21T11:24:19.088Z"
+  },
+  "git": {
+    "baseSha": "76cf2b151844a405dc23efae9979aa3a9c100e9f",
+    "commitSha": null,
+    "branchName": "main",
+    "prUrl": null
+  },
+  "createdAt": "2026-08-21T11:23:49.002Z",
+  "updatedAt": "2026-08-21T11:24:19.088Z"
+}

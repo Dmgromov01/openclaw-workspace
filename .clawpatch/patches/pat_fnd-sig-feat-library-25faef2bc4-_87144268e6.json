@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "patchAttemptId": "pat_fnd-sig-feat-library-25faef2bc4-_87144268e6",
+  "findingIds": [
+    "fnd_sig-feat-library-25faef2bc4-1c92_70271b1f5e"
+  ],
+  "featureIds": [
+    "feat_library_25faef2bc4"
+  ],
+  "status": "applied",
+  "plan": "Finding already resolved in the working tree: commit 76cf2b1 removed the argv token path from update_bot_button.py (no more sys.argv handling in __main__, no CLI-token usage hint) and added test_update_bot_button.py covering env precedence, .env/config.json fallbacks, and argv token rejection. Verified no sys.argv token logic remains and all 6 tests pass; no further edits were needed.",
+  "filesChanged": [],
+  "commandsRun": [],
+  "testResults": [],
+  "provider": {
+    "name": "codex",
+    "model": null,
+    "reasoningEffort": null,
+    "requestId": null,
+    "startedAt": "2026-08-21T11:23:25.630Z",
+    "finishedAt": "2026-08-21T11:23:48.615Z"
+  },
+  "git": {
+    "baseSha": "76cf2b151844a405dc23efae9979aa3a9c100e9f",
+    "commitSha": null,
+    "branchName": "main",
+    "prUrl": null
+  },
+  "createdAt": "2026-08-21T11:23:25.627Z",
+  "updatedAt": "2026-08-21T11:23:48.615Z"
+}

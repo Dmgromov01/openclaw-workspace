@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "runId": "20260821T111454-85e4bb",
+  "command": "review",
+  "args": [
+    "review",
+    "--limit",
+    "5"
+  ],
+  "rootPath": "/root/openclaw",
+  "headSha": "d337c7e8f05cec968f68104e50b4cf933ef7a10d",
+  "startedAt": "2026-08-21T11:14:54.655Z",
+  "finishedAt": "2026-08-21T11:16:40.571Z",
+  "status": "completed",
+  "claimedFeatureIds": [
+    "feat_library_25faef2bc4"
+  ],
+  "findingIds": [
+    "fnd_sig-feat-library-25faef2bc4-1c92_70271b1f5e",
+    "fnd_sig-feat-library-25faef2bc4-99cb_41f9950f67",
+    "fnd_sig-feat-library-25faef2bc4-2657_8580c23161",
+    "fnd_sig-feat-library-25faef2bc4-3e11_0bebeedce7"
+  ],
+  "patchAttemptIds": [],
+  "errors": []
+}

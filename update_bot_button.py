@@ -31,8 +31,7 @@ def get_token():
 async def main():
     token = get_token()
     if not token:
-        print("Ошибка: Токен бота не найден в .env или config.json. Передайте токен вручную:")
-        print("python3 update_bot_button.py <ВАШ_ТОКЕН>")
+        print("Ошибка: Токен бота не найден. Задайте TELEGRAM_BOT_TOKEN или BOT_TOKEN в переменной окружения, .env или config.json.")
         return
 
     bot = Bot(token=token)
@@ -50,7 +49,4 @@ async def main():
         await bot.session.close()
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1:
-        os.environ["TELEGRAM_BOT_TOKEN"] = sys.argv[1]
     asyncio.run(main())

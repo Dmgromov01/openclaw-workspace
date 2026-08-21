@@ -190,6 +190,8 @@
       const [calcAmount, setCalcAmount] = useState(1000);
       const [fromCurr, setFromCurr] = useState('CNY');
       const [toCurr, setToCurr] = useState('RUB');
+      const [showRates, setShowRates] = useState(false); // конвертер валют: развернуть по клику на значок
+      const [showPass, setShowPass] = useState(false); // генератор паролей: развернуть по клику на значок
 
       const [passLength, setPassLength] = useState(16);
       const [password, setPassword] = useState('k9#vL@8$qP2!mZ7x');
@@ -473,13 +475,17 @@
                 </button>
               </div>
 
-              {/* 4. Конвертер валют */}
+              {/* 4. Конвертер валют (по клику на значок) */}
               <div className="card-white rounded-3xl p-5 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-1.5">
+                <button
+                  onClick={() => { haptic(); setShowRates(!showRates); }}
+                  className="w-full flex items-center justify-between gap-1.5 active:scale-98 transition"
+                >
                   <div className="text-base font-black text-slate-900">💱 Конвертер валют</div>
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap">ЦБ РФ Официальный</span>
-                </div>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap">ЦБ РФ {showRates ? '▲' : '▼'}</span>
+                </button>
 
+                {showRates && (<>
                 <div className="flex flex-wrap gap-1.5 items-stretch">
                   <input
                     type="number"
@@ -508,20 +514,28 @@
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Результат</span>
                   <span className="text-lg font-black text-emerald-700 font-mono">{convertValue()} {toCurr}</span>
                 </div>
+                </>)}
               </div>
 
-              {/* 5. Генератор паролей */}
+              {/* 5. Генератор паролей (по клику на значок) */}
               <div className="card-white rounded-3xl p-5 space-y-3.5">
-                <div className="flex items-center justify-between">
+                <button
+                  onClick={() => { haptic(); setShowPass(!showPass); }}
+                  className="w-full flex items-center justify-between active:scale-98 transition"
+                >
                   <div className="text-base font-black text-slate-900">🔐 Генератор паролей</div>
-                  <span className="text-xs font-black text-blue-600 font-mono">{passLength} симв.</span>
-                </div>
+                  <span className="text-xs font-black text-blue-600">{showPass ? '▲' : '▼'}</span>
+                </button>
 
+                {showPass && (<>
                 <input
                   type="range" min="12" max="32" value={passLength}
                   onChange={(e) => setPassLength(Number(e.target.value))}
                   className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-blue-600 font-mono">{passLength} симв.</span>
+                </div>
 
                 <div
                   onClick={copyToClipboard}
@@ -539,6 +553,7 @@
                 >
                   Сгенерировать новый пароль
                 </button>
+                </>)}
               </div>
 
             </div>

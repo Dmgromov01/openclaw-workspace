@@ -16,7 +16,7 @@ import time
 import threading
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -372,6 +372,6 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     miniapp_auth.init_db()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-    server = HTTPServer(("0.0.0.0", port), Handler)
+    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"MiniApp server on :{port} (static: {STATIC})", flush=True)
     server.serve_forever()

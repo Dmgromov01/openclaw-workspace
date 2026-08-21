@@ -62,8 +62,8 @@
         fetch('https://api.rainviewer.com/public/weather-maps.json')
           .then(r => r.json())
           .then(d => {
-            const past = (d.radar?.past || []).map(f => ({ time: f.time }));
-            const nowcast = (d.radar?.nowcast || []).map(f => ({ time: f.time }));
+            const past = (d.radar?.past || []).map(f => ({ time: f.time, path: f.path }));
+            const nowcast = (d.radar?.nowcast || []).map(f => ({ time: f.time, path: f.path }));
             rainFramesRef.current = [...past, ...nowcast];
           })
           .catch(() => {});
@@ -91,7 +91,7 @@
         if (mapRef.current && rainFramesRef.current.length > 0 && !rainLayerRef.current) {
           const idx = rainFramesRef.current.length - 1;
           const f = rainFramesRef.current[idx];
-          rainLayerRef.current = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${f.time}/256/{z}/{x}/{y}/2/1_1.png`, {
+          rainLayerRef.current = L.tileLayer(`https://tilecache.rainviewer.com${f.path}/256/{z}/{x}/{y}/2/1_1.png`, {
             opacity: 0.65,
             maxZoom: 10,
             zIndex: 500
@@ -102,7 +102,7 @@
           const setFrame = (i) => {
             const fr = rainFramesRef.current[i];
             if (!fr || !rainLayerRef.current) return;
-            rainLayerRef.current.setUrl(`https://tilecache.rainviewer.com/v2/radar/${fr.time}/256/{z}/{x}/{y}/2/1_1.png`);
+            rainLayerRef.current.setUrl(`https://tilecache.rainviewer.com${fr.path}/256/{z}/{x}/{y}/2/1_1.png`);
             if (timeLabel) timeLabel.textContent = new Date(fr.time * 1000).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
           };
           if (slider) {

@@ -269,11 +269,23 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception:
                 return self._send_json({"error": "bad json"}, 400)
             init_data = (body.get("initData") or "").strip()
+            # диагностика: сохраняем КАЖДЫЙ initData с таймстампом + полный в лог
+            ts = int(time.time())
+            try:
+                with open("/tmp/miniapp_initdata_%d.txt" % ts, "w", encoding="utf-8") as f:
+                    f.write(init_data)
+                with open("/tmp/miniapp_initdata_last.txt", "w", encoding="utf-8") as f:
+                    f.write(init_data)
+            except Exception:
+                pass
+            sys.stderr.write("[auth] initData len=%d ts=%d head=%s tail=%s\n" % (
+                len(init_data), ts, init_data[:120], init_data[-60:] if len(init_data) > 60 else ""))
             if not init_data:
                 return self._send_json({"error": "initData required"}, 400)
             token = miniapp_auth.load_bot_token()
             payload, err = miniapp_auth.login(init_data, token)
             if err:
+                sys.stderr.write("[auth] login error: %s\n" % err)
                 return self._send_json({"error": err}, 403)
             return self._send_json(payload)
         if p.path == "/api/auth/logout":

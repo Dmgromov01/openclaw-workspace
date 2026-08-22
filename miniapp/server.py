@@ -225,6 +225,21 @@ class Handler(SimpleHTTPRequestHandler):
     # ---------- routes ----------
     def do_GET(self):
         p = urlparse(self.path)
+        if p.path in ("/", "/index.html"):
+            # index.html отдаём с no-cache, чтобы Telegram WebView не держал старую версию
+            try:
+                with open(os.path.join(STATIC, "index.html"), "rb") as f:
+                    body = f.read()
+            except Exception:
+                return self._send_json({"error": "no index"}, 500)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if p.path == "/api/auth/me":
             user = self._require_auth()
             if user is None:

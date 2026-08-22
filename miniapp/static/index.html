@@ -501,6 +501,61 @@
         setTimeout(() => setCopied(false), 2000);
       };
 
+      // ================= 6. ВИКТОРИНЫ (Open Trivia DB) & ИДЕИ (BoredAPI) =================
+      const [quiz, setQuiz] = useState(null);
+      const [quizLoading, setQuizLoading] = useState(false);
+      const [quizError, setQuizError] = useState('');
+      const [showAnswer, setShowAnswer] = useState(false);
+
+      const [activity, setActivity] = useState(null);
+      const [activityLoading, setActivityLoading] = useState(false);
+      const [activityError, setActivityError] = useState('');
+
+      const loadQuiz = () => {
+        setQuizLoading(true); setQuizError(''); setShowAnswer(false);
+        apiFetch('/miniapp/api/quiz?count=1')
+          .then(r => r.json())
+          .then(d => {
+            if (d.ok && d.clues && d.clues.length) setQuiz(d.clues[0]);
+            else setQuizError(d.error || 'Не удалось получить вопрос');
+          })
+          .catch(() => setQuizError('Сервер недоступен'))
+          .finally(() => setQuizLoading(false));
+      };
+
+      const loadActivity = () => {
+        setActivityLoading(true); setActivityError('');
+        apiFetch('/miniapp/api/activity')
+          .then(r => r.json())
+          .then(d => {
+            if (d.ok && d.activity && d.activity.activity) setActivity(d.activity);
+            else setActivityError(d.error || 'Не удалось получить идею');
+          })
+          .catch(() => setActivityError('Сервер недоступен'))
+          .finally(() => setActivityLoading(false));
+      };
+
+      useEffect(() => {
+        if (view === 'fun') {
+          if (!quiz) loadQuiz();
+          if (!activity) loadActivity();
+        }
+      }, [view]);
+
+      const priceLabel = (p) => {
+        if (p === undefined || p === null) return '';
+        if (p === 0) return 'Бесплатно';
+        if (p < 0.3) return 'Дёшево';
+        if (p < 0.7) return 'Средне';
+        return 'Дорого';
+      };
+      const accessLabel = (a) => {
+        if (a === undefined || a === null) return '';
+        if (a < 0.3) return 'Легко организовать';
+        if (a < 0.7) return 'Средняя сложность';
+        return 'Сложно организовать';
+      };
+
       return (
         <div className="max-w-xl mx-auto px-5 py-4 font-sans">
 
@@ -948,6 +1003,20 @@
                 </>)}
               </div>
 
+              {/* 6. Викторины & Идеи (по клику на значок) */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <button
+                  onClick={() => { haptic('medium'); setView('fun'); }}
+                  className="w-full flex items-center justify-between gap-1.5 active:scale-98 transition"
+                >
+                  <div className="text-base font-black text-slate-900">🎲 Викторины & Идеи</div>
+                  <span className="text-xs font-black text-blue-600">→</span>
+                </button>
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div className="text-xs text-slate-600">Вопросы для викторин + идеи, чем заняться, когда скучно.</div>
+                </div>
+              </div>
+
             </div>
           )}
 
@@ -1145,6 +1214,15 @@
                   </>
                 )}
               </div>
+              <button
+                onClick={() => { haptic('light'); loadDigest(); }}
+                className="w-full py-3 bg-slate-900 active:scale-98 text-white rounded-2xl font-bold text-xs transition"
+              >
+                🔄 Обновить дайджест
+              </button>
+            </div>
+          )}
+
           {/* ================= 5. ЭКРАН: ВИКТОРИНЫ & ИДЕИ ================= */}
           {auth.state === 'ok' && view === 'fun' && (
             <div className="space-y-5 animate-fade-in">

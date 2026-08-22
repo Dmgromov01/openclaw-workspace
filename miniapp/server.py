@@ -14,6 +14,9 @@ import os
 import sys
 import time
 import threading
+import urllib.request
+import urllib.parse
+import html
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -106,6 +109,16 @@ def build_calendar_json(days=7):
             label += " (сегодня)"
         out.append({"date": d.isoformat(), "label": label, "events": byday.get(d.isoformat(), [])})
     return {"days": out, "ts": int(time.time())}
+
+def _proxy_json(url, timeout=12):
+    """GET внешнего http API → (dict, None) или (None, err)."""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "PersonalHub/1.0"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode("utf-8", "replace")), None
+    except Exception as ex:
+        return None, str(ex)
+
 
 DEFAULT_SOURCES = [
     {"id": 1, "type": "TG", "name": "meduzalive", "title": "Медуза"},
@@ -258,6 +271,43 @@ class Handler(SimpleHTTPRequestHandler):
                         return self._send_json({"error": str(ex), "days": []}, 500)
                 data = CAL_CACHE["data"]
             return self._send_json(data)
+        if p.path == "/api/quiz":
+            # Прокси к Open Trivia DB (https) — jservice.io мёртв с 2022
+            if self._require_auth() is None:
+                return
+            q = parse_qs(p.query)
+            count = q.get("count", ["1"])[0]
+            data, err = _proxy_json("https://opentdb.com/api.php?amount=" + count)
+            if err:
+                return self._send_json({"error": err}, 502)
+            clues = []
+            for r in data.get("results", []):
+                clues.append({
+                    "question": html.unescape(r.get("question", "")),
+                    "answer": html.unescape(r.get("correct_answer", "")),
+                    "category": {"title": html.unescape(r.get("category", ""))},
+                    "value": None,
+                    "difficulty": r.get("difficulty"),
+                    "airdate": None,
+                })
+            return self._send_json({"ok": True, "clues": clues})
+        if p.path == "/api/activity":
+            # Прокси к BoredAPI (форк Le Wagon) — boredapi.com мёртв
+            if self._require_auth() is None:
+                return
+            q = parse_qs(p.query)
+            params = []
+            for k in ("type", "participants", "price", "minprice", "maxprice",
+                      "minaccessibility", "maxaccessibility"):
+                if k in q:
+                    params.append(f"{k}={q[k][0]}")
+            url = "https://bored.api.lewagon.com/api/activity"
+            if params:
+                url += "?" + "&".join(params)
+            data, err = _proxy_json(url)
+            if err:
+                return self._send_json({"error": err}, 502)
+            return self._send_json({"ok": True, "activity": data})
         return super().do_GET()
 
     def do_POST(self):

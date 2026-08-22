@@ -5,7 +5,7 @@ from pathlib import Path
 from aiogram import Bot
 from aiogram.types import MenuButtonWebApp, WebAppInfo
 
-MINIAPP_URL = "https://gbkz.uk/miniapp/"
+MINIAPP_URL = "https://gbkz.uk/miniapp/?v=2"
 
 
 def get_token(paths=None):

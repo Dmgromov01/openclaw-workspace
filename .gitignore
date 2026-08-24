@@ -18,6 +18,7 @@ node_modules/
 
 # Логи и временное
 *.log
+*.log.*
 *.tmp
 .DS_Store
 

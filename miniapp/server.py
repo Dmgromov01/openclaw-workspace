@@ -129,6 +129,34 @@ DEFAULT_SOURCES = [
     {"id": 6, "type": "RSS", "name": "https://www.kommersant.ru/rss/news.xml", "title": "Коммерсантъ"},
 ]
 
+# MyMemory API: бесплатный перевод без ключа. С email-параметром (de=) лимит 50K симв./день вместо 5K.
+# Email НЕ светится в клиенте — проксируется только нашим сервером.
+MYMEMORY_EMAIL = "dmgromov03@gmail.com"
+MYMEMORY_MAX_CHARS = 2000  # жёсткий лимит на запрос (MyMemory: аноним 500, с email больше)
+
+
+class MyMemoryError(Exception):
+    pass
+
+
+def translate_mymemory(text: str, lang_from: str, lang_to: str) -> dict:
+    """Прокси к MyMemory: возвращает {ok, text, match, source} или бросает MyMemoryError."""
+    q = urllib.parse.quote(text)
+    url = (f"https://api.mymemory.translated.net/get?q={q}"
+           f"&langpair={lang_from}|{lang_to}&de={MYMEMORY_EMAIL}")
+    data, err = _proxy_json(url)
+    if err:
+        raise MyMemoryError(err)
+    if data.get("responseStatus") != 200:
+        raise MyMemoryError(data.get("responseDetails") or "translate failed")
+    rd = data.get("responseData") or {}
+    return {
+        "ok": True,
+        "text": rd.get("translatedText") or "",
+        "match": rd.get("match", 1),
+    }
+
+
 DIGEST_CACHE = {"ts": 0.0, "data": None}
 CACHE_LOCK = threading.Lock()
 
@@ -430,6 +458,27 @@ class Handler(SimpleHTTPRequestHandler):
             save_sources(sources)
             DIGEST_CACHE["ts"] = 0  # сброс кеша дайджеста
             return self._send_json({"ok": True, "sources": sources})
+        if p.path == "/api/translate":
+            # Переводчик: прокси к MyMemory (бесплатно, без ключа, лимит 50K/день с email)
+            if self._require_auth() is None:
+                return
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length) or b"{}")
+            except Exception:
+                return self._send_json({"error": "bad json"}, 400)
+            text = (body.get("text") or "").strip()
+            lang_from = (body.get("from") or "en").strip()
+            lang_to = (body.get("to") or "ru").strip()
+            if not text:
+                return self._send_json({"error": "text required"}, 400)
+            if len(text) > MYMEMORY_MAX_CHARS:
+                return self._send_json({"error": f"text too long (max {MYMEMORY_MAX_CHARS})"}, 400)
+            try:
+                res = translate_mymemory(text, lang_from, lang_to)
+            except MyMemoryError as ex:
+                return self._send_json({"error": str(ex)}, 502)
+            return self._send_json(res)
         return self._send_json({"error": "not found"}, 404)
 
     def do_DELETE(self):

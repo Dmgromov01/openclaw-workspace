@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>R2D2 · Apple Weather</title>
+<style>
+  :root {
+    --bg: #EEF3F9;
+    --card: #FFFFFF;
+    --text: #0F0F0F;
+    --text2: #707579;
+    --accent: #3390EC;
+    --accent-soft: rgba(51,144,236,0.12);
+    --divider: #E3E9F0;
+    --icon-bg: #E9F2FB;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E1621;
+      --card: #17212B;
+      --text: #F5F5F5;
+      --text2: #7D8B99;
+      --accent: #5EB5F7;
+      --accent-soft: rgba(94,181,247,0.15);
+      --divider: #1E2C3A;
+      --icon-bg: #1F2C3A;
+    }
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  /* ---------- Шапка ---------- */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: calc(10px + env(safe-area-inset-top)) 14px 8px;
+    position:sticky; top:0; z-index:20;
+    background:var(--bg);
+  }
+  .header .close {
+    width:30px; height:30px; border-radius:50%;
+    background:var(--icon-bg); color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:600; flex-shrink:0;
+  }
+  .header .mid { text-align:center; flex:1; min-width:0; padding:0 6px; }
+  .header .title { font-size:17px; font-weight:600; letter-spacing:-0.2px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .header .subtitle { font-size:13px; color:var(--text2); font-weight:400; line-height:1.3; }
+
+  /* ---------- Плашки-статусы ---------- */
+  .pills {
+    display:flex; gap:8px; overflow-x:auto; padding:8px 14px 12px;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch;
+  }
+  .pills::-webkit-scrollbar { display:none; }
+  .pill {
+    flex:0 0 auto; display:flex; align-items:center; gap:8px;
+    background:var(--card); border-radius:12px; padding:9px 12px;
+    min-width:132px;
+  }
+  .pill .ic {
+    width:30px; height:30px; border-radius:9px; flex-shrink:0;
+    background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pill .txt { font-size:15px; font-weight:500; line-height:1.25; white-space:nowrap; }
+  .pill .arrow { margin-left:auto; color:var(--text2); font-size:14px; font-weight:500; }
+
+  /* ---------- Карточки (Telegram: плоские, без теней) ---------- */
+  .card {
+    background:var(--card);
+    border-radius:var(--radius);
+    margin:10px 14px 0;
+    overflow:hidden;
+  }
+  .row {
+    display:flex; align-items:center; gap:12px;
+    min-height:50px; padding:7px 14px 7px 12px;
+    position:relative; background:transparent;
+  }
+  .row + .row::before {
+    content:""; position:absolute; left:54px; right:0; top:0;
+    height:0.5px; background:var(--divider); transform:scaleY(0.5);
+  }
+  .row .ic {
+    width:32px; height:32px; border-radius:9px; flex-shrink:0;
+    background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .row .body { flex:1; min-width:0; }
+  .row .title { font-size:17px; font-weight:400; color:var(--text); line-height:1.3; }
+  .row .status { font-size:15px; font-weight:400; color:var(--text2); white-space:nowrap; }
+  .row .chev { color:var(--text2); font-weight:500; font-size:16px; margin-left:4px; }
+
+  /* ---------- Погода: Apple Weather style (iOS 26/27 Liquid Glass) ---------- */
+  .weather-card {
+    margin:10px 14px 0; border-radius:var(--radius); overflow:hidden; position:relative;
+    background:
+      radial-gradient(130% 90% at 82% -10%, rgba(255,236,170,0.95) 0%, rgba(255,214,110,0.45) 28%, rgba(255,214,110,0) 52%),
+      radial-gradient(90% 70% at 10% 105%, rgba(80,170,255,0.55) 0%, rgba(80,170,255,0) 58%),
+      radial-gradient(70% 60% at 55% 45%, rgba(140,215,255,0.4) 0%, rgba(140,215,255,0) 62%),
+      linear-gradient(180deg, #0B5FD6 0%, #1E7FF0 38%, #55ADF6 72%, #8ED0FB 100%);
+    color:#FFFFFF;
+  }
+  /* стеклянный блик сверху (Liquid Glass) */
+  .weather-card::after {
+    content:""; position:absolute; left:0; top:0; right:0; height:46%;
+    background:linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.05) 60%, rgba(255,255,255,0) 100%);
+    border-radius:var(--radius) var(--radius) 0 0;
+    pointer-events:none; z-index:0;
+  }
+  .weather-card .cloud-bg {
+    position:absolute; inset:0; pointer-events:none; opacity:0.5; z-index:0;
+  }
+  @media (prefers-color-scheme: dark) {
+    .weather-card {
+      background:
+        radial-gradient(120% 80% at 80% 0%, rgba(255,220,150,0.35) 0%, rgba(255,220,150,0.1) 30%, rgba(255,220,150,0) 50%),
+        radial-gradient(90% 70% at 15% 100%, rgba(60,120,220,0.5) 0%, rgba(60,120,220,0) 58%),
+        radial-gradient(70% 60% at 55% 40%, rgba(90,160,240,0.3) 0%, rgba(90,160,240,0) 62%),
+        linear-gradient(180deg, #081C3A 0%, #0F2C5A 50%, #16386E 100%);
+      color:#EAF4FF;
+    }
+    .weather-card::after {
+      background:linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 60%);
+    }
+    .weather-card .cloud-bg { opacity:0.25; }
+  }
+  .weather-top { display:flex; align-items:center; padding:16px 14px 12px; position:relative; z-index:2; }
+  .weather-left { flex:1; }
+  .weather-city { font-size:14px; color:#FFFFFF; font-weight:600; text-shadow:0 1px 6px rgba(10,50,110,0.45); }
+  .weather-temp { font-size:50px; font-weight:700; letter-spacing:-2px; line-height:1.05; text-shadow:0 2px 14px rgba(10,50,110,0.4); }
+  .weather-temp sup { font-size:26px; font-weight:600; }
+  .weather-cond { font-size:14px; color:#F0F8FF; font-weight:500; text-shadow:0 1px 6px rgba(10,50,110,0.45); }
+  .weather-3d { width:68px; height:68px; filter:drop-shadow(0 10px 20px rgba(10,60,140,0.5)); }
+  .weather-hourly {
+    display:flex; gap:2px; overflow-x:auto;
+    padding:10px 8px 14px; border-top:0.5px solid rgba(255,255,255,0.35);
+    scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;
+    position:relative; z-index:2;
+  }
+  .weather-hourly::-webkit-scrollbar { display:none; }
+  .h-item { text-align:center; flex:0 0 52px; scroll-snap-align:center; }
+  .h-item .h-time { font-size:12px; color:#FFFFFF; font-weight:500; text-shadow:0 1px 4px rgba(10,50,110,0.4); }
+  .h-item .h-ic { width:24px; height:24px; margin:4px auto; display:block; opacity:0.95; filter:drop-shadow(0 1px 3px rgba(10,50,110,0.35)); }
+  .h-item .h-t { font-size:14px; font-weight:700; color:#FFFFFF; text-shadow:0 1px 4px rgba(10,50,110,0.4); }
+
+  /* ---------- Таб-бар (Telegram: простой, снизу) ---------- */
+  .tabbar {
+    position:fixed; left:0; right:0; bottom:0; z-index:100;
+    display:flex; justify-content:space-around; align-items:center;
+    background:var(--card);
+    border-top:0.5px solid var(--divider);
+    padding:6px 8px calc(8px + env(safe-area-inset-bottom));
+  }
+  .tab { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:54px; min-height:44px; justify-content:center; }
+  .tab .ti { width:22px; height:22px; color:var(--text2); }
+  .tab .tl { font-size:10px; font-weight:500; color:var(--text2); }
+  .tab.active .ti { color:var(--accent); }
+  .tab.active .tl { color:var(--accent); }
+
+  .toast {
+    position:fixed; left:50%; bottom:100px; transform:translateX(-50%) translateY(20px);
+    background:rgba(28,28,30,0.92); color:#fff; font-size:13px; font-weight:500;
+    padding:10px 16px; border-radius:10px; opacity:0; pointer-events:none;
+    transition:opacity .25s, transform .25s; z-index:300; white-space:nowrap;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Шапка -->
+<div class="header">
+  <div class="close" onclick="closeApp()">✕</div>
+  <div class="mid"><div class="title" id="clockDate">—</div><div class="subtitle" id="clockTime">—</div></div>
+</div>
+
+<!-- Плашки -->
+<div class="pills">
+  <div class="pill" onclick="toast('Задачи скоро')">
+    <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg></div>
+    <div class="txt">0 задач</div><div class="arrow">⌄</div>
+  </div>
+  <div class="pill" onclick="toast('Дайджест скоро')">
+    <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 18.5V5.5A1.5 1.5 0 016 4h12a1.5 1.5 0 011.5 1.5v13a1.5 1.5 0 01-1.5 1.5H6A1.5 1.5 0 014.5 18.5z"/><path d="M8 9h8M8 12.5h8M8 16h4.5"/></svg></div>
+    <div class="txt">3 новых дайджеста</div>
+  </div>
+  <div class="pill" onclick="toast('Поиск скоро')">
+    <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/></svg></div>
+    <div class="txt">2 активных поиска</div><div class="arrow">›</div>
+  </div>
+</div>
+
+<!-- Погода -->
+<div class="weather-card">
+  <!-- фоновая картинка: облака -->
+  <svg class="cloud-bg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice">
+    <g fill="#FFFFFF" opacity="0.35">
+      <ellipse cx="70" cy="150" rx="55" ry="22"/>
+      <ellipse cx="110" cy="138" rx="40" ry="18"/>
+      <ellipse cx="40" cy="140" rx="30" ry="14"/>
+    </g>
+    <g fill="#FFFFFF" opacity="0.25">
+      <ellipse cx="300" cy="120" rx="60" ry="24"/>
+      <ellipse cx="345" cy="108" rx="42" ry="18"/>
+      <ellipse cx="265" cy="112" rx="32" ry="15"/>
+    </g>
+    <g fill="#FFFFFF" opacity="0.18">
+      <ellipse cx="190" cy="95" rx="70" ry="22"/>
+      <ellipse cx="240" cy="84" rx="45" ry="16"/>
+    </g>
+  </svg>
+  <div class="weather-top">
+    <div class="weather-left">
+      <div class="weather-city">📍 Москва</div>
+      <div class="weather-temp">19<sup>°C</sup></div>
+      <div class="weather-cond">Облачно с прояснениями</div>
+    </div>
+    <svg class="weather-3d" viewBox="0 0 64 64" fill="none">
+      <defs>
+        <linearGradient id="cld" x1="10" y1="10" x2="54" y2="54">
+          <stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#D6E4F0"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="32" cy="50" rx="22" ry="5" fill="rgba(120,160,200,0.18)"/>
+      <path d="M20 44a10 10 0 01-1-19.9 15 15 0 0129.4-3.4A11.5 11.5 0 0147 44H20z" fill="url(#cld)" stroke="#B8CBE0" stroke-width="0.8"/>
+      <ellipse cx="27" cy="37" rx="9" ry="5" fill="#FFFFFF" opacity="0.85"/>
+      <ellipse cx="38" cy="34" rx="7" ry="4" fill="#FFFFFF" opacity="0.6"/>
+    </svg>
+  </div>
+  <div class="weather-hourly">
+    <div class="h-item"><div class="h-time">11:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">20°</div></div>
+    <div class="h-item"><div class="h-time">12:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">21°</div></div>
+    <div class="h-item"><div class="h-time">13:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">22°</div></div>
+    <div class="h-item"><div class="h-time">14:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">22°</div></div>
+    <div class="h-item"><div class="h-time">15:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">21°</div></div>
+    <div class="h-item"><div class="h-time">16:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">21°</div></div>
+    <div class="h-item"><div class="h-time">17:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">20°</div></div>
+    <div class="h-item"><div class="h-time">18:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">19°</div></div>
+    <div class="h-item"><div class="h-time">19:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">18°</div></div>
+    <div class="h-item"><div class="h-time">20:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">17°</div></div>
+  </div>
+</div>
+
+<!-- Перевод -->
+<div class="card">
+  <div class="row" onclick="toast('RU→ES скоро')">
+    <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9M8.5 4v2c0 4.5-3 7.5-6.5 9M7 11.5c2 2 4.5 3.5 8 4M14 4l-4 13M15.5 6.5l4.5 12.5M19 6l2 13"/></svg></div>
+    <div class="body"><div class="title">Русский → Испанский</div></div>
+    <div class="status">RU → ES</div><div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('RU↔EN скоро')">
+    <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9M8.5 4v2c0 4.5-3 7.5-6.5 9M7 11.5c2 2 4.5 3.5 8 4M14 4l-4 13M15.5 6.5l4.5 12.5M19 6l2 13"/></svg></div>
+    <div class="body"><div class="title">Русский ↔ Английский</div></div>
+    <div class="status">RU ↔ EN</div><div class="chev">›</div>
+  </div>
+</div>
+
+<!-- Сервисы -->
+<div class="card">
+  <div class="row" onclick="toast('Дайджест скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 18.5V5.5A1.5 1.5 0 016 4h12a1.5 1.5 0 011.5 1.5v13a1.5 1.5 0 01-1.5 1.5H6A1.5 1.5 0 014.5 18.5z"/><path d="M8 9h8M8 12.5h8M8 16h4.5"/></svg></div><div class="body"><div class="title">Дайджест</div></div><div class="status">3 новых</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Поездки скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M9 8V6.5A2.5 2.5 0 0111.5 4h1A2.5 2.5 0 0115 6.5V8M4 13h16"/></svg></div><div class="body"><div class="title">Поездки</div></div><div class="status">Планы</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('OpenClaw скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><text x="12" y="15.5" text-anchor="middle" font-size="8.5" font-weight="800" fill="currentColor" stroke="none">GA</text></svg></div><div class="body"><div class="title">OpenClaw</div></div><div class="status">Поиск</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Викторина скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M9.8 9.2a2.3 2.3 0 114.5.9c-.6 1-1.8 1.3-2.3 2.4M12 16h.01"/></svg></div><div class="body"><div class="title">Викторина</div></div><div class="status">Проверь себя</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Пароли скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 017 0v2.5M12 14.5v2"/></svg></div><div class="body"><div class="title">Пароли</div></div><div class="status">Менеджер</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Валюты скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M14.5 8.5c-.6-.6-1.5-.9-2.5-.9-1.6 0-2.8.9-2.8 2.1 0 2.8 5.6 1.4 5.6 4.2 0 1.2-1.2 2.1-2.8 2.1-1 0-1.9-.3-2.5-.9M12 6v12"/></svg></div><div class="body"><div class="title">Валюты</div></div><div class="status">Курсы</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Конвертер скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 5v14M5 8l3-3 3 3M16 5v14M13 16l3 3 3-3"/></svg></div><div class="body"><div class="title">Конвертер</div></div><div class="status">Единицы</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Календарь скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/><circle cx="12" cy="15" r="1.2" fill="currentColor" stroke="none"/></svg></div><div class="body"><div class="title">Календарь</div></div><div class="status">События</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Заметки скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 4.5l4 4L8 20H4v-4L15.5 4.5z"/><path d="M13.5 6.5l4 4"/></svg></div><div class="body"><div class="title">Заметки</div></div><div class="status">Быстрые</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Файлы скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h7L18 8v12.5H6.5z"/><path d="M13.5 3.5V8H18M9.5 13h5M9.5 16.5h5"/></svg></div><div class="body"><div class="title">Файлы</div></div><div class="status">Хранилище</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('QR-сканер скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8.5V6a2 2 0 012-2h2.5M15.5 4H18a2 2 0 012 2v2.5M20 15.5V18a2 2 0 01-2 2h-2.5M8.5 20H6a2 2 0 01-2-2v-2.5"/><path d="M8 9h3v3H8zM13 9h3v3h-3zM8 14h3v3H8zM14 14h2v2h-2zM17 14h3v3h-3z"/></svg></div><div class="body"><div class="title">QR-сканер</div></div><div class="status">Сканировать</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Таймер скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><path d="M12 10v3.5l2.5 1.5M10 3h4M12 3v2.5"/></svg></div><div class="body"><div class="title">Таймер</div></div><div class="status">Обратный отсчёт</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Напоминания скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10.5a6 6 0 0112 0c0 4.5 1.5 6 1.5 6h-15S6 15 6 10.5z"/><path d="M10 19.5a2.2 2.2 0 004 0"/></svg></div><div class="body"><div class="title">Напоминания</div></div><div class="status">Список</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Погода скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="15.5" cy="7.5" r="3.2" fill="#F0C419"/><path d="M6 15.5a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.4 6.5 6.5 0 0119 15.5H6z" fill="currentColor" opacity="0.85"/></svg></div><div class="body"><div class="title">Погода</div></div><div class="status">Прогноз</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Гороскоп скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6.1.7-4.6 4.1 1.2 6L12 16.6 6.7 19.4l1.2-6L3.3 9.3l6.1-.7z"/></svg></div><div class="body"><div class="title">Гороскоп</div></div><div class="status">Ежедневный</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Аналитика скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V14M10 20V9M15 20V12M20 20V6"/></svg></div><div class="body"><div class="title">Аналитика</div></div><div class="status">Статистика</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Идеи скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 18h5M10 21h4M12 3a6.5 6.5 0 00-3.8 11.8c.6.5 1 1.2 1.1 2h5.4c.1-.8.5-1.5 1.1-2A6.5 6.5 0 0012 3z"/></svg></div><div class="body"><div class="title">Идеи</div></div><div class="status">AI-помощник</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Чек-листы скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="5.5" cy="18" r="1.4" fill="currentColor" stroke="none"/><path d="M10 6h9M10 12h9M10 18h9"/></svg></div><div class="body"><div class="title">Чек-листы</div></div><div class="status">Мои списки</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Фокус скоро')"><div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="0.8" fill="currentColor" stroke="none"/></svg></div><div class="body"><div class="title">Фокус</div></div><div class="status">Помодоро</div><div class="chev">›</div></div>
+  <div class="row" onclick="toast('Добавить скоро')"><div class="ic" style="background:var(--accent);color:#fff;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div><div class="body"><div class="title">Добавить</div></div><div class="chev">›</div></div>
+</div>
+
+<!-- Таб-бар -->
+<div class="tabbar">
+  <div class="tab active" data-tab="0" onclick="switchTab(0)">
+    <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V19a1 1 0 001 1h10a1 1 0 001-1V9.5"/><path d="M10 20v-5h4v5"/></svg>
+    <div class="tl">Главная</div>
+  </div>
+  <div class="tab" data-tab="1" onclick="switchTab(1)">
+    <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+    <div class="tl">Поиск</div>
+  </div>
+  <div class="tab" data-tab="2" onclick="switchTab(2)">
+    <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>
+    <div class="tl">Ассистент</div>
+  </div>
+  <div class="tab" data-tab="3" onclick="switchTab(3)">
+    <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10.5a6 6 0 0112 0c0 4.5 1.5 6 1.5 6h-15S6 15 6 10.5z"/><path d="M10 19.5a2.2 2.2 0 004 0"/></svg>
+    <div class="tl">Уведомления</div>
+  </div>
+  <div class="tab" data-tab="4" onclick="switchTab(4)">
+    <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.2-3.2 4-4.5 7.5-4.5s6.3 1.3 7.5 4.5"/></svg>
+    <div class="tl">Профиль</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let toastTimer = null;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+  }
+  function closeApp() {
+    if (window.Telegram?.WebApp?.close) { try { window.Telegram.WebApp.close(); } catch(e){} }
+    else toast('Это прототип — закрой вкладку');
+  }
+  function switchTab(i) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.tab === i));
+    const names = ['Главная','Поиск','Ассистент','Уведомления','Профиль'];
+    if (i !== 0) toast(names[i] + ' — скоро');
+  }
+  // Живые дата и время
+  function updateClock() {
+    const d = new Date();
+    const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+    const dd = document.getElementById('clockDate');
+    const tt = document.getElementById('clockTime');
+    if (dd) dd.textContent = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
+    if (tt) tt.textContent = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
+</script>
+</body>
+</html>

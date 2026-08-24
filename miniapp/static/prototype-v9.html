@@ -83,21 +83,23 @@
   .row .chev { color:#C6C6C8; font-weight:600; font-size:17px; margin-left:4px; }
 
   /* ---------- Погода (белая, спокойная) ---------- */
-  .weather-top { display:flex; align-items:center; padding:18px 18px 12px; background:linear-gradient(180deg, #A9D4F8 0%, #E9F4FC 100%); border-radius:26px 26px 0 0; }
+  .weather-top { display:flex; align-items:center; padding:14px 18px 10px; background:linear-gradient(180deg, #A9D4F8 0%, #E9F4FC 100%); border-radius:26px 26px 0 0; }
   .weather-left { flex:1; }
-  .weather-city { font-size:14px; color:#5A7FA0; font-weight:600; }
-  .weather-temp { font-size:46px; font-weight:700; letter-spacing:-2px; line-height:1.05; }
-  .weather-temp sup { font-size:24px; font-weight:600; color:#3C3C43; }
-  .weather-cond { font-size:13px; color:#5A7FA0; font-weight:500; }
-  .weather-3d { width:70px; height:70px; filter:drop-shadow(0 8px 14px rgba(120,160,200,0.35)); }
+  .weather-city { font-size:13px; color:#5A7FA0; font-weight:600; }
+  .weather-temp { font-size:42px; font-weight:700; letter-spacing:-2px; line-height:1.05; }
+  .weather-temp sup { font-size:22px; font-weight:600; color:#3C3C43; }
+  .weather-cond { font-size:12.5px; color:#5A7FA0; font-weight:500; }
+  .weather-3d { width:62px; height:62px; filter:drop-shadow(0 8px 14px rgba(120,160,200,0.35)); }
   .weather-hourly {
-    display:grid; grid-template-columns:repeat(5,1fr); gap:2px;
-    padding:12px 14px 16px; border-top:0.5px solid #F0F0F2;
+    display:flex; gap:2px; overflow-x:auto;
+    padding:8px 10px 12px; border-top:0.5px solid #F0F0F2;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;
   }
-  .h-item { text-align:center; }
-  .h-item .h-time { font-size:12px; color:#8E8E93; font-weight:500; }
-  .h-item .h-ic { width:24px; height:24px; margin:4px auto; display:block; opacity:0.85; }
-  .h-item .h-t { font-size:14px; font-weight:700; color:#3C3C43; }
+  .weather-hourly::-webkit-scrollbar { display:none; }
+  .h-item { text-align:center; flex:0 0 52px; scroll-snap-align:center; }
+  .h-item .h-time { font-size:11px; color:#8E8E93; font-weight:500; }
+  .h-item .h-ic { width:22px; height:22px; margin:3px auto; display:block; opacity:0.85; }
+  .h-item .h-t { font-size:13px; font-weight:700; color:#3C3C43; }
 
   /* ---------- Таб-бар (плавающий) ---------- */
   .tabbar {
@@ -130,7 +132,7 @@
 <!-- Шапка -->
 <div class="header">
   <div class="close" onclick="closeApp()">Закрыть</div>
-  <div class="mid"><div class="title">R2D2</div><div class="subtitle">мини-приложение</div></div>
+  <div class="mid"><div class="title" id="clockDate">—</div><div class="subtitle" id="clockTime">—</div></div>
   <div class="menu" onclick="toast('Меню скоро')">⋯</div>
 </div>
 
@@ -176,6 +178,11 @@
     <div class="h-item"><div class="h-time">13:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#B8B8BE"/></svg><div class="h-t">22°</div></div>
     <div class="h-item"><div class="h-time">14:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#B8B8BE"/></svg><div class="h-t">22°</div></div>
     <div class="h-item"><div class="h-time">15:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#B8B8BE"/></svg><div class="h-t">21°</div></div>
+    <div class="h-item"><div class="h-time">16:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#B8B8BE"/></svg><div class="h-t">21°</div></div>
+    <div class="h-item"><div class="h-time">17:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#B8B8BE"/></svg><div class="h-t">20°</div></div>
+    <div class="h-item"><div class="h-time">18:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#B8B8BE"/></svg><div class="h-t">19°</div></div>
+    <div class="h-item"><div class="h-time">19:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#B8B8BE"/></svg><div class="h-t">18°</div></div>
+    <div class="h-item"><div class="h-time">20:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#B8B8BE"/></svg><div class="h-t">17°</div></div>
   </div>
 </div>
 
@@ -261,6 +268,19 @@
     const names = ['Главная','Поиск','Ассистент','Уведомления','Профиль'];
     if (i !== 0) toast(names[i] + ' — скоро');
   }
+
+  // Живые дата и время в шапке (вместо названия приложения)
+  function updateClock() {
+    const d = new Date();
+    const days = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+    const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    const dd = document.getElementById('clockDate');
+    const tt = document.getElementById('clockTime');
+    if (dd) dd.textContent = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
+    if (tt) tt.textContent = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
 </script>
 </body>
 </html>

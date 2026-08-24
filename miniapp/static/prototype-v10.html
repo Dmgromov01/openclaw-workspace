@@ -99,48 +99,44 @@
   .row .status { font-size:15px; font-weight:400; color:var(--text2); white-space:nowrap; }
   .row .chev { color:var(--text2); font-weight:500; font-size:16px; margin-left:4px; }
 
-  /* ---------- Погода: насыщенная картинка-фон (небо + солнце + облака) ---------- */
+  /* ---------- Погода: чистое насыщенное небо (Apple Weather style) ---------- */
   .weather-card {
     margin:10px 14px 0; border-radius:var(--radius); overflow:hidden; position:relative;
     background:
-      radial-gradient(ellipse at 82% 8%, rgba(255,214,90,0.95) 0%, rgba(255,214,90,0) 42%),
-      radial-gradient(ellipse at 15% 110%, rgba(120,190,240,0.55) 0%, rgba(120,190,240,0) 55%),
-      linear-gradient(180deg, #3D9BF0 0%, #64B5F6 38%, #A9D4F8 78%, #E9F4FC 100%);
+      radial-gradient(ellipse at 84% 6%, rgba(255,222,89,0.95) 0%, rgba(255,222,89,0.35) 30%, rgba(255,222,89,0) 55%),
+      linear-gradient(180deg, #1565D8 0%, #2E8BF0 38%, #6FBDF7 72%, #A8DCFB 100%);
     color:#FFFFFF;
   }
   .weather-card .cloud-bg {
-    position:absolute; inset:0; pointer-events:none; opacity:0.5;
+    position:absolute; inset:0; pointer-events:none; opacity:0.55;
   }
   @media (prefers-color-scheme: dark) {
     .weather-card {
       background:
-        radial-gradient(ellipse at 82% 8%, rgba(255,200,80,0.5) 0%, rgba(255,200,80,0) 42%),
-        linear-gradient(180deg, #15304F 0%, #1F3A5C 55%, #17212B 100%);
-      color:#DCEBFA;
+        radial-gradient(ellipse at 84% 6%, rgba(255,214,120,0.4) 0%, rgba(255,214,120,0.12) 35%, rgba(255,214,120,0) 55%),
+        linear-gradient(180deg, #0B1F3D 0%, #14315A 55%, #1B3D6E 100%);
+      color:#E8F4FD;
     }
+    .weather-card .cloud-bg { opacity:0.22; }
   }
   .weather-top { display:flex; align-items:center; padding:16px 14px 12px; position:relative; z-index:1; }
   .weather-left { flex:1; }
-  .weather-city { font-size:14px; color:#EAF4FF; font-weight:600; text-shadow:0 1px 3px rgba(20,60,110,0.35); }
-  @media (prefers-color-scheme: dark) { .weather-city { color:#B8D8F5; } }
-  .weather-temp { font-size:48px; font-weight:700; letter-spacing:-2px; line-height:1.05; text-shadow:0 2px 10px rgba(20,60,110,0.4); }
-  .weather-temp sup { font-size:25px; font-weight:600; }
-  .weather-cond { font-size:14px; color:#EAF4FF; font-weight:500; text-shadow:0 1px 3px rgba(20,60,110,0.35); }
-  @media (prefers-color-scheme: dark) { .weather-cond { color:#B8D8F5; } }
-  .weather-3d { width:66px; height:66px; filter:drop-shadow(0 10px 18px rgba(20,80,150,0.5)); }
+  .weather-city { font-size:14px; color:#FFFFFF; font-weight:600; text-shadow:0 1px 4px rgba(15,70,140,0.4); }
+  .weather-temp { font-size:50px; font-weight:700; letter-spacing:-2px; line-height:1.05; text-shadow:0 2px 12px rgba(15,70,140,0.35); }
+  .weather-temp sup { font-size:26px; font-weight:600; }
+  .weather-cond { font-size:14px; color:#F0F8FF; font-weight:500; text-shadow:0 1px 4px rgba(15,70,140,0.4); }
+  .weather-3d { width:68px; height:68px; filter:drop-shadow(0 10px 18px rgba(15,70,150,0.45)); }
   .weather-hourly {
     display:flex; gap:2px; overflow-x:auto;
-    padding:10px 8px 14px; border-top:0.5px solid rgba(255,255,255,0.3);
+    padding:10px 8px 14px; border-top:0.5px solid rgba(255,255,255,0.35);
     scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;
     position:relative; z-index:1;
   }
   .weather-hourly::-webkit-scrollbar { display:none; }
   .h-item { text-align:center; flex:0 0 52px; scroll-snap-align:center; }
-  .h-item .h-time { font-size:12px; color:#EAF4FF; font-weight:500; text-shadow:0 1px 2px rgba(20,60,110,0.3); }
-  @media (prefers-color-scheme: dark) { .h-item .h-time { color:#B8D8F5; } }
-  .h-item .h-ic { width:24px; height:24px; margin:4px auto; display:block; opacity:0.95; filter:drop-shadow(0 1px 2px rgba(20,60,110,0.3)); }
-  .h-item .h-t { font-size:14px; font-weight:700; color:#FFFFFF; text-shadow:0 1px 2px rgba(20,60,110,0.3); }
-  @media (prefers-color-scheme: dark) { .h-item .h-t { color:#E8F4FD; } }
+  .h-item .h-time { font-size:12px; color:#FFFFFF; font-weight:500; text-shadow:0 1px 3px rgba(15,70,140,0.35); }
+  .h-item .h-ic { width:24px; height:24px; margin:4px auto; display:block; opacity:0.95; filter:drop-shadow(0 1px 2px rgba(15,70,140,0.3)); }
+  .h-item .h-t { font-size:14px; font-weight:700; color:#FFFFFF; text-shadow:0 1px 3px rgba(15,70,140,0.35); }
 
   /* ---------- Таб-бар (Telegram: простой, снизу) ---------- */
   .tabbar {

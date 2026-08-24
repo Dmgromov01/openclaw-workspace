@@ -99,6 +99,9 @@
 
   /* ===== WeatherCard — 2.6:1, атмосферный фон, тёмный текст слева ===== */
   .weather-card {
+    --fc: #1C1C1E;          /* цвет текста (дневной) */
+    --fc2: rgba(28,28,30,0.72); /* вторичный текст */
+    --div: rgba(28,28,30,0.12); /* разделитель */
     margin: 0 16px 12px;
     aspect-ratio: 2.6 / 1;
     border-radius: 24px;
@@ -113,6 +116,8 @@
     color: #1C1C1E;
   }
   /* затемнение для читаемости текста на светлых фонах — мягкое, слева */
+  .weather-card.dark { --fc: #FFFFFF; --fc2: rgba(255,255,255,0.78); --div: rgba(255,255,255,0.2); }
+  .weather-card.dark .weather-card__badge { background: rgba(20,20,30,0.4); border-color: rgba(255,255,255,0.25); }
   .weather-card::before {
     content:""; position:absolute; inset:0;
     background: linear-gradient(90deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.12) 38%, rgba(255,255,255,0) 55%);
@@ -124,20 +129,20 @@
     padding: 14px 16px 4px;
   }
   .weather-card__content { min-width:0; }
-  .weather-card__city { font-size:14px; font-weight:700; color:#1C1C1E; }
-  .weather-card__temp { font-size:44px; font-weight:200; letter-spacing:-2px; line-height:1; color:#1C1C1E; }
+  .weather-card__city { font-size:14px; font-weight:700; color:var(--fc); }
+  .weather-card__temp { font-size:44px; font-weight:200; letter-spacing:-2px; line-height:1; color:var(--fc); }
   .weather-card__temp sup { font-size:22px; font-weight:300; }
-  .weather-card__desc { font-size:12px; font-weight:600; color:rgba(28,28,30,0.75); margin-top:2px; }
+  .weather-card__desc { font-size:12px; font-weight:600; color:var(--fc2); margin-top:2px; }
   .weather-card__badge {
     background: rgba(255,255,255,0.45);
     border: 1px solid rgba(255,255,255,0.55);
     border-radius: 999px;
     padding: 5px 12px;
-    font-size: 11px; font-weight: 700; color: #1C1C1E;
+    font-size: 11px; font-weight: 700; color: var(--fc);
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     flex-shrink: 0;
   }
-  .weather-card__divider { height: 1px; background: rgba(28,28,30,0.1); margin: 4px 16px 0; position:relative; z-index:1; }
+  .weather-card__divider { height: 1px; background: var(--div); margin: 4px 16px 0; position:relative; z-index:1; }
   .weather-card__hourly {
     position: relative; z-index: 1;
     display:flex; gap:6px; overflow-x:auto;
@@ -146,9 +151,9 @@
   }
   .weather-card__hourly::-webkit-scrollbar { display:none; }
   .h-item { text-align:center; flex:0 0 40px; scroll-snap-align:center; }
-  .h-item .h-time { font-size:10px; color:rgba(28,28,30,0.6); font-weight:600; }
-  .h-item .h-ic { width:22px; height:22px; margin:3px auto; display:block; object-fit:contain; }
-  .h-item .h-t { font-size:13px; font-weight:700; color:#1C1C1E; }
+  .h-item .h-time { font-size:10px; color:var(--fc2); font-weight:600; }
+  .h-item .h-ic { width:22px; height:22px; margin:3px auto; display:block; color:var(--fc); }
+  .h-item .h-t { font-size:13px; font-weight:700; color:var(--fc); }
 
   /* ===== Cards (translator + services, radius 20-22px) ===== */
   .card {
@@ -420,41 +425,73 @@
     if (i !== 0) toast(names[i] + ' — скоро');
   }
 
-  // ===== WEATHER STATES: маппинг + фоны (2.6:1) =====
+  // ===== WEATHER STATES: 14 дневных + 6 ночных, иконки Lucide (по ICON_MAP), ночные фоны =====
   const WEATHER_STATES = [
-    {"key":"sunny","label_ru":"Солнечно","bg":"./weather-assets/card-backgrounds/sunny-background.png","small":"./weather-assets/hourly-icons/sunny.png"},
-    {"key":"mostly-sunny","label_ru":"Преимущественно солнечно","bg":"./weather-assets/card-backgrounds/mostly-sunny-background.png","small":"./weather-assets/hourly-icons/mostly-sunny.png"},
-    {"key":"partly-cloudy","label_ru":"Облачно с прояснениями","bg":"./weather-assets/card-backgrounds/partly-cloudy-background.png","small":"./weather-assets/hourly-icons/partly-cloudy.png"},
-    {"key":"cloudy","label_ru":"Облачно","bg":"./weather-assets/card-backgrounds/cloudy-background.png","small":"./weather-assets/hourly-icons/cloudy.png"},
-    {"key":"overcast","label_ru":"Пасмурно","bg":"./weather-assets/card-backgrounds/overcast-background.png","small":"./weather-assets/hourly-icons/overcast.png"},
-    {"key":"drizzle","label_ru":"Морось","bg":"./weather-assets/card-backgrounds/drizzle-background.png","small":"./weather-assets/hourly-icons/drizzle.png"},
-    {"key":"rain","label_ru":"Дождь","bg":"./weather-assets/card-backgrounds/rain-background.png","small":"./weather-assets/hourly-icons/rain.png"},
-    {"key":"heavy-rain","label_ru":"Сильный ливень","bg":"./weather-assets/card-backgrounds/heavy-rain-background.png","small":"./weather-assets/hourly-icons/heavy-rain.png"},
-    {"key":"thunderstorm","label_ru":"Гроза","bg":"./weather-assets/card-backgrounds/thunderstorm-background.png","small":"./weather-assets/hourly-icons/thunderstorm.png"},
-    {"key":"snow","label_ru":"Снег","bg":"./weather-assets/card-backgrounds/snow-background.png","small":"./weather-assets/hourly-icons/snow.png"},
-    {"key":"light-snow","label_ru":"Небольшой снег","bg":"./weather-assets/card-backgrounds/light-snow-background.png","small":"./weather-assets/hourly-icons/light-snow.png"},
-    {"key":"sleet","label_ru":"Мокрый снег","bg":"./weather-assets/card-backgrounds/sleet-background.png","small":"./weather-assets/hourly-icons/sleet.png"},
-    {"key":"fog","label_ru":"Туман","bg":"./weather-assets/card-backgrounds/fog-background.png","small":"./weather-assets/hourly-icons/fog.png"},
-    {"key":"wind","label_ru":"Ветрено","bg":"./weather-assets/card-backgrounds/wind-background.png","small":"./weather-assets/hourly-icons/wind.png"}
+    {"key":"sunny","label_ru":"Солнечно","bg":"./weather-assets/card-backgrounds/sunny-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/clear-night.png?v=4","icon":"sun-medium"},
+    {"key":"mostly-sunny","label_ru":"Преимущественно солнечно","bg":"./weather-assets/card-backgrounds/mostly-sunny-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=4","icon":"cloud-sun"},
+    {"key":"partly-cloudy","label_ru":"Облачно с прояснениями","bg":"./weather-assets/card-backgrounds/partly-cloudy-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=4","icon":"cloud-sun"},
+    {"key":"cloudy","label_ru":"Облачно","bg":"./weather-assets/card-backgrounds/cloudy-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=4","icon":"cloud"},
+    {"key":"overcast","label_ru":"Пасмурно","bg":"./weather-assets/card-backgrounds/overcast-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=4","icon":"cloudy"},
+    {"key":"drizzle","label_ru":"Морось","bg":"./weather-assets/card-backgrounds/drizzle-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=4","icon":"cloud-drizzle"},
+    {"key":"rain","label_ru":"Дождь","bg":"./weather-assets/card-backgrounds/rain-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=4","icon":"cloud-rain"},
+    {"key":"heavy-rain","label_ru":"Сильный ливень","bg":"./weather-assets/card-backgrounds/heavy-rain-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=4","icon":"cloud-rain"},
+    {"key":"thunderstorm","label_ru":"Гроза","bg":"./weather-assets/card-backgrounds/thunderstorm-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/thunderstorm-night.png?v=4","icon":"cloud-lightning"},
+    {"key":"snow","label_ru":"Снег","bg":"./weather-assets/card-backgrounds/snow-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=4","icon":"cloud-snow"},
+    {"key":"light-snow","label_ru":"Небольшой снег","bg":"./weather-assets/card-backgrounds/light-snow-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=4","icon":"cloud-snow"},
+    {"key":"sleet","label_ru":"Мокрый снег","bg":"./weather-assets/card-backgrounds/sleet-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=4","icon":"cloud-snow"},
+    {"key":"fog","label_ru":"Туман","bg":"./weather-assets/card-backgrounds/fog-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=4","icon":"cloud-fog"},
+    {"key":"wind","label_ru":"Ветрено","bg":"./weather-assets/card-backgrounds/wind-background.png?v=3","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=4","icon":"wind"},
+    {"key":"clear-night","label_ru":"Ясная ночь","bg":"./weather-assets/card-backgrounds/clear-night.png?v=4","night_bg":"./weather-assets/card-backgrounds/clear-night.png?v=4","icon":"moon-star"},
+    {"key":"partly-cloudy-night","label_ru":"Облачно с прояснениями","bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=4","night_bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=4","icon":"cloud-moon"},
+    {"key":"cloudy-night","label_ru":"Облачно","bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=4","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=4","icon":"cloud"},
+    {"key":"rain-night","label_ru":"Дождь","bg":"./weather-assets/card-backgrounds/rain-night.png?v=4","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=4","icon":"cloud-rain"},
+    {"key":"snow-night","label_ru":"Снег","bg":"./weather-assets/card-backgrounds/snow-night.png?v=4","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=4","icon":"cloud-snow"},
+    {"key":"thunderstorm-night","label_ru":"Гроза","bg":"./weather-assets/card-backgrounds/thunderstorm-night.png?v=4","night_bg":"./weather-assets/card-backgrounds/thunderstorm-night.png?v=4","icon":"cloud-lightning"}
   ];
+  function isNight() {
+    if (location.search.includes('night=1')) return true;
+    const h = new Date().getHours();
+    return h >= 21 || h < 6;
+  }
+  function bgFor(st) { return (isNight() ? (st.night_bg || st.bg) : st.bg); }
+  function applyTheme() {
+    if (cardEl) {
+      const st = WEATHER_STATES[stIdx];
+      const dark = isNight() && st.key.indexOf('night') === -1 ? true : (st.key.indexOf('night') !== -1);
+      // тёмный, если ночной фон активен
+      const isDarkBg = st.key.indexOf('night') !== -1 || (isNight() && st.night_bg);
+      cardEl.classList.toggle('dark', !!isDarkBg);
+    }
+  }
 
-  // Почасовой прогноз (small-иконки, 20-22px)
-  const hourly = [
-    {t:'11:00', w:'partly-cloudy', v:'20°'}, {t:'12:00', w:'cloudy', v:'21°'},
-    {t:'13:00', w:'sunny', v:'22°'},    {t:'14:00', w:'mostly-sunny', v:'22°'},
-    {t:'15:00', w:'partly-cloudy', v:'21°'}, {t:'16:00', w:'cloudy', v:'21°'},
-    {t:'17:00', w:'overcast', v:'20°'}, {t:'18:00', w:'rain', v:'19°'},
-    {t:'19:00', w:'drizzle', v:'18°'}, {t:'20:00', w:'heavy-rain', v:'17°'}
-  ];
-  function smallIcon(key) {
-    const st = WEATHER_STATES.find(s => s.key === key);
-    return st ? st.small + '?v=3' : WEATHER_STATES[2].small + '?v=3';
+  // Почасовой прогноз: от текущего часа, Lucide-иконки, ночные — после заката
+  function hourlyData() {
+    const now = new Date();
+    const startH = now.getHours();
+    const items = [];
+    for (let i = 0; i < 10; i++) {
+      const h = (startH + i) % 24;
+      const night = h >= 21 || h < 6;
+      let w, icon;
+      if (night) {
+        // ночные часы: луна / облачно
+        w = (h >= 2 && h < 5) ? 'clear-night' : 'partly-cloudy-night';
+        icon = (h >= 2 && h < 5) ? 'moon-star' : 'cloud-moon';
+      } else {
+        w = (h >= 12 && h < 15) ? 'sunny' : (h >= 10 && h < 12 ? 'partly-cloudy' : 'cloudy');
+        icon = (h >= 12 && h < 15) ? 'sun-medium' : (h >= 10 && h < 12 ? 'cloud-sun' : 'cloud');
+      }
+      const temp = Math.round(19 + Math.sin((i / 9) * Math.PI) * 3);
+      items.push({t: String(h).padStart(2,'0') + ':00', icon, v: temp + '°'});
+    }
+    return items;
   }
   function renderHourly() {
     const row = document.getElementById('hourlyRow');
-    row.innerHTML = hourly.map(h =>
-      `<div class="h-item"><div class="h-time">${h.t}</div><img class="h-ic" src="${smallIcon(h.w)}" alt=""/><div class="h-t">${h.v}</div></div>`
+    row.innerHTML = hourlyData().map(h =>
+      `<div class="h-item"><div class="h-time">${h.t}</div><i class="h-ic" data-lucide="${h.icon}"></i><div class="h-t">${h.v}</div></div>`
     ).join('');
+    lucide.createIcons();
   }
 
   // Переключение состояния по клику на карточку
@@ -463,7 +500,7 @@
   if (cardEl) cardEl.addEventListener('click', () => {
     stIdx = (stIdx + 1) % WEATHER_STATES.length;
     const st = WEATHER_STATES[stIdx];
-    cardEl.style.backgroundImage = `url('${st.bg}?v=3')`;
+    cardEl.style.backgroundImage = `url('${bgFor(st)}')`;
     cardEl.style.backgroundSize = 'cover';
     cardEl.style.backgroundPosition = 'right center';
     cardEl.classList.remove(...cardEl.classList);
@@ -472,7 +509,12 @@
     if (desc) desc.textContent = st.label_ru;
     const badge = document.getElementById('badgeVal');
     if (badge) badge.textContent = '19°';
+    applyTheme();
   });
+  // Стартовый фон: с учётом ночи
+  const startSt = WEATHER_STATES[stIdx];
+  if (cardEl) cardEl.style.backgroundImage = `url('${bgFor(startSt)}')`;
+  applyTheme();
 
   renderHourly();
   lucide.createIcons();

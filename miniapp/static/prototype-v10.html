@@ -51,8 +51,8 @@
     font-size:13px; font-weight:600; flex-shrink:0;
   }
   .header .mid { text-align:center; flex:1; min-width:0; padding:0 6px; }
-  .header .title { font-size:16px; font-weight:600; letter-spacing:-0.2px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .header .subtitle { font-size:12px; color:var(--text2); font-weight:400; line-height:1.3; }
+  .header .title { font-size:17px; font-weight:600; letter-spacing:-0.2px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .header .subtitle { font-size:13px; color:var(--text2); font-weight:400; line-height:1.3; }
 
   /* ---------- Плашки-статусы ---------- */
   .pills {
@@ -70,7 +70,7 @@
     background:var(--accent-soft); color:var(--accent);
     display:flex; align-items:center; justify-content:center;
   }
-  .pill .txt { font-size:13.5px; font-weight:500; line-height:1.25; white-space:nowrap; }
+  .pill .txt { font-size:15px; font-weight:500; line-height:1.25; white-space:nowrap; }
   .pill .arrow { margin-left:auto; color:var(--text2); font-size:14px; font-weight:500; }
 
   /* ---------- Карточки (Telegram: плоские, без теней) ---------- */
@@ -95,40 +95,52 @@
     display:flex; align-items:center; justify-content:center;
   }
   .row .body { flex:1; min-width:0; }
-  .row .title { font-size:16px; font-weight:400; color:var(--text); line-height:1.3; }
-  .row .status { font-size:14px; font-weight:400; color:var(--text2); white-space:nowrap; }
+  .row .title { font-size:17px; font-weight:400; color:var(--text); line-height:1.3; }
+  .row .status { font-size:15px; font-weight:400; color:var(--text2); white-space:nowrap; }
   .row .chev { color:var(--text2); font-weight:500; font-size:16px; margin-left:4px; }
 
-  /* ---------- Погода (Telegram: мягкая, светлая) ---------- */
+  /* ---------- Погода: насыщенная картинка-фон (небо + солнце + облака) ---------- */
   .weather-card {
-    margin:10px 14px 0; border-radius:var(--radius); overflow:hidden;
-    background:linear-gradient(180deg, #A9D4F8 0%, #E9F4FC 100%);
-    color:#1A3A5C;
+    margin:10px 14px 0; border-radius:var(--radius); overflow:hidden; position:relative;
+    background:
+      radial-gradient(ellipse at 82% 8%, rgba(255,214,90,0.95) 0%, rgba(255,214,90,0) 42%),
+      radial-gradient(ellipse at 15% 110%, rgba(120,190,240,0.55) 0%, rgba(120,190,240,0) 55%),
+      linear-gradient(180deg, #3D9BF0 0%, #64B5F6 38%, #A9D4F8 78%, #E9F4FC 100%);
+    color:#FFFFFF;
+  }
+  .weather-card .cloud-bg {
+    position:absolute; inset:0; pointer-events:none; opacity:0.5;
   }
   @media (prefers-color-scheme: dark) {
-    .weather-card { background:linear-gradient(180deg, #1F3A5C 0%, #17212B 100%); color:#DCEBFA; }
+    .weather-card {
+      background:
+        radial-gradient(ellipse at 82% 8%, rgba(255,200,80,0.5) 0%, rgba(255,200,80,0) 42%),
+        linear-gradient(180deg, #15304F 0%, #1F3A5C 55%, #17212B 100%);
+      color:#DCEBFA;
+    }
   }
-  .weather-top { display:flex; align-items:center; padding:14px 14px 10px; }
+  .weather-top { display:flex; align-items:center; padding:16px 14px 12px; position:relative; z-index:1; }
   .weather-left { flex:1; }
-  .weather-city { font-size:13px; color:#5A7FA0; font-weight:500; }
-  @media (prefers-color-scheme: dark) { .weather-city { color:#8FB4D8; } }
-  .weather-temp { font-size:42px; font-weight:600; letter-spacing:-2px; line-height:1.05; }
-  .weather-temp sup { font-size:22px; font-weight:500; }
-  .weather-cond { font-size:12.5px; color:#5A7FA0; font-weight:500; }
-  @media (prefers-color-scheme: dark) { .weather-cond { color:#8FB4D8; } }
-  .weather-3d { width:62px; height:62px; filter:drop-shadow(0 8px 14px rgba(120,160,200,0.35)); }
+  .weather-city { font-size:14px; color:#EAF4FF; font-weight:600; text-shadow:0 1px 3px rgba(20,60,110,0.35); }
+  @media (prefers-color-scheme: dark) { .weather-city { color:#B8D8F5; } }
+  .weather-temp { font-size:48px; font-weight:700; letter-spacing:-2px; line-height:1.05; text-shadow:0 2px 10px rgba(20,60,110,0.4); }
+  .weather-temp sup { font-size:25px; font-weight:600; }
+  .weather-cond { font-size:14px; color:#EAF4FF; font-weight:500; text-shadow:0 1px 3px rgba(20,60,110,0.35); }
+  @media (prefers-color-scheme: dark) { .weather-cond { color:#B8D8F5; } }
+  .weather-3d { width:66px; height:66px; filter:drop-shadow(0 10px 18px rgba(20,80,150,0.5)); }
   .weather-hourly {
     display:flex; gap:2px; overflow-x:auto;
-    padding:8px 8px 12px; border-top:0.5px solid rgba(90,127,160,0.25);
+    padding:10px 8px 14px; border-top:0.5px solid rgba(255,255,255,0.3);
     scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;
+    position:relative; z-index:1;
   }
   .weather-hourly::-webkit-scrollbar { display:none; }
-  .h-item { text-align:center; flex:0 0 50px; scroll-snap-align:center; }
-  .h-item .h-time { font-size:11px; color:#5A7FA0; font-weight:500; }
-  @media (prefers-color-scheme: dark) { .h-item .h-time { color:#8FB4D8; } }
-  .h-item .h-ic { width:22px; height:22px; margin:3px auto; display:block; opacity:0.85; }
-  .h-item .h-t { font-size:13px; font-weight:600; color:#1A3A5C; }
-  @media (prefers-color-scheme: dark) { .h-item .h-t { color:#DCEBFA; } }
+  .h-item { text-align:center; flex:0 0 52px; scroll-snap-align:center; }
+  .h-item .h-time { font-size:12px; color:#EAF4FF; font-weight:500; text-shadow:0 1px 2px rgba(20,60,110,0.3); }
+  @media (prefers-color-scheme: dark) { .h-item .h-time { color:#B8D8F5; } }
+  .h-item .h-ic { width:24px; height:24px; margin:4px auto; display:block; opacity:0.95; filter:drop-shadow(0 1px 2px rgba(20,60,110,0.3)); }
+  .h-item .h-t { font-size:14px; font-weight:700; color:#FFFFFF; text-shadow:0 1px 2px rgba(20,60,110,0.3); }
+  @media (prefers-color-scheme: dark) { .h-item .h-t { color:#E8F4FD; } }
 
   /* ---------- Таб-бар (Telegram: простой, снизу) ---------- */
   .tabbar {
@@ -179,6 +191,23 @@
 
 <!-- Погода -->
 <div class="weather-card">
+  <!-- фоновая картинка: облака -->
+  <svg class="cloud-bg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice">
+    <g fill="#FFFFFF" opacity="0.35">
+      <ellipse cx="70" cy="150" rx="55" ry="22"/>
+      <ellipse cx="110" cy="138" rx="40" ry="18"/>
+      <ellipse cx="40" cy="140" rx="30" ry="14"/>
+    </g>
+    <g fill="#FFFFFF" opacity="0.25">
+      <ellipse cx="300" cy="120" rx="60" ry="24"/>
+      <ellipse cx="345" cy="108" rx="42" ry="18"/>
+      <ellipse cx="265" cy="112" rx="32" ry="15"/>
+    </g>
+    <g fill="#FFFFFF" opacity="0.18">
+      <ellipse cx="190" cy="95" rx="70" ry="22"/>
+      <ellipse cx="240" cy="84" rx="45" ry="16"/>
+    </g>
+  </svg>
   <div class="weather-top">
     <div class="weather-left">
       <div class="weather-city">📍 Москва</div>

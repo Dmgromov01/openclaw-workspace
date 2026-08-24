@@ -51,8 +51,8 @@
     font-size:13px; font-weight:600; flex-shrink:0;
   }
   .header .mid { text-align:center; flex:1; min-width:0; padding:0 6px; }
-  .header .title { font-size:17px; font-weight:600; letter-spacing:-0.2px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .header .subtitle { font-size:13px; color:var(--text2); font-weight:400; line-height:1.3; }
+  .header .title { font-size:16px; font-weight:600; letter-spacing:-0.2px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .header .subtitle { font-size:12px; color:var(--text2); font-weight:400; line-height:1.3; }
 
   /* ---------- Плашки-статусы ---------- */
   .pills {
@@ -70,10 +70,10 @@
     background:var(--accent-soft); color:var(--accent);
     display:flex; align-items:center; justify-content:center;
   }
-  .pill .txt { font-size:15px; font-weight:500; line-height:1.25; white-space:nowrap; }
+  .pill .txt { font-size:13.5px; font-weight:500; line-height:1.25; white-space:nowrap; }
   .pill .arrow { margin-left:auto; color:var(--text2); font-size:14px; font-weight:500; }
 
-  /* ---------- Карточки (Telegram: плоские, без теней) ---------- */
+  /* ---------- Карточки ---------- */
   .card {
     background:var(--card);
     border-radius:var(--radius);
@@ -99,7 +99,7 @@
   .row .status { font-size:15px; font-weight:400; color:var(--text2); white-space:nowrap; }
   .row .chev { color:var(--text2); font-weight:500; font-size:16px; margin-left:4px; }
 
-  /* ---------- Погода: яркое сочное небо + стеклянные плитки (референс Дмитрия) ---------- */
+  /* ---------- Погода: сочное небо, компактная ---------- */
   .weather-card {
     margin:8px 14px 0; border-radius:16px; overflow:hidden; position:relative;
     background:
@@ -109,48 +109,31 @@
     color:#FFFFFF;
     box-shadow:0 12px 28px rgba(0,80,180,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
   }
-  /* стеклянный блик сверху */
   .weather-card::after {
     content:""; position:absolute; left:8px; top:8px; right:8px; height:34%;
     background:linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.06) 60%, rgba(255,255,255,0) 100%);
-    border-radius:16px 16px 40% 40%;
-    pointer-events:none; z-index:0;
+    pointer-events:none; border-radius:12px;
   }
-  .weather-card .cloud-bg {
-    position:absolute; inset:0; pointer-events:none; opacity:0.25; z-index:0;
-  }
-  @media (prefers-color-scheme: dark) {
-    .weather-card {
-      background:
-        radial-gradient(circle at 78% 18%, rgba(255,220,150,0.5) 0%, rgba(255,220,150,0.15) 25%, rgba(255,220,150,0) 46%),
-        radial-gradient(circle at 50% 45%, rgba(70,150,240,0.4) 0%, rgba(70,150,240,0) 55%),
-        linear-gradient(155deg, #0A2A5C 0%, #0D3570 50%, #0B2B60 100%);
-      color:#EAF4FF;
-      box-shadow:0 12px 28px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
-    }
-    .weather-card .cloud-bg { opacity:0.2; }
-  }
-  .weather-top { display:flex; align-items:center; padding:3px 12px 2px; position:relative; z-index:2; }
-  .weather-left { flex:1; }
-  .weather-city { font-size:10px; color:#FFFFFF; font-weight:600; text-shadow:0 1px 6px rgba(0,40,100,0.5); }
-  .weather-temp { font-size:24px; font-weight:700; letter-spacing:-2px; line-height:1.05; text-shadow:0 3px 16px rgba(0,40,100,0.45); }
+  .weather-top { display:flex; align-items:center; padding:4px 8px 2px; position:relative; z-index:1; }
+  .weather-left { flex:1; min-width:0; }
+  .weather-city { font-size:10px; color:rgba(255,255,255,0.85); font-weight:600; }
+  .weather-main { display:flex; align-items:center; gap:6px; }
+  .weather-temp { font-size:24px; font-weight:700; letter-spacing:-1px; line-height:1.1; }
   .weather-temp sup { font-size:13px; font-weight:600; }
-  .weather-cond { font-size:10px; color:#F2FAFF; font-weight:500; text-shadow:0 1px 6px rgba(0,40,100,0.5); }
-  .weather-3d { width:32px; height:25px; filter:drop-shadow(0 5px 10px rgba(0,50,120,0.4)); }
-  /* почасовка: плоская тонкая строка (без плиток — чтобы виджет был низким) */
+  .weather-cond { font-size:10px; color:rgba(255,255,255,0.9); font-weight:500; margin-top:1px; }
+  #weatherArt { width:32px; height:32px; flex-shrink:0; filter:drop-shadow(0 3px 6px rgba(0,40,100,0.4)); }
   .weather-hourly {
-    display:flex; gap:4px; overflow-x:auto;
-    padding:0 12px 5px;
+    display:flex; gap:0; overflow-x:auto;
+    padding:1px 6px 4px; position:relative; z-index:1;
     scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;
-    position:relative; z-index:2;
   }
   .weather-hourly::-webkit-scrollbar { display:none; }
-  .h-item { flex:0 0 34px; scroll-snap-align:center; text-align:center; padding:0; background:none; border:none; backdrop-filter:none; box-shadow:none; }
-  .h-item .h-time { font-size:8px; color:#FFFFFF; font-weight:600; text-shadow:0 1px 3px rgba(0,40,100,0.4); line-height:1; }
-  .h-item .h-ic { width:13px; height:13px; margin:1px auto; display:block; filter:drop-shadow(0 1px 2px rgba(0,40,100,0.35)); }
-  .h-item .h-t { font-size:9px; font-weight:700; color:#FFFFFF; text-shadow:0 1px 3px rgba(0,40,100,0.4); line-height:1; }
+  .h-item { text-align:center; flex:0 0 34px; scroll-snap-align:center; padding:2px 0; }
+  .h-item .h-time { font-size:8px; color:rgba(255,255,255,0.8); font-weight:500; }
+  .h-item .h-ic { width:16px; height:16px; margin:1px auto; display:block; opacity:0.95; }
+  .h-item .h-t { font-size:10px; font-weight:600; color:#fff; }
 
-  /* ---------- Таб-бар (Telegram: простой, снизу) ---------- */
+  /* ---------- Таб-бар ---------- */
   .tabbar {
     position:fixed; left:0; right:0; bottom:0; z-index:100;
     display:flex; justify-content:space-around; align-items:center;
@@ -199,42 +182,27 @@
 
 <!-- Погода -->
 <div class="weather-card">
-  <!-- фоновая картинка: облака -->
-  <svg class="cloud-bg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice">
-    <g fill="#FFFFFF" opacity="0.35">
-      <ellipse cx="70" cy="150" rx="55" ry="22"/>
-      <ellipse cx="110" cy="138" rx="40" ry="18"/>
-      <ellipse cx="40" cy="140" rx="30" ry="14"/>
-    </g>
-    <g fill="#FFFFFF" opacity="0.25">
-      <ellipse cx="300" cy="120" rx="60" ry="24"/>
-      <ellipse cx="345" cy="108" rx="42" ry="18"/>
-      <ellipse cx="265" cy="112" rx="32" ry="15"/>
-    </g>
-    <g fill="#FFFFFF" opacity="0.18">
-      <ellipse cx="190" cy="95" rx="70" ry="22"/>
-      <ellipse cx="240" cy="84" rx="45" ry="16"/>
-    </g>
-  </svg>
   <div class="weather-top">
     <div class="weather-left">
       <div class="weather-city">📍 Москва</div>
-      <div class="weather-temp">19<sup>°C</sup></div>
-      <div class="weather-cond">Облачно с прояснениями</div>
+      <div class="weather-main">
+        <div class="weather-temp">19<sup>°C</sup></div>
+        <div class="weather-cond">Переменная облачность</div>
+      </div>
     </div>
-    <div id="weatherArt"></div>
+    <div id="weatherArt"><svg viewBox="0 0 120 90" width="32" height="32"><defs><linearGradient id="sunG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFF7C0"/><stop offset="100%" stop-color="#FFC933"/></linearGradient><linearGradient id="cldG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#C9DDF2"/></linearGradient></defs><circle cx="74" cy="34" r="16" fill="url(#sunG)"/><circle cx="74" cy="34" r="22" fill="#FFD60A" opacity="0.25"/><path d="M30 62a16 16 0 01-2-31.8 24 24 0 0147-5.5A18.5 18.5 0 0175 62H30z" fill="url(#cldG)"/><ellipse cx="42" cy="50" rx="14" ry="8" fill="#FFFFFF" opacity="0.85"/><ellipse cx="60" cy="46" rx="11" ry="6" fill="#FFFFFF" opacity="0.6"/></svg></div>
   </div>
   <div class="weather-hourly">
-    <div class="h-item"><div class="h-time">11:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">20°</div></div>
-    <div class="h-item"><div class="h-time">12:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">21°</div></div>
-    <div class="h-item"><div class="h-time">13:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">22°</div></div>
-    <div class="h-item"><div class="h-time">14:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">22°</div></div>
-    <div class="h-item"><div class="h-time">15:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">21°</div></div>
-    <div class="h-item"><div class="h-time">16:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">21°</div></div>
-    <div class="h-item"><div class="h-time">17:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">20°</div></div>
-    <div class="h-item"><div class="h-time">18:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">19°</div></div>
-    <div class="h-item"><div class="h-time">19:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">18°</div></div>
-    <div class="h-item"><div class="h-time">20:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#F0C419"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#8FB4D8"/></svg><div class="h-t">17°</div></div>
+    <div class="h-item"><div class="h-time">11:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">20°</div></div>
+    <div class="h-item"><div class="h-time">12:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">21°</div></div>
+    <div class="h-item"><div class="h-time">13:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#FFD60A"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">22°</div></div>
+    <div class="h-item"><div class="h-time">14:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">22°</div></div>
+    <div class="h-item"><div class="h-time">15:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#FFD60A"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">21°</div></div>
+    <div class="h-item"><div class="h-time">16:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">21°</div></div>
+    <div class="h-item"><div class="h-time">17:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">20°</div></div>
+    <div class="h-item"><div class="h-time">18:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#FFD60A"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">19°</div></div>
+    <div class="h-item"><div class="h-time">19:00</div><svg class="h-ic" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">18°</div></div>
+    <div class="h-item"><div class="h-time">20:00</div><svg class="h-ic" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#FFD60A"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="h-t">17°</div></div>
   </div>
 </div>
 
@@ -320,124 +288,16 @@
     const names = ['Главная','Поиск','Ассистент','Уведомления','Профиль'];
     if (i !== 0) toast(names[i] + ' — скоро');
   }
-  // ================= ПОГОДНЫЕ ИЛЛЮСТРАЦИИ (3D, как Apple Weather) =================
+  // Набор погодных иллюстраций (3D-стиль, как Apple Weather)
   const WEATHER = {
-    sun: {
-      label: 'Ясно',
-      bg: 'radial-gradient(circle at 50% 40%, rgba(255,240,170,0.9) 0%, rgba(255,220,110,0.35) 30%, rgba(255,220,110,0) 55%), linear-gradient(155deg, #23A6F5 0%, #0E7BE0 50%, #0753B8 100%)',
-      art: `<svg viewBox="0 0 120 90" fill="none" style="width:100%;height:100%;">
-        <defs><radialGradient id="g1" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FFF7C0"/><stop offset="45%" stop-color="#FFD93D"/><stop offset="100%" stop-color="#FFB800" stop-opacity="0"/></radialGradient></defs>
-        <circle cx="60" cy="40" r="42" fill="url(#g1)" opacity="0.9"/>
-        <circle cx="60" cy="40" r="22" fill="#FFE066" stroke="#FFC93C" stroke-width="1.5"/>
-        <circle cx="54" cy="34" r="7" fill="#FFF8D6" opacity="0.85"/>
-        <g stroke="#FFD93D" stroke-width="3.5" stroke-linecap="round" opacity="0.9">
-          <path d="M60 6v9M60 65v9M18 40h9M93 40h9M27 14l6 6M87 60l6 6M93 14l-6 6M33 60l-6 6"/>
-        </g>
-      </svg>`
-    },
-    partly: {
-      label: 'Переменная облачность',
-      bg: 'radial-gradient(circle at 78% 18%, rgba(255,240,180,0.95) 0%, rgba(255,224,130,0.5) 22%, rgba(255,224,130,0) 46%), radial-gradient(circle at 50% 45%, rgba(90,200,255,0.55) 0%, rgba(90,200,255,0) 55%), linear-gradient(155deg, #00A8F3 0%, #0078E0 45%, #0056B8 100%)',
-      art: `<svg viewBox="0 0 120 90" fill="none" style="width:100%;height:100%;">
-        <defs>
-          <radialGradient id="g2" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FFF7C0"/><stop offset="45%" stop-color="#FFD93D"/><stop offset="100%" stop-color="#FFB800" stop-opacity="0"/></radialGradient>
-          <linearGradient id="c2t" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#E8F1FA"/></linearGradient>
-          <linearGradient id="c2b" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F4F9FE"/><stop offset="100%" stop-color="#C9DCF0"/></linearGradient>
-        </defs>
-        <circle cx="88" cy="22" r="38" fill="url(#g2)" opacity="0.9"/>
-        <circle cx="88" cy="22" r="17" fill="#FFE066" stroke="#FFC93C" stroke-width="1.5"/>
-        <circle cx="84" cy="18" r="5" fill="#FFF8D6" opacity="0.8"/>
-        <ellipse cx="60" cy="76" rx="46" ry="8" fill="rgba(0,50,110,0.25)"/>
-        <g fill="url(#c2b)"><ellipse cx="40" cy="62" rx="34" ry="16"/><ellipse cx="66" cy="64" rx="38" ry="17"/><ellipse cx="52" cy="58" rx="26" ry="13"/></g>
-        <g fill="url(#c2t)"><ellipse cx="36" cy="50" rx="24" ry="14"/><ellipse cx="62" cy="46" rx="28" ry="17"/><ellipse cx="80" cy="52" rx="20" ry="12"/><ellipse cx="50" cy="42" rx="16" ry="10"/></g>
-        <ellipse cx="52" cy="36" rx="20" ry="6" fill="#FFFFFF" opacity="0.75"/>
-        <ellipse cx="72" cy="42" rx="12" ry="4" fill="#FFFFFF" opacity="0.6"/>
-      </svg>`
-    },
-    cloud: {
-      label: 'Облачно',
-      bg: 'radial-gradient(circle at 50% 40%, rgba(180,215,245,0.5) 0%, rgba(180,215,245,0) 55%), linear-gradient(155deg, #8FAFCB 0%, #6E91B5 50%, #52789F 100%)',
-      art: `<svg viewBox="0 0 120 90" fill="none" style="width:100%;height:100%;">
-        <defs>
-          <linearGradient id="c3t" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#E3EDF7"/></linearGradient>
-          <linearGradient id="c3b" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F0F6FC"/><stop offset="100%" stop-color="#B8CCE2"/></linearGradient>
-        </defs>
-        <ellipse cx="60" cy="76" rx="48" ry="8" fill="rgba(20,60,100,0.3)"/>
-        <g fill="url(#c3b)"><ellipse cx="42" cy="62" rx="36" ry="17"/><ellipse cx="70" cy="64" rx="40" ry="18"/><ellipse cx="55" cy="57" rx="28" ry="14"/></g>
-        <g fill="url(#c3t)"><ellipse cx="38" cy="50" rx="25" ry="15"/><ellipse cx="66" cy="45" rx="30" ry="18"/><ellipse cx="84" cy="52" rx="21" ry="13"/><ellipse cx="53" cy="41" rx="17" ry="11"/></g>
-        <ellipse cx="54" cy="36" rx="21" ry="6" fill="#FFFFFF" opacity="0.7"/>
-        <ellipse cx="76" cy="43" rx="13" ry="4" fill="#FFFFFF" opacity="0.5"/>
-      </svg>`
-    },
-    rain: {
-      label: 'Дождь',
-      bg: 'radial-gradient(circle at 50% 35%, rgba(140,175,215,0.45) 0%, rgba(140,175,215,0) 55%), linear-gradient(155deg, #5E7A9E 0%, #425F85 50%, #2E4668 100%)',
-      art: `<svg viewBox="0 0 120 90" fill="none" style="width:100%;height:100%;">
-        <defs>
-          <linearGradient id="c4t" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#DCE7F2"/></linearGradient>
-          <linearGradient id="c4b" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#EAF2FA"/><stop offset="100%" stop-color="#A9C0D8"/></linearGradient>
-        </defs>
-        <ellipse cx="60" cy="70" rx="46" ry="8" fill="rgba(10,40,80,0.35)"/>
-        <g fill="url(#c4b)"><ellipse cx="42" cy="60" rx="35" ry="16"/><ellipse cx="68" cy="62" rx="38" ry="17"/><ellipse cx="54" cy="56" rx="26" ry="13"/></g>
-        <g fill="url(#c4t)"><ellipse cx="38" cy="49" rx="24" ry="14"/><ellipse cx="64" cy="44" rx="28" ry="17"/><ellipse cx="82" cy="51" rx="20" ry="12"/><ellipse cx="51" cy="40" rx="16" ry="10"/></g>
-        <g stroke="#5BB8F5" stroke-width="3" stroke-linecap="round">
-          <path d="M38 74l-4 10M52 76l-4 10M66 74l-4 10M80 76l-4 10"/>
-        </g>
-        <g fill="#7CC8F8" opacity="0.9">
-          <circle cx="35" cy="72" r="1.8"/><circle cx="49" cy="74" r="1.8"/><circle cx="63" cy="72" r="1.8"/><circle cx="77" cy="74" r="1.8"/>
-        </g>
-      </svg>`
-    },
-    storm: {
-      label: 'Гроза',
-      bg: 'radial-gradient(circle at 50% 30%, rgba(130,110,190,0.4) 0%, rgba(130,110,190,0) 55%), linear-gradient(155deg, #4A4E6E 0%, #33375A 50%, #232647 100%)',
-      art: `<svg viewBox="0 0 120 90" fill="none" style="width:100%;height:100%;">
-        <defs>
-          <linearGradient id="c5t" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#D4DDEA"/></linearGradient>
-          <linearGradient id="c5b" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E6ECF5"/><stop offset="100%" stop-color="#9AAAC4"/></linearGradient>
-        </defs>
-        <ellipse cx="60" cy="68" rx="44" ry="7" fill="rgba(10,20,50,0.4)"/>
-        <g fill="url(#c5b)"><ellipse cx="42" cy="58" rx="34" ry="15"/><ellipse cx="67" cy="60" rx="37" ry="16"/><ellipse cx="54" cy="54" rx="25" ry="12"/></g>
-        <g fill="url(#c5t)"><ellipse cx="38" cy="48" rx="23" ry="13"/><ellipse cx="63" cy="43" rx="27" ry="16"/><ellipse cx="81" cy="50" rx="19" ry="11"/><ellipse cx="50" cy="39" rx="15" ry="9"/></g>
-        <path d="M64 66l-10 16h8l-6 14 18-20h-9l7-10z" fill="#FFD93D" stroke="#F5B800" stroke-width="1"/>
-      </svg>`
-    },
-    snow: {
-      label: 'Снег',
-      bg: 'radial-gradient(circle at 50% 40%, rgba(220,235,250,0.5) 0%, rgba(220,235,250,0) 55%), linear-gradient(155deg, #B8CCE0 0%, #93AFCB 50%, #718DAE 100%)',
-      art: `<svg viewBox="0 0 120 90" fill="none" style="width:100%;height:100%;">
-        <defs>
-          <linearGradient id="c6t" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#E8F0F8"/></linearGradient>
-          <linearGradient id="c6b" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5F9FD"/><stop offset="100%" stop-color="#C2D4E6"/></linearGradient>
-        </defs>
-        <ellipse cx="60" cy="70" rx="45" ry="8" fill="rgba(30,60,100,0.25)"/>
-        <g fill="url(#c6b)"><ellipse cx="42" cy="60" rx="34" ry="16"/><ellipse cx="68" cy="62" rx="38" ry="17"/><ellipse cx="54" cy="56" rx="26" ry="13"/></g>
-        <g fill="url(#c6t)"><ellipse cx="38" cy="49" rx="24" ry="14"/><ellipse cx="64" cy="44" rx="28" ry="17"/><ellipse cx="82" cy="51" rx="20" ry="12"/><ellipse cx="51" cy="40" rx="16" ry="10"/></g>
-        <g stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round">
-          <path d="M38 74l-5 5M33 79l5 5M38 74l5 5M43 79l-5 5M38 79v-5M36 77l4 4M40 77l-4 4"/>
-          <path d="M54 76l-5 5M49 81l5 5M54 76l5 5M59 81l-5 5M54 81v-5M52 79l4 4M56 79l-4 4"/>
-          <path d="M70 74l-5 5M65 79l5 5M70 74l5 5M75 79l-5 5M70 79v-5M68 77l4 4M72 77l-4 4"/>
-        </g>
-      </svg>`
-    },
-    night: {
-      label: 'Ночь',
-      bg: 'radial-gradient(circle at 75% 20%, rgba(200,170,255,0.35) 0%, rgba(200,170,255,0) 45%), linear-gradient(155deg, #0B1E4B 0%, #0A1740 50%, #070F2E 100%)',
-      art: `<svg viewBox="0 0 120 90" fill="none" style="width:100%;height:100%;">
-        <defs><radialGradient id="g7" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FFF9E8"/><stop offset="60%" stop-color="#FFEDB0"/><stop offset="100%" stop-color="#FFE080" stop-opacity="0"/></radialGradient></defs>
-        <circle cx="78" cy="34" r="40" fill="url(#g7)" opacity="0.8"/>
-        <circle cx="78" cy="34" r="20" fill="#FFF3C4" stroke="#FFE9A0" stroke-width="1.2"/>
-        <circle cx="70" cy="28" r="5" fill="#FFEDB0" opacity="0.6"/>
-        <circle cx="84" cy="40" r="4" fill="#FFEDB0" opacity="0.5"/>
-        <g fill="#FFFFFF">
-          <circle cx="30" cy="22" r="1.6"/><circle cx="45" cy="15" r="1.2"/><circle cx="55" cy="28" r="1.4"/>
-          <circle cx="22" cy="40" r="1.2"/><circle cx="35" cy="52" r="1.5"/><circle cx="15" cy="60" r="1.1"/>
-          <circle cx="48" cy="62" r="1.3"/><circle cx="28" cy="70" r="1.1"/>
-        </g>
-      </svg>`
-    }
+    clear: { label: 'Ясно', bg: 'radial-gradient(circle at 78% 18%, rgba(255,240,180,0.95) 0%, rgba(255,224,130,0.5) 22%, rgba(255,224,130,0) 46%), radial-gradient(circle at 50% 45%, rgba(90,200,255,0.55) 0%, rgba(90,200,255,0) 55%), linear-gradient(155deg, #00A8F3 0%, #0078E0 45%, #0056B8 100%)', art: '<svg viewBox="0 0 120 90" width="32" height="32"><defs><radialGradient id="sg" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FFF7C0"/><stop offset="100%" stop-color="#FFC933"/></radialGradient></defs><circle cx="60" cy="40" r="24" fill="url(#sg)"/><g stroke="#FFD60A" stroke-width="4" stroke-linecap="round" opacity="0.9"><line x1="60" y1="4" x2="60" y2="14"/><line x1="60" y1="66" x2="60" y2="76"/><line x1="24" y1="40" x2="34" y2="40"/><line x1="86" y1="40" x2="96" y2="40"/><line x1="34" y1="14" x2="41" y2="21"/><line x1="79" y1="59" x2="86" y2="66"/><line x1="86" y1="14" x2="79" y2="21"/><line x1="41" y1="59" x2="34" y2="66"/></g></svg>' },
+    partly: { label: 'Переменная облачность', bg: 'radial-gradient(circle at 78% 18%, rgba(255,240,180,0.95) 0%, rgba(255,224,130,0.5) 22%, rgba(255,224,130,0) 46%), radial-gradient(circle at 50% 45%, rgba(90,200,255,0.55) 0%, rgba(90,200,255,0) 55%), linear-gradient(155deg, #00A8F3 0%, #0078E0 45%, #0056B8 100%)', art: '<svg viewBox="0 0 120 90" width="32" height="32"><defs><linearGradient id="sunG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFF7C0"/><stop offset="100%" stop-color="#FFC933"/></linearGradient><linearGradient id="cldG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#C9DDF2"/></linearGradient></defs><circle cx="74" cy="34" r="16" fill="url(#sunG)"/><circle cx="74" cy="34" r="22" fill="#FFD60A" opacity="0.25"/><path d="M30 62a16 16 0 01-2-31.8 24 24 0 0147-5.5A18.5 18.5 0 0175 62H30z" fill="url(#cldG)"/><ellipse cx="42" cy="50" rx="14" ry="8" fill="#FFFFFF" opacity="0.85"/><ellipse cx="60" cy="46" rx="11" ry="6" fill="#FFFFFF" opacity="0.6"/></svg>' },
+    cloudy: { label: 'Облачно', bg: 'radial-gradient(circle at 50% 30%, rgba(180,205,235,0.7) 0%, rgba(150,180,215,0.2) 40%, rgba(150,180,215,0) 65%), linear-gradient(155deg, #7FA8CC 0%, #5E87B0 45%, #46688F 100%)', art: '<svg viewBox="0 0 120 90" width="32" height="32"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#B9CCDF"/></linearGradient></defs><path d="M24 64a18 18 0 01-2-35.8 27 27 0 0153-6.2A21 21 0 0180 64H24z" fill="url(#cg)"/><ellipse cx="42" cy="50" rx="16" ry="9" fill="#FFFFFF" opacity="0.9"/><ellipse cx="62" cy="46" rx="13" ry="7" fill="#FFFFFF" opacity="0.7"/></svg>' },
+    rain: { label: 'Дождь', bg: 'radial-gradient(circle at 50% 30%, rgba(130,155,190,0.6) 0%, rgba(110,135,170,0.2) 45%, rgba(110,135,170,0) 65%), linear-gradient(155deg, #5E7A99 0%, #46607E 45%, #334A63 100%)', art: '<svg viewBox="0 0 120 90" width="32" height="32"><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E8EFF6"/><stop offset="100%" stop-color="#9FB2C8"/></linearGradient></defs><path d="M24 60a16 16 0 01-2-31.8 24 24 0 0147-5.4A19 19 0 0178 60H24z" fill="url(#rg)"/><g stroke="#7FB8E8" stroke-width="4" stroke-linecap="round"><line x1="40" y1="66" x2="34" y2="80"/><line x1="58" y1="66" x2="52" y2="80"/><line x1="76" y1="66" x2="70" y2="80"/></g></svg>' },
+    storm: { label: 'Гроза', bg: 'radial-gradient(circle at 50% 30%, rgba(90,90,130,0.6) 0%, rgba(70,70,105,0.25) 45%, rgba(70,70,105,0) 65%), linear-gradient(155deg, #4A4A66 0%, #34344E 50%, #232338 100%)', art: '<svg viewBox="0 0 120 90" width="32" height="32"><defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8B8BA8"/><stop offset="100%" stop-color="#4A4A66"/></linearGradient></defs><path d="M22 58a16 16 0 01-2-31.6 24 24 0 0147-5.4A19 19 0 0176 58H22z" fill="url(#tg)"/><path d="M58 62l-12 22h10l-5 18 18-26h-11l8-14H58z" fill="#FFD60A"/></svg>' },
+    snow: { label: 'Снег', bg: 'radial-gradient(circle at 50% 30%, rgba(220,235,250,0.7) 0%, rgba(190,215,240,0.2) 45%, rgba(190,215,240,0) 65%), linear-gradient(155deg, #A8C4DE 0%, #7FA3C4 50%, #5E87A8 100%)', art: '<svg viewBox="0 0 120 90" width="32" height="32"><defs><linearGradient id="ng" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#C4D8EA"/></linearGradient></defs><path d="M24 60a16 16 0 01-2-31.8 24 24 0 0147-5.4A19 19 0 0178 60H24z" fill="url(#ng)"/><g fill="#FFFFFF"><circle cx="38" cy="72" r="3"/><circle cx="58" cy="70" r="3"/><circle cx="76" cy="72" r="3"/><circle cx="48" cy="78" r="2.4"/><circle cx="68" cy="78" r="2.4"/></g></svg>' },
+    night: { label: 'Ночь', bg: 'radial-gradient(circle at 70% 25%, rgba(200,210,255,0.5) 0%, rgba(150,160,230,0.15) 35%, rgba(150,160,230,0) 60%), linear-gradient(155deg, #1A2151 0%, #141A40 50%, #0D112E 100%)', art: '<svg viewBox="0 0 120 90" width="32" height="32"><defs><radialGradient id="mg" cx="0.4" cy="0.4" r="0.6"><stop offset="0%" stop-color="#FFFDE8"/><stop offset="100%" stop-color="#F0E68C"/></radialGradient></defs><path d="M70 24a26 26 0 00-2 36 27 27 0 11-34-34 26 26 0 0036-2z" fill="url(#mg)"/><g fill="#FFF" opacity="0.9"><circle cx="22" cy="30" r="2"/><circle cx="34" cy="18" r="1.6"/><circle cx="90" cy="22" r="2"/><circle cx="100" cy="40" r="1.6"/><circle cx="28" cy="62" r="1.6"/></g></svg>' }
   };
-
   // переключение погоды по клику на карточку
   let weatherIdx = 0;
   const weatherKeys = Object.keys(WEATHER);

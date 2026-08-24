@@ -30,17 +30,17 @@ _Курируемые воспоминания, свёрнутые из днев
 - (Ранее: «решать проще, без ухода в IT» — заменено этим принципом.)
 
 ## Инфраструктура / критичные настройки
-- **Компакция** (`agents.defaults.compaction`): актуально на 11.08 12:40 — `maxActiveTranscriptBytes: "1mb"`, `truncateAfterCompaction: true`, `reserveTokensFloor: 100000`, `reserveTokens: 150000`, `keepRecentTokens: 200000`, `midTurnPrecheck.enabled: false`, mode safeguard, бэкап `openclaw.json.bak-pre-keeprecent-fix-20260811-124051`.
+- **Компакция** (`agents.defaults.compaction`): актуально на 24.08 — `maxActiveTranscriptBytes: "2mb"`, `truncateAfterCompaction: true`, `reserveTokensFloor: 100000`, `reserveTokens: 450000`, `keepRecentTokens: 200000`, `midTurnPrecheck.enabled: true`, mode safeguard. Бэкапы: openclaw.json.bak-pre-* (см. /root/.openclaw).
   ⚠️ **Урок (11.08, повторно падало)**: диалог раздулся до ~114K токенов, а лимит был `keepRecentTokens: 100000` → перебор на 14K, сжатие падало с `already_compacted_recently` → «context overflow / auto-compaction could not recover». Диагностика по логам: `[context-overflow-precheck] estimatedPromptTokens > promptBudgetBeforeReserve` + `[compaction-diag] outcome=failed reason=already_compacted_recently`.
   **Правило**: `keepRecentTokens` держать ЗАВЫШЕННЫМ относительно пикового размера диалога (у DeepSeek 1M ctx — запас есть), иначе карусель overflow → already_compacted → фейл. `reserveTokensFloor` (подсказка про 35000) тут НЕ решает — он и так был 100000. Поля protected — править напрямую в `openclaw.json` + restart (`config.patch` блокирует).
-- **Модели**: primary `deepseek/deepseek-v4-flash` (прямой API, дёшево 1M ctx). Провайдеры в конфиге (19.08, ключи восстановлены): **deepseek** · **openrouter** (auto, qwen/qwen-image-3-pro) · **google** (gemini-3.1-flash-image-preview, gemini-2.5-flash) — все с apiKey. **DeepSeek НЕ принимает картинки** — для image использовать Gemini/OpenRouter. Ключи: `/root/.openclaw/credentials/` (openrouter.key, ai-studio.key, github.token, telegram-app.json — все chmod 600, ВНЕ git). ⚠️ Схема моделей провайдера не принимает `output`/`input:["text","image"]` — только `input:["text"]` (+api/contextWindow/maxTokens). Vision-чтение скринов: gpt-4o-mini был удалён из каталога (см. хвосты).
-- **Файрвол (ufw)**: SSH 22 открыт, tailnet (100.64.0.0/10) пропущен, порт device-pair 18789 — только из tailnet. Default deny incoming / allow outgoing.
+- **Модели**: primary `deepseek/deepseek-v4-flash` (прямой API, дёшево 1M ctx). Провайдеры в конфиге (19.08, ключи восстановлены): **deepseek** · **openrouter** (auto, qwen/qwen-image-3-pro, + openai/text-embedding-3-small с 24.08) · **google** (gemini-3.1-flash-image-preview, gemini-2.5-flash) — все с apiKey. **DeepSeek НЕ принимает картинки** — для image использовать Gemini/OpenRouter. Ключи: `/root/.openclaw/credentials/` (openrouter.key, ai-studio.key, github.token, telegram-app.json, jina.key — все chmod 600, ВНЕ git). ⚠️ Схема моделей провайдера не принимает `output`/`input:["text","image"]` — только `input:["text"]` (+api/contextWindow/maxTokens). ⚠️ **Урок 24.08**: memorySearch требует, чтобы embedding-модель была в каталоге провайдера, иначе векторная часть гибрида молча не работает. OpenRouter не показывает embedding-модели в GET /models, но POST /v1/embeddings работает.
+- **Файрвол (ufw)**: **ACTIVE с 24.08** (после аудита был INACTIVE!): 22/80/443 open + tailnet (100.64.0.0/10), default deny incoming / allow outgoing. Порт 8080 (miniapp) — ТОЛЬКО 127.0.0.1 (переведён 24.08), наружу закрыт.
 - **Swap 2GB** на новом сервере — создан.
 
 ## Календарь — GOOGLE API (переехали с iCloud; iCloud УСТАРЕЛ)
 - ⚠️ **Актуальный календарь — Google Calendar** (`dmgromov03@gmail.com`), НЕ iCloud.
 - Скрипт: `calendar/gcal_reader.py` (service-account `/root/.openclaw/credentials/gcal/service-account.json`). Команды: `today`, `week`, `list --days N`. Даты Europe/Moscow.
-- **Google API только ЧИТАЕТ** (нет add/delete в gcal_reader). Добавление событий — НЕ реализовано на Google; старый `icloud_calendar.py` (add/delete) от старой системы, `orchestrator.py` до сих пор делает `import icloud_calendar as cal` — это нестыковка, надо развязать.
+- **Google API только ЧИТАЕТ** (нет add/delete в gcal_reader). Добавление событий — НЕ реализовано на Google. `icloud_calendar.py` и `orchestrator.py` — 🗑️ **УДАЛЕНЫ 24.08** (в `_trash_/batch3-20260824`), нестыковка с `import icloud_calendar` исчезла.
 - Проверено 11.08: `gcal_reader.py today` вернул реальное событие («Тест: подключение календаря OpenClaw» 13:00) — Google API работает.
 - 07.08 чистили мусор ещё в iCloud. Пометка «позвонить Петрову 18.08.2026» — из старого iCloud-демо, к Google не относится.
 
@@ -60,7 +60,7 @@ _Курируемые воспоминания, свёрнутые из днев
 
 ## Личный Telegram-аккаунт (MTProto / Telethon)
 - Сервис `/root/telegram-user-svc/server.py` (HTTP `127.0.0.1:8765`) — **systemd unit** `telegram-user-svc.service` (важно: systemd перезапускает, pkill бесполезен). Endpoint'ы: /auth/status, /auth/start, /auth/code, /auth/password, /send, /send_file, /dialogs, /history.
-- 🔄 **ПЕРЕСОЗДАН на новом сервере 19.08** (по команде Дмитрия): venv + telethon 1.44 + aiohttp 3.14, config.json из telegram-app.json (api_id 33037521, api_hash, password пустой), сервис active на порту 8765. ⚠️ **Авторизация НЕ пройдена** (authorized: false) — нужен вход: номер → /auth/start → код → 2FA. В хвосты.
+- 🔄 **ПЕРЕСОЗДАН на новом сервере 19.08** (по команде Дмитрия): venv + telethon 1.44 + aiohttp 3.14, config.json из telegram-app.json (api_id 33037521, api_hash, password пустой), сервис active на порту 8765. ✅ **Авторизация ПРОЙДЕНА 20.08** (`authorized: true`, self=Дмитрий 1916536646).
 - Плагин `~/.openclaw/plugins/tg-user-tools/` → инструменты **tg_send, tg_send_file, tg_dialogs, tg_history** (создан заново, подключён в plugins.load.paths + entries; ⚠️ загрузку проверить).
 - **Формат плагина**: `definePluginEntry` из `openclaw/plugin-sdk/plugin-entry` + `api.registerTool({name,description,parameters,execute})`; объявить `contracts.tools` в `openclaw.plugin.json` И `package.json` (`openclaw.contracts.tools`). Manifest требует `configSchema` (пустой объект).
 - Скрипт отправки фото: `/root/telegram_user_send_photo.sh <target> <path> [caption]`.
@@ -93,11 +93,13 @@ _Курируемые воспоминания, свёрнутые из днев
 1. ~~**Личный TG: вход в telegram-user-svc**~~ — ✅ ЗАКРЫТ 20.08: авторизован (`authorized: true`, self=Дмитрий 1916536646).
 2. **Дайджест @de574574 (Екатерина)** — TG авторизован 20.08, теперь доступен. (Реализовать отправку при необходимости.)
 3. **Image-gen через `image_generate` tool** — ретушь Gemini ждёт квоты (429). Открытые HF-сервисы нестабильны. (qwen-image — закрыто решением Дмитрия, убрано.)
-4. `_collect_news` в orchestrator.py — всё ещё **заглушка** (дайджест собран вручную). Реализовать реальный сбор.
+4. ~~`_collect_news` в orchestrator.py~~ — 🗑️ УДАЛЁН 24.08 вместе с orchestrator.py (мёртвый код).
 5. ⚠️ **R2D2 (19.08): billing error — у какого-то ключа кончились кредиты** — проверить балансы OpenRouter/Google/DeepSeek.
 6. ~~meme_fetcher.py~~ — УДАЛЁН (мем-автоматизация убрана 11.08).
 7. MiMo v2.5 и Hy3 :free — добавлять ли в каталог OpenRouter (Дмитрий рассматривал, не подтвердил). Vision-чтение после удаления gpt-4o-mini — чем читать скрины.
 8. ✅ Плагин tg-user-tools загружен (лог: `2 plugins: telegram, tg-user-tools`), инструменты tg_send/tg_send_file работают (отправка .ics 20.08).
+9. ✅ **Плагин jina-tools (jina_search, jina_rag) — подключён 24.08** (entries+load+allow, лог: 7 plugins). Ключ: `/root/.openclaw/credentials/jina.key`. Кэш RAG: `/root/.openclaw/cache/jina_rag.json` (10MB). Rate limit Jina: 100K токенов/мин — троттлинг встроен.
+10. 🔒 **Bot token @Dmbotmy_bot РОТИРОВАН 24.08 12:09** (утёк в git-историю; старый мёртв 401, новый в openclaw.json+.env, НЕ писать в git/логи).
 
 ## Расписание/календарь (последнее известное, Google)
 - По Google Calendar на 11.08: событие «Тест: подключение календаря OpenClaw» 13:00 (проверка подключения).
@@ -105,7 +107,7 @@ _Курируемые воспоминания, свёрнутые из днев
 
 ## 🔒 ПРАВИЛО РЕЛИЗА (15.08.11, требование Дмитрия)
 - НИЧЕГО в прод без явного «можно» от Дмитрия. Процесс: тест в ~/.openclaw-test (порт 18790, без TG-бота) → отчёт (что/что проверил/риски) → вопрос → только после «можно» катить в прод.
-- Тестовый контур: `--profile test` изолирует; прод-гейтвей = user-systemd юнит `openclaw-gateway.service` (рестарт `systemctl --user restart`, НЕ SIGUSR1 для tailscale-изменений). Скрипт релиза: `/root/.openclaw/deploy-test-to-prod.sh`.
+- ⚠️ **Урок 24.08**: тестовый контур `--profile test` на текущем сервере НЕ поднимается, пока активен прод (guard блокирует второй гейтвей). Скрипт `/root/.openclaw/deploy-test-to-prod.sh` на новом сервере ОТСУТСТВУЕТ. Альтернатива: правка конфига файлом + `systemctl --user restart openclaw-gateway.service` (с явного «можно»).
 - image_generate настроен: primary openrouter/google/gemini-3.1-flash-image, fallback google + openrouter gemini-3-pro (поля protected — править напрямую в openclaw.json + restart).
 - Я нарушил это правило (serve в прод) 15.08.11 — Дмитрий отчитал. Больше не повторять.
 

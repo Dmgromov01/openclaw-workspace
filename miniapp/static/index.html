@@ -542,6 +542,59 @@
         }
       }, [view]);
 
+      // ================= 7. ПЕРЕВОДЧИК (MyMemory через /api/translate) =================
+      const [trText, setTrText] = useState('');
+      const [trPair, setTrPair] = useState('en|ru'); // 'en|ru' | 'ru|en' | 'es|ru' | 'ru|es'
+      const [trResult, setTrResult] = useState('');
+      const [trLoading, setTrLoading] = useState(false);
+      const [trError, setTrError] = useState('');
+      const [trCopied, setTrCopied] = useState(false);
+      const [dict, setDict] = useState([]); // словарь: [{id, src, dst}]
+      const [dictSrc, setDictSrc] = useState('');
+      const [dictDst, setDictDst] = useState('');
+
+      const PAIRS = [
+        { id: 'en|ru', label: '🇬🇧 Английский → 🇷🇺 Русский' },
+        { id: 'ru|en', label: '🇷🇺 Русский → 🇬🇧 Английский' },
+        { id: 'es|ru', label: '🇪🇸 Испанский → 🇷🇺 Русский' },
+        { id: 'ru|es', label: '🇷🇺 Русский → 🇪🇸 Испанский' },
+      ];
+
+      // словарь в localStorage
+      useEffect(() => {
+        try {
+          const raw = localStorage.getItem('hub_dict');
+          if (raw) setDict(JSON.parse(raw));
+        } catch (_) {}
+      }, []);
+      const saveDict = (d) => {
+        setDict(d);
+        try { localStorage.setItem('hub_dict', JSON.stringify(d)); } catch (_) {}
+      };
+      const addDict = (src, dst) => {
+        if (!src.trim()) return;
+        saveDict([{ id: Date.now(), src: src.trim(), dst: (dst || '').trim() }, ...dict]);
+      };
+      const removeDict = (id) => saveDict(dict.filter(x => x.id !== id));
+
+      const doTranslate = () => {
+        if (!trText.trim()) { setTrError('Введи текст для перевода'); return; }
+        setTrLoading(true); setTrError(''); setTrResult('');
+        const [from, to] = trPair.split('|');
+        apiFetch('/miniapp/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: trText, from, to }),
+        })
+          .then(r => r.json())
+          .then(d => {
+            if (d.ok) setTrResult(d.text || '');
+            else setTrError(d.error || 'Ошибка перевода');
+          })
+          .catch(() => setTrError('Сервер недоступен'))
+          .finally(() => setTrLoading(false));
+      };
+
       const priceLabel = (p) => {
         if (p === undefined || p === null) return '';
         if (p === 0) return 'Бесплатно';
@@ -1017,6 +1070,20 @@
                 </div>
               </div>
 
+              {/* 7. Переводчик (по клику на значок) */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <button
+                  onClick={() => { haptic('medium'); setView('translate'); }}
+                  className="w-full flex items-center justify-between gap-1.5 active:scale-98 transition"
+                >
+                  <div className="text-base font-black text-slate-900">🌐 Переводчик & Словарь</div>
+                  <span className="text-xs font-black text-blue-600">→</span>
+                </button>
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div className="text-xs text-slate-600">Английский ↔ русский, испанский ↔ русский. Свой словарик.</div>
+                </div>
+              </div>
+
             </div>
           )}
 
@@ -1354,6 +1421,142 @@
 
                 <div className="text-center text-[10px] text-slate-400 pb-2">
                 Данные: Open Trivia DB · BoredAPI
+              </div>
+            </div>
+          )}
+
+          {/* ================= 8. ПЕРЕВОДЧИК & СЛОВАРЬ ================= */}
+          {auth.state === 'ok' && view === 'translate' && (
+            <div className="space-y-5 animate-fade-in">
+              <button
+                onClick={() => { haptic(); setView('main'); }}
+                className="px-3.5 py-1.5 bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition"
+              >
+                ← Назад на главную
+              </button>
+
+              <div>
+                <h1 className="text-xl font-black text-slate-900">🌐 Переводчик</h1>
+                <div className="text-xs text-slate-500 mt-0.5">Английский ↔ русский · испанский ↔ русский</div>
+              </div>
+
+              {/* Выбор пары языков */}
+              <div className="grid grid-cols-2 gap-2">
+                {PAIRS.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => { haptic('light'); setTrPair(p.id); setTrResult(''); }}
+                    className={`px-2 py-2.5 rounded-2xl font-bold text-[11px] transition active:scale-97 ${trPair === p.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Ввод текста */}
+              <div className="card-white rounded-3xl p-4 space-y-3">
+                <textarea
+                  value={trText}
+                  onChange={e => setTrText(e.target.value)}
+                  placeholder="Вставь текст для перевода…"
+                  rows="4"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm text-slate-900 outline-none focus:border-blue-400 resize-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { haptic('medium'); doTranslate(); }}
+                    disabled={trLoading || !trText.trim()}
+                    className="flex-1 py-3 bg-blue-600 active:scale-97 text-white rounded-2xl font-bold text-sm transition disabled:opacity-40"
+                  >
+                    {trLoading ? '…' : '🔄 Перевести'}
+                  </button>
+                  <button
+                    onClick={() => { haptic(); setTrText(''); setTrResult(''); setTrError(''); }}
+                    className="px-4 py-3 bg-slate-100 active:scale-97 text-slate-600 rounded-2xl font-bold text-sm transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+                {trError && <div className="text-xs font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{trError}</div>}
+                {trResult && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 space-y-2">
+                    <div className="text-sm text-slate-800 whitespace-pre-wrap break-words">{trResult}</div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(trResult);
+                        haptic('notification');
+                        setTrCopied && setTrCopied(true);
+                        setTimeout(() => setTrCopied && setTrCopied(false), 2000);
+                      }}
+                      className="text-[11px] font-bold text-emerald-700 underline underline-offset-2"
+                    >
+                      Копировать
+                    </button>
+                    <button
+                      onClick={() => { haptic('medium'); addDict(trText, trResult); }}
+                      className="block w-full mt-1 py-2 bg-emerald-600 active:scale-97 text-white rounded-xl font-bold text-xs transition"
+                    >
+                      ➕ В словарь
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Словарь */}
+              <div className="card-white rounded-3xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">📚 Словарь ({dict.length})</span>
+                  <span className="text-[10px] text-slate-400">хранится на устройстве</span>
+                </div>
+
+                {/* Быстрое добавление: фраза + перевод */}
+                <div className="space-y-2">
+                  <input
+                    value={dictSrc}
+                    onChange={e => setDictSrc(e.target.value)}
+                    placeholder="Фраза (англ/исп)…"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400"
+                  />
+                  <input
+                    value={dictDst}
+                    onChange={e => setDictDst(e.target.value)}
+                    placeholder="Перевод на русский…"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400"
+                  />
+                  <button
+                    onClick={() => { haptic('medium'); addDict(dictSrc, dictDst); setDictSrc(''); setDictDst(''); }}
+                    disabled={!dictSrc.trim()}
+                    className="w-full py-2.5 bg-slate-900 active:scale-97 text-white rounded-xl font-bold text-xs transition disabled:opacity-40"
+                  >
+                    ➕ Добавить в словарь
+                  </button>
+                </div>
+
+                {/* Список */}
+                {dict.length === 0 ? (
+                  <div className="text-xs text-slate-500 bg-slate-50 rounded-xl px-3 py-4 text-center">
+                    Словарь пуст. Добавь фразу с переводом или сохрани перевод кнопкой «➕ В словарь».
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-72 overflow-y-auto">
+                    {dict.map(x => (
+                      <div key={x.id} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 space-y-0.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="text-sm font-bold text-slate-900 break-words">{x.src}</div>
+                          <button
+                            onClick={() => { haptic('light'); removeDict(x.id); }}
+                            className="text-slate-300 hover:text-red-500 text-sm shrink-0"
+                          >✕</button>
+                        </div>
+                        {x.dst && <div className="text-xs text-slate-600 break-words">🇷🇺 {x.dst}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="text-center text-[10px] text-slate-400 pb-2">
+                Перевод: MyMemory API · лимит ~50K символов/день
               </div>
             </div>
           )}

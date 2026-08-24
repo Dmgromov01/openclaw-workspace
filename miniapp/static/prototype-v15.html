@@ -114,6 +114,7 @@
     background:linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.06) 60%, rgba(255,255,255,0) 100%);
     pointer-events:none; border-radius:12px;
   }
+<<<<<<< HEAD
   .weather-top { display:flex; align-items:center; padding:4px 8px 2px; position:relative; z-index:1; }
   .weather-left { flex:1; min-width:0; }
   .weather-city { font-size:10px; color:rgba(255,255,255,0.85); font-weight:600; }
@@ -125,13 +126,52 @@
   .weather-hourly {
     display:flex; gap:0; overflow-x:auto;
     padding:1px 6px 4px; position:relative; z-index:1;
+=======
+  .weather-card .cloud-bg {
+    position:absolute; inset:0; pointer-events:none; opacity:0.25; z-index:0;
+  }
+  @media (prefers-color-scheme: dark) {
+    .weather-card {
+      background:
+        radial-gradient(circle at 78% 18%, rgba(255,220,150,0.5) 0%, rgba(255,220,150,0.15) 25%, rgba(255,220,150,0) 46%),
+        radial-gradient(circle at 50% 45%, rgba(70,150,240,0.4) 0%, rgba(70,150,240,0) 55%),
+        linear-gradient(155deg, #0A2A5C 0%, #0D3570 50%, #0B2B60 100%);
+      color:#EAF4FF;
+      box-shadow:0 12px 28px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+    .weather-card .cloud-bg { opacity:0.2; }
+  }
+  .weather-top { display:flex; align-items:center; padding:10px 14px 8px; position:relative; z-index:2; }
+  .weather-left { flex:1; }
+  .weather-city { font-size:13px; color:#FFFFFF; font-weight:600; text-shadow:0 1px 6px rgba(0,40,100,0.5); }
+  .weather-temp { font-size:40px; font-weight:700; letter-spacing:-2px; line-height:1.05; text-shadow:0 3px 16px rgba(0,40,100,0.45); }
+  .weather-temp sup { font-size:21px; font-weight:600; }
+  .weather-cond { font-size:13px; color:#F2FAFF; font-weight:500; text-shadow:0 1px 6px rgba(0,40,100,0.5); }
+  .weather-3d { width:32px; height:25px; filter:drop-shadow(0 5px 10px rgba(0,50,120,0.4)); }
+  /* почасовка: нормальные плитки, одна строка */
+  .weather-hourly {
+    display:flex; gap:6px; overflow-x:auto;
+    padding:2px 12px 12px;
+>>>>>>> 52425ef (fix(miniapp): v15 — proper widget: temp 40px, hourly tiles 46px with readable 11/14px text (not microscopic))
     scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;
   }
   .weather-hourly::-webkit-scrollbar { display:none; }
+<<<<<<< HEAD
   .h-item { text-align:center; flex:0 0 34px; scroll-snap-align:center; padding:2px 0; }
   .h-item .h-time { font-size:8px; color:rgba(255,255,255,0.8); font-weight:500; }
   .h-item .h-ic { width:16px; height:16px; margin:1px auto; display:block; opacity:0.95; }
   .h-item .h-t { font-size:10px; font-weight:600; color:#fff; }
+=======
+  .h-item {
+    flex:0 0 46px; scroll-snap-align:center; text-align:center;
+    background:rgba(255,255,255,0.15);
+    border-radius:12px;
+    padding:6px 2px;
+  }
+  .h-item .h-time { font-size:11px; color:#fff; font-weight:600; opacity:0.9; line-height:1; }
+  .h-item .h-ic { width:22px; height:22px; margin:4px auto; display:block; }
+  .h-item .h-t { font-size:14px; font-weight:700; color:#fff; line-height:1; }
+>>>>>>> 52425ef (fix(miniapp): v15 — proper widget: temp 40px, hourly tiles 46px with readable 11/14px text (not microscopic))
 
   /* ---------- Таб-бар ---------- */
   .tabbar {

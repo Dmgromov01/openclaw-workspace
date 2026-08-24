@@ -8,6 +8,7 @@
   python3 digest.py --no-send  — только вывести текст (без отправки)
 """
 import sys
+import os
 import re
 import html
 import json
@@ -46,6 +47,37 @@ def _clip(text: str, n: int = MAX_POST_LEN) -> str:
     return cut.rstrip() + "…"
 
 
+# ---------- Файловый кэш сырых ответов (TTL 15 мин) ----------
+# Не дёргаем t.me/s и RSS при повторных запусках в течение окна.
+# Кэш в /root/.openclaw/cache (вне git). Сигнатуры функций НЕ меняются.
+CACHE_DIR = "/root/.openclaw/cache"
+CACHE_TTL = 900  # 15 минут
+
+
+def _fetch_cached(url: str, curl_args: list, ttl: int = CACHE_TTL) -> str:
+    import time, hashlib
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    h = hashlib.md5(url.encode()).hexdigest()
+    cf = os.path.join(CACHE_DIR, f"digest_{h}.cache")
+    now = time.time()
+    try:
+        if os.path.exists(cf) and now - os.path.getmtime(cf) < ttl:
+            with open(cf, encoding="utf-8") as f:
+                return f.read()
+    except Exception:
+        pass
+    r = subprocess.run(curl_args, capture_output=True, text=True)
+    data = r.stdout
+    # Не кэшируем пустые/битые ответы (иначе 15 минут будем показывать пустоту)
+    if data and len(data) > 100:
+        try:
+            with open(cf, "w", encoding="utf-8") as f:
+                f.write(data)
+        except Exception:
+            pass
+    return data
+
+
 # ---------- RSS-фиды ----------
 def _rss(feed_url: str, limit: int = None, hours: int = None) -> list:
     """Возвращает [(текст, время)] заголовков из RSS-фида."""
@@ -54,9 +86,9 @@ def _rss(feed_url: str, limit: int = None, hours: int = None) -> list:
     limit = RSS_FEEDS[0][2] if limit is None else limit
     cut = 30
     try:
-        curl = ["curl", "-sL", "--max-time", "20", "-A", "Mozilla/5.0", feed_url]
-        r = subprocess.run(curl, capture_output=True, text=True)
-        data = r.stdout
+        url = feed_url
+        curl = ["curl", "-sL", "--max-time", "20", "-A", "Mozilla/5.0", url]
+        data = _fetch_cached(url, curl)
         import xml.etree.ElementTree as ET
         root = ET.fromstring(data)
         items = []
@@ -116,12 +148,12 @@ def _channel(ch: str, limit: int = None, hours: int = None) -> list:
     cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=hours)
     items = []
     try:
+        url = f"https://t.me/s/{ch}"
         curl = ["curl", "-s", "--max-time", "20", "-A", "Mozilla/5.0"]
         if SOCKS:
             curl += ["--socks5-hostname", SOCKS]
-        curl.append(f"https://t.me/s/{ch}")
-        r = subprocess.run(curl, capture_output=True, text=True)
-        data = r.stdout
+        curl.append(url)
+        data = _fetch_cached(url, curl)
         parts = re.split(r'<div class="tgme_widget_message ', data)
         seen = set()
         for p in parts[1:]:

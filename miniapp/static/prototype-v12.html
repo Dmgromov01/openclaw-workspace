@@ -136,7 +136,7 @@
   .weather-temp { font-size:52px; font-weight:700; letter-spacing:-2px; line-height:1.05; text-shadow:0 3px 16px rgba(0,40,100,0.45); }
   .weather-temp sup { font-size:27px; font-weight:600; }
   .weather-cond { font-size:14px; color:#F2FAFF; font-weight:500; text-shadow:0 1px 6px rgba(0,40,100,0.5); }
-  .weather-3d { width:72px; height:72px; filter:drop-shadow(0 12px 22px rgba(0,50,120,0.55)); }
+  .weather-3d { width:92px; height:72px; filter:drop-shadow(0 14px 24px rgba(0,50,120,0.55)); }
   /* почасовка: стеклянные плитки */
   .weather-hourly {
     display:flex; gap:8px; overflow-x:auto;
@@ -238,16 +238,46 @@
       <div class="weather-temp">19<sup>°C</sup></div>
       <div class="weather-cond">Облачно с прояснениями</div>
     </div>
-    <svg class="weather-3d" viewBox="0 0 64 64" fill="none">
+    <svg class="weather-3d" viewBox="0 0 120 90" fill="none">
+      <!-- солнце за облаком -->
       <defs>
-        <linearGradient id="cld" x1="10" y1="10" x2="54" y2="54">
-          <stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#D6E4F0"/>
+        <radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stop-color="#FFF7C0"/>
+          <stop offset="45%" stop-color="#FFD93D"/>
+          <stop offset="100%" stop-color="#FFB800" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="cloudTop" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#FFFFFF"/>
+          <stop offset="100%" stop-color="#E8F1FA"/>
+        </linearGradient>
+        <linearGradient id="cloudBottom" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#F4F9FE"/>
+          <stop offset="100%" stop-color="#C9DCF0"/>
         </linearGradient>
       </defs>
-      <ellipse cx="32" cy="50" rx="22" ry="5" fill="rgba(120,160,200,0.18)"/>
-      <path d="M20 44a10 10 0 01-1-19.9 15 15 0 0129.4-3.4A11.5 11.5 0 0147 44H20z" fill="url(#cld)" stroke="#B8CBE0" stroke-width="0.8"/>
-      <ellipse cx="27" cy="37" rx="9" ry="5" fill="#FFFFFF" opacity="0.85"/>
-      <ellipse cx="38" cy="34" rx="7" ry="4" fill="#FFFFFF" opacity="0.6"/>
+      <!-- свечение солнца -->
+      <circle cx="88" cy="22" r="38" fill="url(#sunGlow)" opacity="0.9"/>
+      <!-- само солнце -->
+      <circle cx="88" cy="22" r="17" fill="#FFE066" stroke="#FFC93C" stroke-width="1.5"/>
+      <circle cx="84" cy="18" r="5" fill="#FFF8D6" opacity="0.8"/>
+      <!-- тень облака -->
+      <ellipse cx="60" cy="76" rx="46" ry="8" fill="rgba(0,50,110,0.25)"/>
+      <!-- нижний слой облака -->
+      <g fill="url(#cloudBottom)">
+        <ellipse cx="40" cy="62" rx="34" ry="16"/>
+        <ellipse cx="66" cy="64" rx="38" ry="17"/>
+        <ellipse cx="52" cy="58" rx="26" ry="13"/>
+      </g>
+      <!-- верхний слой облака (объём) -->
+      <g fill="url(#cloudTop)">
+        <ellipse cx="36" cy="50" rx="24" ry="14"/>
+        <ellipse cx="62" cy="46" rx="28" ry="17"/>
+        <ellipse cx="80" cy="52" rx="20" ry="12"/>
+        <ellipse cx="50" cy="42" rx="16" ry="10"/>
+      </g>
+      <!-- блик сверху -->
+      <ellipse cx="52" cy="36" rx="20" ry="6" fill="#FFFFFF" opacity="0.75"/>
+      <ellipse cx="72" cy="42" rx="12" ry="4" fill="#FFFFFF" opacity="0.6"/>
     </svg>
   </div>
   <div class="weather-hourly">

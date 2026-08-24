@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>R2D2 · мини-приложение</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== Токены (DESIGN_SPEC) ===== */
+  :root {
+    --bg: #F7F8FA;
+    --surface: #FFFFFF;
+    --surface-subtle: #F3F5F7;
+    --border: #E6E9EE;
+    --border-strong: #D9DEE6;
+    --text: #121826;
+    --text-muted: #6B7280;
+    --accent: #5B6CFF;
+    --accent-soft: #EEF1FF;
+    --radius-card: 20px;
+    --radius-card-lg: 24px;
+    --radius-icon: 999px;
+    --shadow-soft: 0 8px 24px rgba(16, 24, 40, 0.04);
+    --weather-tint: #EAF1F8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171A;
+      --surface: #1C1F24;
+      --surface-subtle: #232730;
+      --border: #2D3440;
+      --border-strong: #3A4352;
+      --text: #F3F5F7;
+      --text-muted: #A0A8B5;
+      --accent: #7C88FF;
+      --accent-soft: #2A3150;
+      --weather-tint: #283240;
+      --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; }
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+  .lucide { stroke: currentColor; }
+
+  /* ===== Header Telegram shell (56-60px) ===== */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    height:58px;
+    padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+    position:sticky; top:0; z-index:20;
+    background: var(--bg);
+  }
+  .header .btn {
+    width:36px; height:36px; border-radius:var(--radius-icon);
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
+    color: var(--text);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .header .btn svg { width:18px; height:18px; }
+  .header .mid { text-align:center; flex:1; min-width:0; padding:0 8px; }
+  .header .title { font-size:17px; font-weight:600; letter-spacing:-0.2px; line-height:1.2; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .header .subtitle { font-size:11px; color:var(--text-muted); font-weight:500; line-height:1.3; }
+
+  /* ===== Summary strip (44-48px, radius 18px) ===== */
+  .summary {
+    display:flex; gap:8px; overflow-x:auto;
+    padding:0 16px 12px;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch;
+  }
+  .summary::-webkit-scrollbar { display:none; }
+  .summary .pill {
+    flex:0 0 auto; display:flex; align-items:center; gap:8px;
+    height:46px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 0 14px;
+    color: var(--text);
+  }
+  .summary .pill .ic {
+    width: 28px; height: 28px; border-radius: var(--radius-icon);
+    background: var(--accent-soft); color: var(--accent);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .summary .pill .ic svg { width:15px; height:15px; }
+  .summary .pill .txt { font-size:13px; font-weight:600; white-space:nowrap; }
+  .summary .pill .chev { color:var(--text-muted); font-size:13px; margin-left:2px; }
+
+  /* ===== Weather block — главный hero (108-124px, radius 22-24px) ===== */
+  .weather {
+    margin:0 16px 12px;
+    background: var(--weather-tint);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card-lg);
+    padding: 14px 16px 10px;
+    min-height: 108px;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .weather-top { display:flex; align-items:center; gap:12px; }
+  .weather-loc {
+    display:flex; align-items:center; gap:5px;
+    font-size:12px; font-weight:600; color:var(--text);
+  }
+  .weather-loc svg { width:12px; height:12px; color:var(--text-muted); }
+  .weather-main { display:flex; align-items:center; gap:12px; margin-top:2px; }
+  .weather-temp { font-size:34px; font-weight:700; letter-spacing:-1.5px; line-height:1; color:var(--text); }
+  .weather-temp sup { font-size:18px; font-weight:600; }
+  .weather-cond { font-size:12.5px; color:var(--text-muted); font-weight:500; margin-top:4px; }
+  .weather-art { width:64px; height:64px; flex-shrink:0; margin-left:auto; color:var(--text); }
+  .weather-art svg { width:100%; height:100%; }
+  .weather-hourly {
+    display:flex; gap:2px; overflow-x:auto; margin-top:8px; padding-top:8px;
+    border-top: 1px solid var(--border);
+    scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;
+  }
+  .weather-hourly::-webkit-scrollbar { display:none; }
+  .h-item { text-align:center; flex:0 0 44px; scroll-snap-align:center; }
+  .h-item .h-time { font-size:10px; color:var(--text-muted); font-weight:600; }
+  .h-item .h-ic { width:20px; height:20px; margin:3px auto; display:block; color:var(--text); opacity:0.85; }
+  .h-item .h-t { font-size:12px; font-weight:700; color:var(--text); }
+
+  /* ===== Cards (translator + services, radius 20-22px) ===== */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    margin: 0 16px 12px;
+    overflow: hidden;
+  }
+  .row {
+    display:flex; align-items:center; gap:12px;
+    min-height: 64px; padding: 8px 14px;
+    position:relative;
+  }
+  .row + .row::before {
+    content:""; position:absolute; left:62px; right:0; top:0;
+    height: 0.5px; background: var(--border);
+  }
+  .row .ic {
+    width: 40px; height: 40px; border-radius: var(--radius-icon);
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
+    color: var(--text);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .row .ic svg { width:19px; height:19px; }
+  .row .ic.acc { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+  .row .body { flex:1; min-width:0; }
+  .row .title { font-size:15px; font-weight:600; color:var(--text); line-height:1.3; }
+  .row .status { font-size:12px; color:var(--text-muted); font-weight:500; line-height:1.3; margin-top:1px; }
+  .row .chev { color:var(--text-muted); font-weight:500; font-size:14px; margin-left:4px; flex-shrink:0; }
+
+  /* ===== Tab bar (72-78px) ===== */
+  .tabbar {
+    position:fixed; left:0; right:0; bottom:0; z-index:100;
+    display:flex; justify-content:space-around; align-items:center;
+    height: 74px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:56px; min-height:44px; justify-content:center; }
+  .tab .ti { width:21px; height:21px; color: var(--text-muted); }
+  .tab .tl { font-size:10px; font-weight:500; color: var(--text-muted); }
+  .tab.active .ti { color: var(--accent); }
+  .tab.active .tl { color: var(--accent); }
+
+  .toast {
+    position:fixed; left:50%; bottom:100px; transform:translateX(-50%) translateY(20px);
+    background: rgba(18,24,38,0.92); color:#fff; font-size:13px; font-weight:500;
+    padding:10px 16px; border-radius:12px; opacity:0; pointer-events:none;
+    transition:opacity .25s, transform .25s; z-index:300; white-space:nowrap;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Header: Закрыть | R2D2 · мини-приложение | меню -->
+<div class="header">
+  <div class="btn" onclick="closeApp()"><i data-lucide="x"></i></div>
+  <div class="mid"><div class="title">R2D2</div><div class="subtitle">мини-приложение</div></div>
+  <div class="btn" onclick="toast('Меню скоро')"><i data-lucide="ellipsis"></i></div>
+</div>
+
+<!-- Summary strip -->
+<div class="summary">
+  <div class="pill" onclick="toast('Задачи скоро')">
+    <div class="ic"><i data-lucide="check-check"></i></div>
+    <div class="txt">0 задач</div><div class="chev">›</div>
+  </div>
+  <div class="pill" onclick="toast('Дайджест скоро')">
+    <div class="ic"><i data-lucide="newspaper"></i></div>
+    <div class="txt">3 новых дайджеста</div>
+  </div>
+  <div class="pill" onclick="toast('Поиск скоро')">
+    <div class="ic"><i data-lucide="radar"></i></div>
+    <div class="txt">2 активных поиска</div><div class="chev">›</div>
+  </div>
+</div>
+
+<!-- Weather block (hero) -->
+<div class="weather">
+  <div class="weather-top">
+    <div class="weather-left">
+      <div class="weather-loc"><i data-lucide="map-pin"></i>Москва</div>
+      <div class="weather-main">
+        <div class="weather-temp">19<sup>°C</sup></div>
+      </div>
+      <div class="weather-cond">Облачно с прояснениями</div>
+    </div>
+    <div class="weather-art" id="weatherArt"><i data-lucide="cloud-sun" style="width:100%;height:100%;stroke-width:1.4;"></i></div>
+  </div>
+  <div class="weather-hourly" id="hourlyRow"></div>
+</div>
+
+<!-- Translator -->
+<div class="card">
+  <div class="row" onclick="toast('RU→ES скоро')">
+    <div class="ic"><i data-lucide="languages"></i></div>
+    <div class="body"><div class="title">Русский → Испанский</div><div class="status">Перевод с русского</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('RU↔EN скоро')">
+    <div class="ic"><i data-lucide="languages"></i></div>
+    <div class="body"><div class="title">Русский ↔ Английский</div><div class="status">Двусторонний перевод</div></div>
+    <div class="chev">›</div>
+  </div>
+</div>
+
+<!-- Services list (grouped, Apple Settings style) -->
+<div class="card">
+  <div class="row" onclick="toast('Дайджест скоро')">
+    <div class="ic"><i data-lucide="newspaper"></i></div>
+    <div class="body"><div class="title">Дайджест</div><div class="status">3 новых выжимки</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Поездки скоро')">
+    <div class="ic"><i data-lucide="plane"></i></div>
+    <div class="body"><div class="title">Поездки</div><div class="status">Плеяды / активный поиск</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('OpenClaw Search скоро')">
+    <div class="ic"><i data-lucide="radar"></i></div>
+    <div class="body"><div class="title">OpenClaw Search</div><div class="status">2 активных поиска</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Викторина скоро')">
+    <div class="ic"><i data-lucide="brain"></i></div>
+    <div class="body"><div class="title">Викторина</div><div class="status">Проверь себя</div></div>
+    <div class="chev">›</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row" onclick="toast('Пароли скоро')">
+    <div class="ic"><i data-lucide="key-round"></i></div>
+    <div class="body"><div class="title">Пароли</div><div class="status">Менеджер паролей</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Валюты скоро')">
+    <div class="ic"><i data-lucide="banknote"></i></div>
+    <div class="body"><div class="title">Валюты</div><div class="status">Курсы ЦБ</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Конвертер скоро')">
+    <div class="ic"><i data-lucide="arrow-left-right"></i></div>
+    <div class="body"><div class="title">Конвертер</div><div class="status">Единицы измерения</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Календарь скоро')">
+    <div class="ic"><i data-lucide="calendar-days"></i></div>
+    <div class="body"><div class="title">Календарь</div><div class="status">События и задачи</div></div>
+    <div class="chev">›</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row" onclick="toast('Заметки скоро')">
+    <div class="ic"><i data-lucide="notebook-pen"></i></div>
+    <div class="body"><div class="title">Заметки</div><div class="status">Быстрые записи</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Файлы скоро')">
+    <div class="ic"><i data-lucide="folder"></i></div>
+    <div class="body"><div class="title">Файлы</div><div class="status">Хранилище</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('QR-сканер скоро')">
+    <div class="ic"><i data-lucide="scan-line"></i></div>
+    <div class="body"><div class="title">QR-сканер</div><div class="status">Сканировать</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Таймер скоро')">
+    <div class="ic"><i data-lucide="timer"></i></div>
+    <div class="body"><div class="title">Таймер</div><div class="status">Обратный отсчёт</div></div>
+    <div class="chev">›</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row" onclick="toast('Напоминания скоро')">
+    <div class="ic"><i data-lucide="bell-ring"></i></div>
+    <div class="body"><div class="title">Напоминания</div><div class="status">Список напоминаний</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Погода скоро')">
+    <div class="ic"><i data-lucide="cloudy"></i></div>
+    <div class="body"><div class="title">Погода</div><div class="status">Прогноз</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Гороскоп скоро')">
+    <div class="ic"><i data-lucide="sparkles"></i></div>
+    <div class="body"><div class="title">Гороскоп</div><div class="status">Ежедневный</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Аналитика скоро')">
+    <div class="ic"><i data-lucide="chart-column"></i></div>
+    <div class="body"><div class="title">Аналитика</div><div class="status">Статистика</div></div>
+    <div class="chev">›</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row" onclick="toast('Идеи скоро')">
+    <div class="ic"><i data-lucide="lightbulb"></i></div>
+    <div class="body"><div class="title">Идеи</div><div class="status">AI-помощник</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Чек-листы скоро')">
+    <div class="ic"><i data-lucide="list-checks"></i></div>
+    <div class="body"><div class="title">Чек-листы</div><div class="status">Мои списки</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Фокус скоро')">
+    <div class="ic"><i data-lucide="focus"></i></div>
+    <div class="body"><div class="title">Фокус</div><div class="status">Помодоро</div></div>
+    <div class="chev">›</div>
+  </div>
+  <div class="row" onclick="toast('Добавить скоро')">
+    <div class="ic acc"><i data-lucide="plus"></i></div>
+    <div class="body"><div class="title">Добавить</div><div class="status">Новый сервис</div></div>
+    <div class="chev">›</div>
+  </div>
+</div>
+
+<!-- Tab bar -->
+<div class="tabbar">
+  <div class="tab active" data-tab="0" onclick="switchTab(0)">
+    <i class="ti" data-lucide="house"></i>
+    <div class="tl">Главная</div>
+  </div>
+  <div class="tab" data-tab="1" onclick="switchTab(1)">
+    <i class="ti" data-lucide="search"></i>
+    <div class="tl">Поиск</div>
+  </div>
+  <div class="tab" data-tab="2" onclick="switchTab(2)">
+    <i class="ti" data-lucide="bot"></i>
+    <div class="tl">Ассистент</div>
+  </div>
+  <div class="tab" data-tab="3" onclick="switchTab(3)">
+    <i class="ti" data-lucide="bell"></i>
+    <div class="tl">Уведомления</div>
+  </div>
+  <div class="tab" data-tab="4" onclick="switchTab(4)">
+    <i class="ti" data-lucide="user-round"></i>
+    <div class="tl">Профиль</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  let toastTimer = null;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+  }
+  function closeApp() {
+    if (window.Telegram?.WebApp?.close) { try { window.Telegram.WebApp.close(); } catch(e){} }
+    else toast('Это прототип — закрой вкладку');
+  }
+  function switchTab(i) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.tab === i));
+    const names = ['Главная','Поиск','Ассистент','Уведомления','Профиль'];
+    if (i !== 0) toast(names[i] + ' — скоро');
+  }
+
+  // Почасовой прогноз (Lucide-иконки)
+  const hourly = [
+    {t:'11:00', w:'cloud', v:'20°'}, {t:'12:00', w:'cloud', v:'21°'},
+    {t:'13:00', w:'sun-medium', v:'22°'}, {t:'14:00', w:'cloud', v:'22°'},
+    {t:'15:00', w:'cloud-sun', v:'21°'}, {t:'16:00', w:'cloud', v:'21°'},
+    {t:'17:00', w:'cloud', v:'20°'}, {t:'18:00', w:'cloud-sun', v:'19°'},
+    {t:'19:00', w:'cloud', v:'18°'}, {t:'20:00', w:'cloud-rain', v:'17°'}
+  ];
+  function renderHourly() {
+    const row = document.getElementById('hourlyRow');
+    row.innerHTML = hourly.map(h =>
+      `<div class="h-item"><div class="h-time">${h.t}</div><i class="h-ic" data-lucide="${h.w}"></i><div class="h-t">${h.v}</div></div>`
+    ).join('');
+    lucide.createIcons();
+  }
+
+  // Переключение погоды по клику на арт
+  const artIcons = ['cloud-sun','sun-medium','cloud','cloud-rain','cloud-lightning','cloud-snow','moon-star'];
+  let artIdx = 0;
+  const artEl = document.getElementById('weatherArt');
+  if (artEl) artEl.addEventListener('click', () => {
+    artIdx = (artIdx + 1) % artIcons.length;
+    artEl.innerHTML = `<i data-lucide="${artIcons[artIdx]}" style="width:100%;height:100%;stroke-width:1.4;"></i>`;
+    lucide.createIcons();
+  });
+
+  renderHourly();
+  lucide.createIcons();
+</script>
+</body>
+</html>

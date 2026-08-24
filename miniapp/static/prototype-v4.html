@@ -22,8 +22,8 @@
   }
   .header .close { color:#007AFF; font-size:16px; font-weight:500; padding:6px 0; }
   .header .mid { text-align:center; }
-  .header .title { font-size:19px; font-weight:700; letter-spacing:-0.3px; line-height:1.15; }
-  .header .subtitle { font-size:10.5px; color:#8E8E93; font-weight:400; }
+  .header .title { font-size:21px; font-weight:800; letter-spacing:-0.3px; line-height:1.15; }
+  .header .subtitle { font-size:12px; color:#8E8E93; font-weight:500; }
   .header .menu {
     width:32px; height:32px; border-radius:50%; background:#EDEDF0;
     display:flex; align-items:center; justify-content:center; color:#007AFF;
@@ -44,7 +44,7 @@
     width:32px; height:32px; border-radius:10px; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
   }
-  .pill .txt { font-size:13px; font-weight:500; line-height:1.25; white-space:nowrap; }
+  .pill .txt { font-size:15px; font-weight:600; line-height:1.25; white-space:nowrap; }
   .pill .arrow { margin-left:auto; color:#C7C7CC; font-size:14px; font-weight:300; }
 
   /* ---------- Контент ---------- */
@@ -52,52 +52,59 @@
   .card { background:#fff; border-radius:20px; box-shadow:0 4px 12px rgba(0,0,0,0.05); padding:16px; }
 
   /* Погода */
-  .weather-head { display:flex; align-items:center; gap:4px; font-size:13px; font-weight:500; color:#1A1A1A; }
-  .weather-head .pin { color:#007AFF; font-size:12px; }
+  .weather-head { display:flex; align-items:center; gap:4px; font-size:14px; font-weight:600; color:#1A1A1A; }
+  .weather-head .pin { color:#007AFF; font-size:13px; }
   .weather-main { display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
-  .weather-left { display:flex; align-items:center; gap:14px; }
-  .weather-temp { font-size:38px; font-weight:300; letter-spacing:-1.5px; line-height:1; }
-  .weather-temp sup { font-size:20px; font-weight:300; }
-  .weather-cond { font-size:12.5px; color:#8E8E93; margin-top:3px; font-weight:400; }
-  .weather-3d { width:64px; height:64px; filter:drop-shadow(0 6px 12px rgba(90,140,200,0.35)); }
+  .weather-left { display:flex; align-items:center; gap:16px; }
+  .weather-temp { font-size:46px; font-weight:400; letter-spacing:-1.5px; line-height:1; }
+  .weather-temp sup { font-size:24px; font-weight:400; }
+  .weather-cond { font-size:14px; color:#6E6E73; margin-top:4px; font-weight:500; }
+  .weather-3d { width:72px; height:72px; filter:drop-shadow(0 8px 14px rgba(90,140,200,0.4)); }
   .weather-hourly {
-    display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin-top:12px;
-    padding-top:10px; border-top:1px solid #F2F2F2;
+    display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin-top:14px;
+    padding-top:12px; border-top:1px solid #F2F2F2;
   }
   .h-item { text-align:center; }
-  .h-item .h-time { font-size:10.5px; color:#8E8E93; font-weight:400; }
-  .h-item .h-ic { width:20px; height:20px; margin:4px auto; display:block; }
-  .h-item .h-t { font-size:12px; font-weight:500; color:#3C3C43; }
+  .h-item .h-time { font-size:12px; color:#8E8E93; font-weight:500; }
+  .h-item .h-ic { width:24px; height:24px; margin:5px auto; display:block; filter:drop-shadow(0 1px 1px rgba(0,0,0,0.1)); }
+  .h-item .h-t { font-size:14px; font-weight:600; color:#3C3C43; }
 
   /* Секция */
   .sec { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-  .sec .s-left { display:flex; align-items:center; gap:7px; }
-  .sec .s-ic { width:22px; height:22px; display:flex; align-items:center; justify-content:center; }
-  .sec .s-title { font-size:16px; font-weight:600; }
-  .sec .s-all { color:#007AFF; font-size:12.5px; font-weight:500; }
+  .sec .s-left { display:flex; align-items:center; gap:8px; }
+  .sec .s-ic { width:26px; height:26px; display:flex; align-items:center; justify-content:center; }
+  .sec .s-title { font-size:19px; font-weight:700; }
+  .sec .s-all { color:#007AFF; font-size:14px; font-weight:500; }
 
   /* Перевод */
   .langs { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .lang {
-    border:1px solid #E5E5EA; border-radius:16px; padding:13px 14px;
+    border:1px solid #E5E5EA; border-radius:16px; padding:15px 14px;
     background:#fff; text-align:left;
   }
-  .lang .l-code { font-size:15px; font-weight:700; letter-spacing:-0.2px; }
-  .lang .l-code .arrow { color:#007AFF; font-weight:600; }
-  .lang .l-name { font-size:11px; color:#8E8E93; margin-top:2px; font-weight:400; }
+  .lang .l-code { font-size:18px; font-weight:800; letter-spacing:-0.3px; }
+  .lang .l-code .arrow { color:#007AFF; font-weight:700; }
+  .lang .l-name { font-size:12.5px; color:#8E8E93; margin-top:3px; font-weight:500; }
 
-  /* Сетка сервисов 5×4 */
-  .services { display:grid; grid-template-columns:repeat(5,1fr); gap:16px 4px; }
-  .svc { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  /* Сетка сервисов 5×4 — объёмные значки + крупный шрифт */
+  .services { display:grid; grid-template-columns:repeat(5,1fr); gap:18px 4px; }
+  .svc { display:flex; flex-direction:column; align-items:center; gap:7px; }
   .svc .s-ic {
-    width:46px; height:46px; border-radius:50%;
-    border:1px solid #E5E5E5;
+    width:54px; height:54px; border-radius:50%;
+    background: radial-gradient(circle at 32% 26%, #FFFFFF 0%, #F2F2F5 55%, #E4E4E9 100%);
+    border:1px solid #DEDEE4;
+    box-shadow: inset 0 -3px 5px rgba(0,0,0,0.05), inset 0 2px 3px rgba(255,255,255,0.9), 0 3px 8px rgba(0,0,0,0.08);
     display:flex; align-items:center; justify-content:center;
-    color:#3C3C43;
+    color:#2C2C2E;
   }
-  .svc .s-name { font-size:11px; font-weight:600; text-align:center; line-height:1.2; color:#1A1A1A; }
-  .svc .s-desc { font-size:9px; color:#8E8E93; text-align:center; line-height:1.1; font-weight:400; }
-  .svc.add .s-ic { background:#007AFF; border:none; color:#fff; }
+  .svc .s-ic svg { filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.18)); }
+  .svc .s-name { font-size:13px; font-weight:700; text-align:center; line-height:1.2; color:#1A1A1A; }
+  .svc .s-desc { font-size:10.5px; color:#8E8E93; text-align:center; line-height:1.15; font-weight:500; }
+  .svc.add .s-ic {
+    background: radial-gradient(circle at 32% 26%, #3395FF 0%, #007AFF 60%, #005FD6 100%);
+    border:none; color:#fff;
+    box-shadow: inset 0 -3px 5px rgba(0,0,0,0.15), inset 0 2px 3px rgba(255,255,255,0.35), 0 3px 8px rgba(0,122,255,0.35);
+  }
 
   /* ---------- Таб-бар ---------- */
   .tabbar {
@@ -108,9 +115,9 @@
     border-top:0.5px solid rgba(128,128,128,0.18);
     padding:8px 10px calc(10px + env(safe-area-inset-bottom));
   }
-  .tab { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:52px; }
-  .tab .ti { width:24px; height:24px; color:#8E8E93; }
-  .tab .tl { font-size:9.5px; font-weight:500; color:#8E8E93; }
+  .tab { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:56px; }
+  .tab .ti { width:26px; height:26px; color:#8E8E93; }
+  .tab .tl { font-size:11px; font-weight:600; color:#8E8E93; }
   .tab.active .ti { color:#007AFF; }
   .tab.active .tl { color:#007AFF; }
 

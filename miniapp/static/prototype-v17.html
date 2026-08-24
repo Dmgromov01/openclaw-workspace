@@ -113,8 +113,8 @@
   .weather-card__temp { font-size:36px; font-weight:700; letter-spacing:-1.5px; line-height:1.05; color:var(--text); }
   .weather-card__temp sup { font-size:18px; font-weight:600; }
   .weather-card__desc { font-size:12.5px; color:var(--text-muted); font-weight:500; margin-top:2px; }
-  .weather-card__art { width:72px; height:72px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
-  .weather-card__hero { width:72px; height:72px; object-fit:contain; filter: drop-shadow(0 6px 14px rgba(16,24,40,0.12)); }
+  .weather-card__art { width:104px; height:88px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .weather-card__hero { width:104px; height:88px; object-fit:contain; filter: drop-shadow(0 8px 18px rgba(16,24,40,0.14)); }
   .weather-card__divider { height:1px; background:var(--border); margin:8px 0 6px; }
   .weather-card__hourly {
     display:flex; gap:4px; overflow-x:auto;
@@ -123,7 +123,7 @@
   .weather-card__hourly::-webkit-scrollbar { display:none; }
   .h-item { text-align:center; flex:0 0 42px; scroll-snap-align:center; }
   .h-item .h-time { font-size:10px; color:var(--text-muted); font-weight:600; }
-  .h-item .h-ic { width:22px; height:22px; margin:3px auto; display:block; object-fit:contain; }
+  .h-item .h-ic { width:24px; height:24px; margin:3px auto; display:block; object-fit:contain; }
   .h-item .h-t { font-size:12px; font-weight:700; color:var(--text); }
 
   /* ===== Cards (translator + services, radius 20-22px) ===== */
@@ -215,7 +215,7 @@
       <div class="weather-card__desc">Облачно с прояснениями</div>
     </div>
     <div class="weather-card__art" aria-hidden="true">
-      <img src="./weather-icons/hero/partly-cloudy-hero.png" alt="" class="weather-card__hero" id="heroImg" />
+      <img src="./weather-icons/hero/partly-cloudy-hero.png?v=2" alt="" class="weather-card__hero" id="heroImg" />
     </div>
   </div>
   <div class="weather-card__divider"></div>
@@ -426,7 +426,7 @@
   ];
   function smallIcon(key) {
     const st = WEATHER_STATES.find(s => s.key === key);
-    return st ? st.small : WEATHER_STATES[2].small;
+    return st ? st.small + '?v=2' : WEATHER_STATES[2].small + '?v=2';
   }
   function renderHourly() {
     const row = document.getElementById('hourlyRow');
@@ -444,7 +444,7 @@
     artEl.addEventListener('click', () => {
       artIdx = (artIdx + 1) % WEATHER_STATES.length;
       const st = WEATHER_STATES[artIdx];
-      artEl.src = st.hero;
+      artEl.src = st.hero + '?v=2';
       if (descEl) descEl.textContent = st.label_ru;
       cardEl.classList.remove(...cardEl.classList);
       cardEl.classList.add('weather-card', 'weather--' + st.key);

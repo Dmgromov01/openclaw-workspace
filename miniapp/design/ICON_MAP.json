@@ -1,0 +1,33 @@
+{
+  "library": "lucide",
+  "cdn": "https://unpkg.com/lucide@latest",
+  "icons": {
+    "weather": ["cloud", "cloud-sun", "cloud-rain", "sun-medium", "wind"],
+    "translator": "languages",
+    "digest": "newspaper",
+    "travel": ["plane", "map", "tickets-plane"],
+    "openclaw_search": ["search", "radar", "bot"],
+    "quiz": ["brain", "help-circle", "badge-help"],
+    "passwords": ["key-round", "shield-check"],
+    "currency": ["banknote", "badge-dollar-sign", "coins"],
+    "converter": "arrow-left-right",
+    "calendar": "calendar-days",
+    "notes": ["notebook-pen", "sticky-note"],
+    "files": ["folder", "files"],
+    "qr": ["scan-line", "qr-code"],
+    "timer": ["timer", "clock-3"],
+    "reminders": "bell-ring",
+    "forecast": "cloudy",
+    "horoscope": ["sparkles", "stars"],
+    "analytics": ["chart-column", "bar-chart-3"],
+    "ideas": "lightbulb",
+    "checklists": "list-checks",
+    "focus": ["focus", "target"],
+    "add": "plus",
+    "assistant": ["bot", "sparkles"],
+    "notifications": "bell",
+    "profile": "user-round",
+    "search_tab": "search",
+    "home": "house"
+  }
+}

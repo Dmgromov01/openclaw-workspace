@@ -467,6 +467,6 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     miniapp_auth.init_db()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     print(f"MiniApp server on :{port} (static: {STATIC})", flush=True)
     server.serve_forever()

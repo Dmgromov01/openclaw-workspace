@@ -28,3 +28,8 @@ __pycache__/
 # Python venv
 venv/
 .clawpatch/
+
+# Runtime data (не для git)
+.venv/
+*.db
+*.sqlite

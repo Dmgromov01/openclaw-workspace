@@ -13,9 +13,13 @@ function getKey() {
   return fs.readFileSync(KEY_FILE, "utf8").trim();
 }
 
+// Единый таймаут для всех HTTP-вызовов Jina (защита от зависших соединений)
+const HTTP_TIMEOUT_MS = 30000;
+
 async function jinaGet(url) {
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${getKey()}` },
+    signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
   });
   if (!res.ok) {
     throw new Error(`Jina ${res.status}: ${(await res.text()).slice(0, 200)}`);
@@ -31,6 +35,7 @@ async function jinaPost(url, body, retries = 3) {
       method: "POST",
       headers: { Authorization: `Bearer ${getKey()}`, "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
     });
     if (res.ok) return res.json();
     if (res.status === 429 && attempt < retries) {

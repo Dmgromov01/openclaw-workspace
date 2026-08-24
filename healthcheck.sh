@@ -43,9 +43,18 @@ done
 # 3. Сервисы
 log "--- 3. Сервисы ---"
 systemctl --user is-active miniapp.service >/dev/null 2>&1 && ok "miniapp.service" || fail "miniapp.service НЕ активен"
-# telegram-user-svc: не systemd-юнит, а ручной процесс — проверяем порт 8765
+# telegram-user-svc: systemd-юнит (telegram-user-svc.service), слушает 127.0.0.1:8765
+systemctl is-active telegram-user-svc.service >/dev/null 2>&1 && ok "telegram-user-svc.service" || fail "telegram-user-svc.service НЕ активен"
 (ss -tlnp 2>/dev/null | grep -q ":8765 ") && ok "telegram-user-svc (порт 8765)" || fail "telegram-user-svc НЕ слушает 8765"
 systemctl --user is-active openclaw-gateway.service >/dev/null 2>&1 && ok "openclaw-gateway.service" || fail "openclaw-gateway.service НЕ активен"
+
+# 3b. Firewall (ufw должен быть active; 8080 НЕ должен быть открыт наружу)
+/usr/sbin/ufw status 2>/dev/null | grep -q "Status: active" && ok "ufw active" || fail "ufw НЕ активен"
+if ss -tlnp 2>/dev/null | grep -q ":8080 "; then
+  ss -tlnp 2>/dev/null | grep ":8080 " | grep -q "127.0.0.1" && ok "miniapp слушает loopback" || fail "miniapp слушает НЕ loopback (8080)"
+else
+  fail "miniapp не слушает 8080"
+fi
 
 # 4. Ключевые python-зависимости
 log "--- 4. Зависимости (system python) ---"

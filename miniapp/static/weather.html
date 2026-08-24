@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Погода</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, Roboto, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    color:#fff;
+    overflow-x:hidden;
+  }
+
+  /* ===== Фон: сочное небо ===== */
+  .sky {
+    position:fixed; inset:0; z-index:-1;
+    background:
+      radial-gradient(circle at 75% 18%, rgba(255,240,180,0.95) 0%, rgba(255,224,130,0.5) 22%, rgba(255,224,130,0) 46%),
+      radial-gradient(circle at 50% 50%, rgba(90,200,255,0.5) 0%, rgba(90,200,255,0) 58%),
+      linear-gradient(160deg, #00A8F3 0%, #0078E0 48%, #0056B8 100%);
+  }
+  .sky::after {
+    content:""; position:absolute; left:0; top:0; right:0; height:42%;
+    background:linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 100%);
+  }
+  /* облака на фоне */
+  .clouds { position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:0.3; }
+
+  /* ===== Шапка ===== */
+  .header {
+    display:flex; align-items:center; gap:12px;
+    padding: calc(12px + env(safe-area-inset-top)) 18px 0;
+  }
+  .header .back {
+    width:34px; height:34px; border-radius:50%;
+    background:rgba(255,255,255,0.22);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,0.3);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; color:#fff; text-decoration:none; flex-shrink:0;
+  }
+  .header .loc { font-size:16px; font-weight:600; text-shadow:0 1px 4px rgba(0,40,100,0.4); }
+
+  /* ===== Основной блок ===== */
+  .main { padding:4px 20px 0; }
+  .city { font-size:20px; font-weight:700; text-shadow:0 2px 8px rgba(0,40,100,0.45); }
+  .day { font-size:14px; color:rgba(255,255,255,0.92); font-weight:500; margin-top:2px; text-shadow:0 1px 4px rgba(0,40,100,0.4); }
+  .temp { font-size:84px; font-weight:200; letter-spacing:-4px; line-height:1; margin-top:2px; text-shadow:0 4px 20px rgba(0,40,100,0.4); }
+  .temp sup { font-size:40px; font-weight:300; }
+
+  /* ===== Иллюстрация погоды ===== */
+  .art-wrap { display:flex; justify-content:center; margin:6px 0 10px; }
+  .art { width:230px; height:170px; filter:drop-shadow(0 20px 34px rgba(0,50,120,0.45)); }
+
+  /* ===== Параметры: влажность, ветер, давление ===== */
+  .params {
+    display:flex; justify-content:space-around; gap:8px;
+    background:rgba(255,255,255,0.16);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:18px;
+    padding:12px 8px;
+    margin:0 2px;
+  }
+  .param { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; min-width:0; }
+  .param .p-ic { width:20px; height:20px; opacity:0.95; }
+  .param .p-val { font-size:15px; font-weight:700; line-height:1.1; white-space:nowrap; }
+  .param .p-label { font-size:11px; color:rgba(255,255,255,0.85); font-weight:500; }
+
+  /* ===== Почасовка ===== */
+  .h-title { font-size:13px; font-weight:600; color:rgba(255,255,255,0.9); margin:16px 2px 8px; text-transform:uppercase; letter-spacing:0.5px; }
+  .hourly {
+    display:flex; gap:8px; overflow-x:auto;
+    padding-bottom:6px;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;
+  }
+  .hourly::-webkit-scrollbar { display:none; }
+  .h-card {
+    flex:0 0 58px; scroll-snap-align:center;
+    background:rgba(255,255,255,0.16);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:16px;
+    padding:9px 4px 10px;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+  }
+  .h-card .ht { font-size:12px; font-weight:600; opacity:0.95; }
+  .h-card .hi { width:22px; height:22px; }
+  .h-card .ht2 { font-size:15px; font-weight:700; }
+
+  /* ===== Прогноз на 7 дней ===== */
+  .w-title { font-size:13px; font-weight:600; color:rgba(255,255,255,0.9); margin:18px 2px 8px; text-transform:uppercase; letter-spacing:0.5px; }
+  .week {
+    background:rgba(255,255,255,0.16);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:18px;
+    padding:4px 14px;
+    margin-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+  .w-row {
+    display:flex; align-items:center; gap:10px;
+    min-height:46px;
+  }
+  .w-row + .w-row { border-top:0.5px solid rgba(255,255,255,0.2); }
+  .w-row .wd { width:72px; font-size:15px; font-weight:600; }
+  .w-row .wi { width:26px; height:26px; margin-left:auto; }
+  .w-row .wlo { width:38px; text-align:right; font-size:13px; color:rgba(255,255,255,0.7); font-weight:500; }
+  .w-row .whi { width:38px; text-align:right; font-size:15px; font-weight:700; }
+</style>
+</head>
+<body>
+
+<div class="sky"></div>
+<svg class="clouds" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice">
+  <g fill="#FFFFFF" opacity="0.5">
+    <ellipse cx="60" cy="150" rx="60" ry="24"/><ellipse cx="105" cy="138" rx="44" ry="19"/><ellipse cx="30" cy="142" rx="32" ry="15"/>
+  </g>
+  <g fill="#FFFFFF" opacity="0.35">
+    <ellipse cx="320" cy="130" rx="65" ry="26"/><ellipse cx="368" cy="118" rx="44" ry="19"/><ellipse cx="282" cy="122" rx="34" ry="16"/>
+  </g>
+</svg>
+
+<!-- Шапка -->
+<div class="header">
+  <a class="back" href="javascript:history.back()">‹</a>
+  <div class="loc">📍 Москва</div>
+</div>
+
+<!-- Основная инфа -->
+<div class="main">
+  <div class="city">Москва</div>
+  <div class="day" id="todayLabel">Пн, 24 августа</div>
+  <div class="temp" id="bigTemp">19<sup>°</sup></div>
+</div>
+
+<!-- Иллюстрация: солнце за облаком (переменная облачность) -->
+<div class="art-wrap">
+  <svg class="art" viewBox="0 0 240 180" fill="none">
+    <defs>
+      <radialGradient id="sg" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%" stop-color="#FFF8C8"/><stop offset="45%" stop-color="#FFD93D"/><stop offset="100%" stop-color="#FFB800" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="ct" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#E8F1FA"/>
+      </linearGradient>
+      <linearGradient id="cb" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#F4F9FE"/><stop offset="100%" stop-color="#C9DCF0"/>
+      </linearGradient>
+    </defs>
+    <circle cx="176" cy="44" r="76" fill="url(#sg)" opacity="0.9"/>
+    <circle cx="176" cy="44" r="34" fill="#FFE066" stroke="#FFC93C" stroke-width="2.5"/>
+    <circle cx="168" cy="36" r="10" fill="#FFF8D6" opacity="0.8"/>
+    <ellipse cx="120" cy="152" rx="92" ry="16" fill="rgba(0,50,110,0.28)"/>
+    <g fill="url(#cb)">
+      <ellipse cx="80" cy="124" rx="68" ry="32"/><ellipse cx="132" cy="128" rx="76" ry="34"/><ellipse cx="104" cy="116" rx="52" ry="26"/>
+    </g>
+    <g fill="url(#ct)">
+      <ellipse cx="72" cy="100" rx="48" ry="28"/><ellipse cx="124" cy="92" rx="56" ry="34"/><ellipse cx="160" cy="104" rx="40" ry="24"/><ellipse cx="100" cy="84" rx="32" ry="20"/>
+    </g>
+    <ellipse cx="104" cy="72" rx="40" ry="12" fill="#FFFFFF" opacity="0.75"/>
+    <ellipse cx="144" cy="84" rx="24" ry="8" fill="#FFFFFF" opacity="0.6"/>
+  </svg>
+</div>
+
+<!-- Параметры -->
+<div class="main">
+  <div class="params">
+    <div class="param">
+      <svg class="p-ic" viewBox="0 0 24 24" fill="#fff"><path d="M12 3c3.5 4.5 6 7.6 6 10.6A6 6 0 0112 19.6a6 6 0 01-6-6C6 10.6 8.5 7.5 12 3z" opacity="0.95"/></svg>
+      <div class="p-val">50%</div>
+      <div class="p-label">Влажность</div>
+    </div>
+    <div class="param">
+      <svg class="p-ic" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2.2" fill="#fff" stroke="none"/><circle cx="16" cy="12" r="2.2" fill="#fff" stroke="none"/><circle cx="10" cy="18" r="2.2" fill="#fff" stroke="none"/></svg>
+      <div class="p-val">4 м/с</div>
+      <div class="p-label">Ветер</div>
+    </div>
+    <div class="param">
+      <svg class="p-ic" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.8"/></svg>
+      <div class="p-val">1010</div>
+      <div class="p-label">Давление</div>
+    </div>
+  </div>
+
+  <!-- Почасовка -->
+  <div class="h-title">Почасовой прогноз</div>
+  <div class="hourly" id="hourlyRow">
+    <div class="h-card"><div class="ht">11:00</div><svg class="hi" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">20°</div></div>
+    <div class="h-card"><div class="ht">12:00</div><svg class="hi" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">21°</div></div>
+    <div class="h-card"><div class="ht">13:00</div><svg class="hi" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#FFD60A"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">22°</div></div>
+    <div class="h-card"><div class="ht">14:00</div><svg class="hi" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">22°</div></div>
+    <div class="h-card"><div class="ht">15:00</div><svg class="hi" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#FFD60A"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">21°</div></div>
+    <div class="h-card"><div class="ht">16:00</div><svg class="hi" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">21°</div></div>
+    <div class="h-card"><div class="ht">17:00</div><svg class="hi" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">20°</div></div>
+    <div class="h-card"><div class="ht">18:00</div><svg class="hi" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#FFD60A"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">19°</div></div>
+    <div class="h-card"><div class="ht">19:00</div><svg class="hi" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">18°</div></div>
+    <div class="h-card"><div class="ht">20:00</div><svg class="hi" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#FFD60A"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="ht2">17°</div></div>
+  </div>
+
+  <!-- 7 дней -->
+  <div class="w-title">Прогноз на неделю</div>
+  <div class="week" id="weekRow">
+    <div class="w-row"><div class="wd">Сегодня</div><svg class="wi" viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.6" fill="#FFD60A"/><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="wlo">19°</div><div class="whi">22°</div></div>
+    <div class="w-row"><div class="wd">Вторник</div><svg class="wi" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="wlo">17°</div><div class="whi">21°</div></div>
+    <div class="w-row"><div class="wd">Среда</div><svg class="wi" viewBox="0 0 24 24"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/></svg><div class="wlo">16°</div><div class="whi">20°</div></div>
+    <div class="w-row"><div class="wd">Четверг</div><svg class="wi" viewBox="0 0 24 24"><g stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/><path d="M10 18l-3 6M15 18l-3 6M20 18l-3 6"/></g></svg><div class="wlo">14°</div><div class="whi">18°</div></div>
+    <div class="w-row"><div class="wd">Пятница</div><svg class="wi" viewBox="0 0 24 24"><g stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 15a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.5 6.5 6.5 0 0119 15H6z" fill="#fff" opacity="0.9"/><path d="M9 18l-2 5M14 18l-2 5M19 18l-2 5"/></g></svg><div class="wlo">12°</div><div class="whi">16°</div></div>
+    <div class="w-row"><div class="wd">Суббота</div><svg class="wi" viewBox="0 0 24 24"><circle cx="15.5" cy="7.5" r="3.2" fill="#FFD60A"/><path d="M6 15.5a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.4 6.5 6.5 0 0119 15.5H6z" fill="#fff" opacity="0.9"/></svg><div class="wlo">13°</div><div class="whi">17°</div></div>
+    <div class="w-row"><div class="wd">Воскресенье</div><svg class="wi" viewBox="0 0 24 24"><circle cx="15.5" cy="7.5" r="3.2" fill="#FFD60A"/><path d="M6 15.5a5.5 5.5 0 01-1-10.9A8 8 0 0119.6 6.4 6.5 6.5 0 0119 15.5H6z" fill="#fff" opacity="0.9"/></svg><div class="wlo">14°</div><div class="whi">19°</div></div>
+  </div>
+</div>
+
+<script>
+  // Текущая дата
+  const d = new Date();
+  const days = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const el = document.getElementById('todayLabel');
+  if (el) el.textContent = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
+  document.title = 'Погода · Москва';
+</script>
+</body>
+</html>

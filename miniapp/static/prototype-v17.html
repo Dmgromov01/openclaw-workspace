@@ -97,37 +97,33 @@
   .summary .pill .txt { font-size:13px; font-weight:600; white-space:nowrap; }
   .summary .pill .chev { color:var(--text-muted); font-size:13px; margin-left:2px; }
 
-  /* ===== Weather block — главный hero (108-124px, radius 22-24px) ===== */
-  .weather {
-    margin:0 16px 12px;
+  /* ===== Weather block — hero (компактный premium, по пакету) ===== */
+  .weather-card {
+    margin: 0 16px 12px;
     background: var(--weather-tint);
     border: 1px solid var(--border);
     border-radius: var(--radius-card-lg);
     padding: 14px 16px 10px;
     min-height: 108px;
-    display:flex; flex-direction:column; justify-content:space-between;
+    display:flex; flex-direction:column;
   }
-  .weather-top { display:flex; align-items:center; gap:12px; }
-  .weather-loc {
-    display:flex; align-items:center; gap:5px;
-    font-size:12px; font-weight:600; color:var(--text);
-  }
-  .weather-loc svg { width:12px; height:12px; color:var(--text-muted); }
-  .weather-main { display:flex; align-items:center; gap:12px; margin-top:2px; }
-  .weather-temp { font-size:34px; font-weight:700; letter-spacing:-1.5px; line-height:1; color:var(--text); }
-  .weather-temp sup { font-size:18px; font-weight:600; }
-  .weather-cond { font-size:12.5px; color:var(--text-muted); font-weight:500; margin-top:4px; }
-  .weather-art { width:64px; height:64px; flex-shrink:0; margin-left:auto; color:var(--text); }
-  .weather-art svg { width:100%; height:100%; }
-  .weather-hourly {
-    display:flex; gap:2px; overflow-x:auto; margin-top:8px; padding-top:8px;
-    border-top: 1px solid var(--border);
+  .weather-card__top { display:flex; align-items:center; gap:12px; }
+  .weather-card__content { flex:1; min-width:0; }
+  .weather-card__city { font-size:13px; font-weight:600; color:var(--text); }
+  .weather-card__temp { font-size:36px; font-weight:700; letter-spacing:-1.5px; line-height:1.05; color:var(--text); }
+  .weather-card__temp sup { font-size:18px; font-weight:600; }
+  .weather-card__desc { font-size:12.5px; color:var(--text-muted); font-weight:500; margin-top:2px; }
+  .weather-card__art { width:72px; height:72px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .weather-card__hero { width:72px; height:72px; object-fit:contain; filter: drop-shadow(0 6px 14px rgba(16,24,40,0.12)); }
+  .weather-card__divider { height:1px; background:var(--border); margin:8px 0 6px; }
+  .weather-card__hourly {
+    display:flex; gap:4px; overflow-x:auto;
     scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;
   }
-  .weather-hourly::-webkit-scrollbar { display:none; }
-  .h-item { text-align:center; flex:0 0 44px; scroll-snap-align:center; }
+  .weather-card__hourly::-webkit-scrollbar { display:none; }
+  .h-item { text-align:center; flex:0 0 42px; scroll-snap-align:center; }
   .h-item .h-time { font-size:10px; color:var(--text-muted); font-weight:600; }
-  .h-item .h-ic { width:20px; height:20px; margin:3px auto; display:block; color:var(--text); opacity:0.85; }
+  .h-item .h-ic { width:22px; height:22px; margin:3px auto; display:block; object-fit:contain; }
   .h-item .h-t { font-size:12px; font-weight:700; color:var(--text); }
 
   /* ===== Cards (translator + services, radius 20-22px) ===== */
@@ -210,20 +206,21 @@
   </div>
 </div>
 
-<!-- Weather block (hero) -->
-<div class="weather">
-  <div class="weather-top">
-    <div class="weather-left">
-      <div class="weather-loc"><i data-lucide="map-pin"></i>Москва</div>
-      <div class="weather-main">
-        <div class="weather-temp">19<sup>°C</sup></div>
-      </div>
-      <div class="weather-cond">Облачно с прояснениями</div>
+<!-- Weather block (hero, по HTML_USAGE_EXAMPLE) -->
+<section class="weather-card weather--partly-cloudy" aria-label="Погода в Москве">
+  <div class="weather-card__top">
+    <div class="weather-card__content">
+      <div class="weather-card__city">Москва</div>
+      <div class="weather-card__temp">19°</div>
+      <div class="weather-card__desc">Облачно с прояснениями</div>
     </div>
-    <div class="weather-art" id="weatherArt"><i data-lucide="cloud-sun" style="width:100%;height:100%;stroke-width:1.4;"></i></div>
+    <div class="weather-card__art" aria-hidden="true">
+      <img src="./weather-icons/hero/partly-cloudy-hero.png" alt="" class="weather-card__hero" id="heroImg" />
+    </div>
   </div>
-  <div class="weather-hourly" id="hourlyRow"></div>
-</div>
+  <div class="weather-card__divider"></div>
+  <div class="weather-card__hourly" id="hourlyRow"></div>
+</section>
 
 <!-- Translator -->
 <div class="card">
@@ -401,31 +398,58 @@
     if (i !== 0) toast(names[i] + ' — скоро');
   }
 
-  // Почасовой прогноз (Lucide-иконки)
-  const hourly = [
-    {t:'11:00', w:'cloud', v:'20°'}, {t:'12:00', w:'cloud', v:'21°'},
-    {t:'13:00', w:'sun-medium', v:'22°'}, {t:'14:00', w:'cloud', v:'22°'},
-    {t:'15:00', w:'cloud-sun', v:'21°'}, {t:'16:00', w:'cloud', v:'21°'},
-    {t:'17:00', w:'cloud', v:'20°'}, {t:'18:00', w:'cloud-sun', v:'19°'},
-    {t:'19:00', w:'cloud', v:'18°'}, {t:'20:00', w:'cloud-rain', v:'17°'}
+  // ===== WEATHER STATES (по пакету) =====
+  const WEATHER_STATES = [
+    {"key":"sunny","label_ru":"Солнечно","hero":"./weather-icons/hero/sunny-hero.png","small":"./weather-icons/small/sunny.png"},
+    {"key":"mostly-sunny","label_ru":"Преимущественно солнечно","hero":"./weather-icons/hero/mostly-sunny-hero.png","small":"./weather-icons/small/mostly-sunny.png"},
+    {"key":"partly-cloudy","label_ru":"Облачно с прояснениями","hero":"./weather-icons/hero/partly-cloudy-hero.png","small":"./weather-icons/small/partly-cloudy.png"},
+    {"key":"cloudy","label_ru":"Облачно","hero":"./weather-icons/hero/cloudy-hero.png","small":"./weather-icons/small/cloudy.png"},
+    {"key":"overcast","label_ru":"Пасмурно","hero":"./weather-icons/hero/overcast-hero.png","small":"./weather-icons/small/overcast.png"},
+    {"key":"drizzle","label_ru":"Морось","hero":"./weather-icons/hero/drizzle-hero.png","small":"./weather-icons/small/drizzle.png"},
+    {"key":"rain","label_ru":"Дождь","hero":"./weather-icons/hero/rain-hero.png","small":"./weather-icons/small/rain.png"},
+    {"key":"heavy-rain","label_ru":"Сильный ливень","hero":"./weather-icons/hero/heavy-rain-hero.png","small":"./weather-icons/small/heavy-rain.png"},
+    {"key":"thunderstorm","label_ru":"Гроза","hero":"./weather-icons/hero/thunderstorm-hero.png","small":"./weather-icons/small/thunderstorm.png"},
+    {"key":"snow","label_ru":"Снег","hero":"./weather-icons/hero/snow-hero.png","small":"./weather-icons/small/snow.png"},
+    {"key":"light-snow","label_ru":"Небольшой снег","hero":"./weather-icons/hero/light-snow-hero.png","small":"./weather-icons/small/light-snow.png"},
+    {"key":"sleet","label_ru":"Мокрый снег","hero":"./weather-icons/hero/sleet-hero.png","small":"./weather-icons/small/sleet.png"},
+    {"key":"fog","label_ru":"Туман","hero":"./weather-icons/hero/fog-hero.png","small":"./weather-icons/small/fog.png"},
+    {"key":"wind","label_ru":"Ветрено","hero":"./weather-icons/hero/wind-hero.png","small":"./weather-icons/small/wind.png"}
   ];
+
+  // Почасовой прогноз (small-иконки из пакета)
+  const hourly = [
+    {t:'11:00', w:'partly-cloudy', v:'20°'}, {t:'12:00', w:'cloudy', v:'21°'},
+    {t:'13:00', w:'sunny', v:'22°'},    {t:'14:00', w:'mostly-sunny', v:'22°'},
+    {t:'15:00', w:'partly-cloudy', v:'21°'}, {t:'16:00', w:'cloudy', v:'21°'},
+    {t:'17:00', w:'overcast', v:'20°'}, {t:'18:00', w:'rain', v:'19°'},
+    {t:'19:00', w:'drizzle', v:'18°'}, {t:'20:00', w:'heavy-rain', v:'17°'}
+  ];
+  function smallIcon(key) {
+    const st = WEATHER_STATES.find(s => s.key === key);
+    return st ? st.small : WEATHER_STATES[2].small;
+  }
   function renderHourly() {
     const row = document.getElementById('hourlyRow');
     row.innerHTML = hourly.map(h =>
-      `<div class="h-item"><div class="h-time">${h.t}</div><i class="h-ic" data-lucide="${h.w}"></i><div class="h-t">${h.v}</div></div>`
+      `<div class="h-item"><div class="h-time">${h.t}</div><img class="h-ic" src="${smallIcon(h.w)}" alt=""/><div class="h-t">${h.v}</div></div>`
     ).join('');
-    lucide.createIcons();
   }
 
-  // Переключение погоды по клику на арт
-  const artIcons = ['cloud-sun','sun-medium','cloud','cloud-rain','cloud-lightning','cloud-snow','moon-star'];
-  let artIdx = 0;
-  const artEl = document.getElementById('weatherArt');
-  if (artEl) artEl.addEventListener('click', () => {
-    artIdx = (artIdx + 1) % artIcons.length;
-    artEl.innerHTML = `<i data-lucide="${artIcons[artIdx]}" style="width:100%;height:100%;stroke-width:1.4;"></i>`;
-    lucide.createIcons();
-  });
+  // Переключение погоды по клику на hero-картинку
+  let artIdx = 2; // старт: partly-cloudy
+  const artEl = document.getElementById('heroImg');
+  const cardEl = document.querySelector('.weather-card');
+  const descEl = document.querySelector('.weather-card__desc');
+  if (artEl && cardEl) {
+    artEl.addEventListener('click', () => {
+      artIdx = (artIdx + 1) % WEATHER_STATES.length;
+      const st = WEATHER_STATES[artIdx];
+      artEl.src = st.hero;
+      if (descEl) descEl.textContent = st.label_ru;
+      cardEl.classList.remove(...cardEl.classList);
+      cardEl.classList.add('weather-card', 'weather--' + st.key);
+    });
+  }
 
   renderHourly();
   lucide.createIcons();

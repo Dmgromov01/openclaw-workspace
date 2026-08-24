@@ -231,7 +231,7 @@
 </div>
 
 <!-- WeatherCard: 2.6:1, фон по состоянию погоды -->
-<section class="weather-card weather--partly-cloudy" id="weatherCard" style="background-image:url('./weather-assets/card-backgrounds/partly-cloudy-background.png');background-size:cover;background-position:right center;" aria-label="Погода в Москве">
+<section class="weather-card weather--partly-cloudy" id="weatherCard" style="background-image:url('./weather-assets/card-backgrounds/partly-cloudy-background.png?v=3');background-size:cover;background-position:right center;" aria-label="Погода в Москве">
   <div class="weather-card__top">
     <div class="weather-card__content">
       <div class="weather-card__city">Москва</div>
@@ -448,7 +448,7 @@
   ];
   function smallIcon(key) {
     const st = WEATHER_STATES.find(s => s.key === key);
-    return st ? st.small : WEATHER_STATES[2].small;
+    return st ? st.small + '?v=3' : WEATHER_STATES[2].small + '?v=3';
   }
   function renderHourly() {
     const row = document.getElementById('hourlyRow');
@@ -463,7 +463,7 @@
   if (cardEl) cardEl.addEventListener('click', () => {
     stIdx = (stIdx + 1) % WEATHER_STATES.length;
     const st = WEATHER_STATES[stIdx];
-    cardEl.style.backgroundImage = `url('${st.bg}')`;
+    cardEl.style.backgroundImage = `url('${st.bg}?v=3')`;
     cardEl.style.backgroundSize = 'cover';
     cardEl.style.backgroundPosition = 'right center';
     cardEl.classList.remove(...cardEl.classList);

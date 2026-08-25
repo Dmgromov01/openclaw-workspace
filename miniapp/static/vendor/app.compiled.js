@@ -1040,7 +1040,7 @@ function App() {
           'clear-night': 'clear-night',
           'partly-cloudy-night': 'partly-cloudy-night'
         };
-        return (map[weather.icon] || 'partly-cloudy-background') + '.png?v=9';
+        return (map[weather.icon] || 'partly-cloudy-background') + '.png?v=10';
       })()}'`,
       backgroundSize: 'cover',
       backgroundPosition: 'right center'

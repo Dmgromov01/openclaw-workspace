@@ -1010,7 +1010,7 @@
                   <div className="ic"><i className="ph ph-newspaper"></i></div>
                   <div className="txt">Дайджест</div><div className="chev">›</div>
                 </div>
-                <div className="pill" onClick={() => { haptic(); document.getElementById('ratesBlock')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
+                <div className="pill" onClick={() => { haptic('medium'); setShowRates(true); setView('digest'); }}>
                   <div className="ic"><i className="ph ph-coins"></i></div>
                   <div className="txt">{rates.USD ? Math.round(rates.USD) : '—'} ₽/$</div><div className="chev">›</div>
                 </div>

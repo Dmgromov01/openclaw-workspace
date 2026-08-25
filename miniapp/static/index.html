@@ -1170,70 +1170,6 @@
                 </div>
               </div>
 
-              {/* ===== Card: Источники новостей (новый дизайн) ===== */}
-              <div className="card">
-                <div className="row" onClick={() => { haptic(); setView('sources'); }}>
-                  <div className="ic"><i className="ph ph-broadcast"></i></div>
-                  <div className="body">
-                    <div className="title">Источники новостей</div>
-                    <div className="status">{sources.length} подключено · каналы и RSS</div>
-                  </div>
-                  <div className="chev">›</div>
-                </div>
-                {sources.length > 0 && (
-                  <div className="block space-y-2">
-                    {sources.map(s => (
-                      <div key={s.id} className="flex items-center gap-2.5 px-1 py-1" style={{ borderRadius: '12px' }}>
-                        <i className={s.type === 'TG' ? 'ph ph-paper-plane-tilt' : 'ph ph-rss'} style={{ fontSize: '15px', color: 'var(--accent)' }}></i>
-                        <span className="text-xs font-semibold" style={{ color: 'var(--text)' }}>{s.title || s.name}</span>
-                        <span className="ml-auto text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>{s.type}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* ===== Card: Конвертер валют (ЦБ) ===== */}
-              <div className="card" id="ratesBlock">
-                <div className="row" onClick={() => { haptic(); setShowRates(!showRates); }}>
-                  <div className="ic"><i className="ph ph-coins"></i></div>
-                  <div className="body">
-                    <div className="title">Валюты & Конвертер</div>
-                    <div className="status">Курсы ЦБ РФ · USD {rates.USD ? Math.round(rates.USD) : '—'}₽</div>
-                  </div>
-                  <div className="chev">{showRates ? '▲' : '▼'}</div>
-                </div>
-                {showRates && (
-                  <div className="block space-y-2.5">
-                    {/* Сумма + пара валют одной строкой */}
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number" value={calcAmount}
-                        onChange={(e) => setCalcAmount(Number(e.target.value))}
-                        className="flex-1 min-w-0 basis-20 rounded-xl px-3 py-2.5 text-base font-bold outline-none border"
-                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                      />
-                      <select value={fromCurr} onChange={(e) => setFromCurr(e.target.value)}
-                        className="shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border"
-                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}>
-                        {['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <i className="ph ph-arrow-right shrink-0" style={{ color: 'var(--text-muted)', fontSize: '16px' }}></i>
-                      <select value={toCurr} onChange={(e) => setToCurr(e.target.value)}
-                        className="shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border"
-                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}>
-                        {['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                    {/* Результат одной строкой */}
-                    <div className="flex items-center justify-between rounded-xl px-3.5 py-3" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
-                      <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Результат</span>
-                      <span className="text-base font-black" style={{ color: '#059669', fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>{convertValue()} {toCurr}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* ===== Card: Генератор паролей ===== */}
               <div className="card">
                 <div className="row" onClick={() => { haptic(); setShowPass(!showPass); }}>
@@ -1504,6 +1440,45 @@
                   </div>
                   <div className="chev">›</div>
                 </div>
+              </div>
+
+              {/* Валюты & Конвертер — на экране дайджеста */}
+              <div className="card" id="ratesBlock">
+                <div className="row" onClick={() => { haptic(); setShowRates(!showRates); }}>
+                  <div className="ic"><i className="ph ph-coins"></i></div>
+                  <div className="body">
+                    <div className="title">Валюты & Конвертер</div>
+                    <div className="status">Курсы ЦБ РФ · USD {rates.USD ? Math.round(rates.USD) : '—'}₽</div>
+                  </div>
+                  <div className="chev">{showRates ? '▲' : '▼'}</div>
+                </div>
+                {showRates && (
+                  <div className="block space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number" value={calcAmount}
+                        onChange={(e) => setCalcAmount(Number(e.target.value))}
+                        className="flex-1 min-w-0 basis-20 rounded-xl px-3 py-2.5 text-base font-bold outline-none border"
+                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                      />
+                      <select value={fromCurr} onChange={(e) => setFromCurr(e.target.value)}
+                        className="shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border"
+                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}>
+                        {['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <i className="ph ph-arrow-right shrink-0" style={{ color: 'var(--text-muted)', fontSize: '16px' }}></i>
+                      <select value={toCurr} onChange={(e) => setToCurr(e.target.value)}
+                        className="shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border"
+                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}>
+                        {['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between rounded-xl px-3.5 py-3" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
+                      <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Результат</span>
+                      <span className="text-base font-black" style={{ color: '#059669', fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>{convertValue()} {toCurr}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-3.5">

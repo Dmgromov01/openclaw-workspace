@@ -1006,11 +1006,7 @@ function App() {
     onClick: () => {
       haptic('medium');
       setShowRates(true);
-      setView('main');
-      setTimeout(() => document.getElementById('ratesBlock')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      }), 120);
+      setView('digest');
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "ic"
@@ -1101,89 +1097,6 @@ function App() {
   }, "--:--"), /*#__PURE__*/React.createElement("div", {
     className: "h-t"
   }, "\u2014\xB0")))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    id: "ratesBlock"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "row",
-    onClick: () => {
-      haptic();
-      setShowRates(!showRates);
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "ic"
-  }, /*#__PURE__*/React.createElement("i", {
-    className: "ph ph-coins"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "body"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "title"
-  }, "\u0412\u0430\u043B\u044E\u0442\u044B & \u041A\u043E\u043D\u0432\u0435\u0440\u0442\u0435\u0440"), /*#__PURE__*/React.createElement("div", {
-    className: "status"
-  }, "\u041A\u0443\u0440\u0441\u044B \u0426\u0411 \u0420\u0424 \xB7 USD ", rates.USD ? Math.round(rates.USD) : '—', "\u20BD")), /*#__PURE__*/React.createElement("div", {
-    className: "chev"
-  }, showRates ? '▲' : '▼')), showRates && /*#__PURE__*/React.createElement("div", {
-    className: "block space-y-2.5"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-2"
-  }, /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    value: calcAmount,
-    onChange: e => setCalcAmount(Number(e.target.value)),
-    className: "flex-1 min-w-0 basis-20 rounded-xl px-3 py-2.5 text-base font-bold outline-none border",
-    style: {
-      background: 'var(--surface-subtle)',
-      borderColor: 'var(--border)',
-      color: 'var(--text)'
-    }
-  }), /*#__PURE__*/React.createElement("select", {
-    value: fromCurr,
-    onChange: e => setFromCurr(e.target.value),
-    className: "shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border",
-    style: {
-      background: 'var(--surface-subtle)',
-      borderColor: 'var(--border)',
-      color: 'var(--text)'
-    }
-  }, ['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => /*#__PURE__*/React.createElement("option", {
-    key: c,
-    value: c
-  }, c))), /*#__PURE__*/React.createElement("i", {
-    className: "ph ph-arrow-right shrink-0",
-    style: {
-      color: 'var(--text-muted)',
-      fontSize: '16px'
-    }
-  }), /*#__PURE__*/React.createElement("select", {
-    value: toCurr,
-    onChange: e => setToCurr(e.target.value),
-    className: "shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border",
-    style: {
-      background: 'var(--surface-subtle)',
-      borderColor: 'var(--border)',
-      color: 'var(--text)'
-    }
-  }, ['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => /*#__PURE__*/React.createElement("option", {
-    key: c,
-    value: c
-  }, c)))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-between rounded-xl px-3.5 py-3",
-    style: {
-      background: 'rgba(16,185,129,0.08)',
-      border: '1px solid rgba(16,185,129,0.25)'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "text-[10px] font-bold uppercase tracking-wide",
-    style: {
-      color: 'var(--text-muted)'
-    }
-  }, "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442"), /*#__PURE__*/React.createElement("span", {
-    className: "text-base font-black",
-    style: {
-      color: '#059669',
-      fontVariantNumeric: 'tabular-nums',
-      lineHeight: 1.2
-    }
-  }, convertValue(), " ", toCurr)))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     id: "tasksBlock"
   }, /*#__PURE__*/React.createElement("div", {
@@ -1671,6 +1584,89 @@ function App() {
   }, sources.length, " \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u043E \xB7 \u043A\u0430\u043D\u0430\u043B\u044B \u0438 RSS")), /*#__PURE__*/React.createElement("div", {
     className: "chev"
   }, "\u203A"))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    id: "ratesBlock"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "row",
+    onClick: () => {
+      haptic();
+      setShowRates(!showRates);
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "ic"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "ph ph-coins"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "body"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "title"
+  }, "\u0412\u0430\u043B\u044E\u0442\u044B & \u041A\u043E\u043D\u0432\u0435\u0440\u0442\u0435\u0440"), /*#__PURE__*/React.createElement("div", {
+    className: "status"
+  }, "\u041A\u0443\u0440\u0441\u044B \u0426\u0411 \u0420\u0424 \xB7 USD ", rates.USD ? Math.round(rates.USD) : '—', "\u20BD")), /*#__PURE__*/React.createElement("div", {
+    className: "chev"
+  }, showRates ? '▲' : '▼')), showRates && /*#__PURE__*/React.createElement("div", {
+    className: "block space-y-2.5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: calcAmount,
+    onChange: e => setCalcAmount(Number(e.target.value)),
+    className: "flex-1 min-w-0 basis-20 rounded-xl px-3 py-2.5 text-base font-bold outline-none border",
+    style: {
+      background: 'var(--surface-subtle)',
+      borderColor: 'var(--border)',
+      color: 'var(--text)'
+    }
+  }), /*#__PURE__*/React.createElement("select", {
+    value: fromCurr,
+    onChange: e => setFromCurr(e.target.value),
+    className: "shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border",
+    style: {
+      background: 'var(--surface-subtle)',
+      borderColor: 'var(--border)',
+      color: 'var(--text)'
+    }
+  }, ['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => /*#__PURE__*/React.createElement("option", {
+    key: c,
+    value: c
+  }, c))), /*#__PURE__*/React.createElement("i", {
+    className: "ph ph-arrow-right shrink-0",
+    style: {
+      color: 'var(--text-muted)',
+      fontSize: '16px'
+    }
+  }), /*#__PURE__*/React.createElement("select", {
+    value: toCurr,
+    onChange: e => setToCurr(e.target.value),
+    className: "shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border",
+    style: {
+      background: 'var(--surface-subtle)',
+      borderColor: 'var(--border)',
+      color: 'var(--text)'
+    }
+  }, ['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => /*#__PURE__*/React.createElement("option", {
+    key: c,
+    value: c
+  }, c)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between rounded-xl px-3.5 py-3",
+    style: {
+      background: 'rgba(16,185,129,0.08)',
+      border: '1px solid rgba(16,185,129,0.25)'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] font-bold uppercase tracking-wide",
+    style: {
+      color: 'var(--text-muted)'
+    }
+  }, "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442"), /*#__PURE__*/React.createElement("span", {
+    className: "text-base font-black",
+    style: {
+      color: '#059669',
+      fontVariantNumeric: 'tabular-nums',
+      lineHeight: 1.2
+    }
+  }, convertValue(), " ", toCurr)))), /*#__PURE__*/React.createElement("div", {
     className: "space-y-3.5"
   }, digestLoading && /*#__PURE__*/React.createElement("div", {
     className: "text-center py-8 text-xs text-slate-400"

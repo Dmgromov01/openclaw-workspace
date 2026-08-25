@@ -113,7 +113,7 @@
     .weather-card {
       --fc: #FFFFFF; --fc2: rgba(255,255,255,0.88); --div: rgba(255,255,255,0.25);
       margin: 0 16px 12px;
-      min-height: 190px;
+      min-height: 150px;
       border-radius: 24px;
       overflow: hidden;
       position: relative;
@@ -130,22 +130,22 @@
       background: linear-gradient(90deg, rgba(8,12,26,0.78) 0%, rgba(8,12,26,0.48) 45%, rgba(8,12,26,0.18) 68%, rgba(8,12,26,0) 82%);
       pointer-events:none;
     }
-    .weather-card__top { position:relative; z-index:1; display:flex; align-items:flex-start; justify-content:space-between; padding:14px 16px 4px; }
+    .weather-card__top { position:relative; z-index:1; display:flex; align-items:flex-start; justify-content:space-between; padding:9px 16px 2px; }
     .weather-card__content { min-width:0; }
-    .weather-card__city { font-size:16px; font-weight:800; color:var(--fc); text-shadow:0 1px 3px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.35); }
-    .weather-card__temp { font-size:50px; font-weight:800; letter-spacing:-2px; line-height:1; color:var(--fc); text-shadow:0 2px 6px rgba(0,0,0,0.85), 0 0 18px rgba(0,0,0,0.4); }
-    .weather-card__temp sup { font-size:24px; font-weight:600; }
-    .weather-card__desc { font-size:15px; font-weight:800; color:var(--fc); margin-top:2px; text-shadow:0 1px 3px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.35); }
-    .weather-card__wind { font-size:13px; font-weight:700; color:var(--fc2); margin-top:2px; text-shadow:0 1px 3px rgba(0,0,0,0.8); }
-    .weather-card__divider { height:1px; background:var(--div); margin:4px 16px 0; position:relative; z-index:1; }
-    .weather-card__hourly { position:relative; z-index:1; display:flex; gap:8px; overflow-x:auto; padding:8px 0 12px 16px; scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; scroll-padding-inline:16px; }
+    .weather-card__city { font-size:14px; font-weight:800; color:var(--fc); text-shadow:0 1px 3px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.35); }
+    .weather-card__temp { font-size:44px; font-weight:800; letter-spacing:-2px; line-height:1; color:var(--fc); text-shadow:0 2px 6px rgba(0,0,0,0.85), 0 0 18px rgba(0,0,0,0.4); }
+    .weather-card__temp sup { font-size:20px; font-weight:600; }
+    .weather-card__desc { font-size:14px; font-weight:800; color:var(--fc); margin-top:1px; text-shadow:0 1px 3px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.35); }
+    .weather-card__wind { font-size:12px; font-weight:700; color:var(--fc2); margin-top:1px; text-shadow:0 1px 3px rgba(0,0,0,0.8); }
+    .weather-card__divider { height:1px; background:var(--div); margin:2px 16px 0; position:relative; z-index:1; }
+    .weather-card__hourly { position:relative; z-index:1; display:flex; gap:8px; overflow-x:auto; padding:5px 0 8px 16px; scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; scroll-padding-inline:16px; }
     .h-item { text-align:center; scroll-snap-align:start; min-width:0; flex: 0 0 calc((100% - 40px) / 6); }
     .h-item:last-child { margin-right: 16px; }
     
     .weather-card__hourly::-webkit-scrollbar { display:none; }
-    .h-item .h-time { font-size:13px; color:var(--fc); font-weight:800; text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.35); }
-    .h-item .h-ic { width:36px; height:36px; margin:3px auto; display:block; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.9)) drop-shadow(0 0 4px rgba(255,255,255,0.55)) saturate(2.4) contrast(1.35) brightness(1.35); }
-    .h-item .h-t { font-size:17px; font-weight:800; color:var(--fc); text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.35); }
+    .h-item .h-time { font-size:12px; color:var(--fc); font-weight:800; text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.35); }
+    .h-item .h-ic { width:30px; height:30px; margin:2px auto; display:block; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.9)) drop-shadow(0 0 4px rgba(255,255,255,0.55)) saturate(2.4) contrast(1.35) brightness(1.35); }
+    .h-item .h-t { font-size:15px; font-weight:800; color:var(--fc); text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.35); }
 
     /* ===== Cards & rows (Apple Settings style) ===== */
     .card {

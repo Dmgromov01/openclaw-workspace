@@ -10,19 +10,27 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import sqlite3
 import time
 from urllib.parse import parse_qsl
 
-DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "miniapp.db")
-OWNER_TG_ID = 1916536646
+DB = os.environ.get("MINIAPP_DB", os.path.join(os.path.dirname(os.path.abspath(__file__)), "miniapp.db"))
+OWNER_TG_ID = int(os.environ.get("MINIAPP_OWNER_TG_ID", "1916536646"))
 SESSION_TTL = 7 * 24 * 3600  # 7 дней
+PBKDF2_ITER = 100_000
+MIN_PASSWORD_LEN = 8
 
 
 def _conn():
-    c = sqlite3.connect(DB)
+    c = sqlite3.connect(DB, timeout=15)
     c.row_factory = sqlite3.Row
+    try:
+        c.execute("PRAGMA journal_mode=WAL;")
+        c.execute("PRAGMA busy_timeout=15000;")
+    except Exception:
+        pass
     return c
 
 
@@ -64,13 +72,16 @@ def init_db():
     c.close()
 
 
+_ENV_RE = re.compile(r"^\s*TELEGRAM_BOT_TOKEN\s*=\s*['\"]?([^'\"\s]+)", re.M)
+
+
 def load_bot_token():
-    """Bot token из /root/.openclaw/.env (TELEGRAM_BOT_TOKEN=...)."""
-    env = "/root/.openclaw/.env"
+    """Bot token из /root/.openclaw/.env (TELEGRAM_BOT_TOKEN=...). Регэксп вместо ручного парсинга."""
+    env = os.environ.get("MINIAPP_ENV", "/root/.openclaw/.env")
     if os.path.exists(env):
-        for line in open(env, encoding="utf-8"):
-            if line.startswith("TELEGRAM_BOT_TOKEN="):
-                return line.strip().split("=", 1)[1].strip().strip('"').strip("'")
+        m = _ENV_RE.search(open(env, encoding="utf-8").read())
+        if m:
+            return m.group(1)
     return ""
 
 
@@ -154,12 +165,18 @@ def login(init_data, bot_token):
     }, None
 
 
+def _hash_password(password, salt=None, iterations=PBKDF2_ITER):
+    """PBKDF2-HMAC-SHA256: salt$iterations$hex. Медленный хэш — устойчив к GPU-перебору."""
+    salt = salt or secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), iterations)
+    return f"{salt}${iterations}${dk.hex()}"
+
+
 def set_password(telegram_id, password):
-    """Пользователь сам задаёт/меняет свой пароль. Хэш — sha256(соль+пароль)."""
-    if not password or len(password) < 4:
-        return False, "Пароль слишком короткий (мин. 4 символа)"
-    salt = secrets.token_hex(8)
-    ph = salt + "$" + hashlib.sha256((salt + password).encode()).hexdigest()
+    """Пользователь сам задаёт/меняет свой пароль. Хэш — PBKDF2-HMAC-SHA256."""
+    if not password or len(password) < MIN_PASSWORD_LEN:
+        return False, f"Пароль слишком короткий (мин. {MIN_PASSWORD_LEN} символов)"
+    ph = _hash_password(password)
     c = _conn()
     row = c.execute("SELECT * FROM users WHERE telegram_id=?", (telegram_id,)).fetchone()
     if row is None:
@@ -187,7 +204,21 @@ def check_password(username, password):
     if row is None or not row["password_hash"]:
         c.close()
         return None, "Пользователь не найден или пароль не задан"
-    salt, _, h = (row["password_hash"] or "").partition("$")
+    stored = row["password_hash"] or ""
+    parts = stored.split("$")
+    if len(parts) == 3:  # новый формат: salt$iterations$hex
+        salt, iterations, h = parts
+        try:
+            iterations = int(iterations)
+        except (TypeError, ValueError):
+            iterations = PBKDF2_ITER
+        calc = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), iterations).hex()
+        if not hmac.compare_digest(calc, h):
+            c.close()
+            return None, "Неверный пароль"
+        return row, None
+    # старый формат: salt$sha256hex — проверяем и пересохраняем на PBKDF2
+    salt, _, h = stored.partition("$")
     if not salt or not h:
         c.close()
         return None, "Пароль не задан"
@@ -195,6 +226,12 @@ def check_password(username, password):
     if not hmac.compare_digest(calc, h):
         c.close()
         return None, "Неверный пароль"
+    try:
+        c.execute("UPDATE users SET password_hash=? WHERE telegram_id=?",
+                  (_hash_password(password), row["telegram_id"]))
+        c.commit()
+    except Exception:
+        pass
     return row, None
 
 

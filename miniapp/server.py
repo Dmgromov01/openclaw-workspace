@@ -23,11 +23,11 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-STATIC = os.path.join(BASE, "static")
-SOURCES_FILE = os.path.join(BASE, "sources.json")
+STATIC = os.environ.get("MINIAPP_STATIC", os.path.join(BASE, "static"))
+SOURCES_FILE = os.environ.get("MINIAPP_SOURCES", os.path.join(BASE, "sources.json"))
 CACHE_TTL = 900  # 15 минут
 
-sys.path.insert(0, "/root/openclaw/calendar")
+sys.path.insert(0, os.environ.get("OPENCLAW_CALENDAR_DIR", "/root/openclaw/calendar"))
 import digest  # переиспользуем парсеры каналов/RSS и курс ЦБ
 
 # ---------- Auth (Telegram WebApp initData + пользователи) ----------
@@ -35,8 +35,8 @@ sys.path.insert(0, BASE)
 import auth as miniapp_auth
 
 # ---------- Google Calendar (OAuth, чтение) ----------
-GCAL_DIR = "/root/.openclaw/credentials/gcal"
-CAL_ID = "dmgromov03@gmail.com"
+GCAL_DIR = os.environ.get("MINIAPP_GCAL_DIR", "/root/.openclaw/credentials/gcal")
+CAL_ID = os.environ.get("MINIAPP_CAL_ID", "dmgromov03@gmail.com")
 CAL_TZ = ZoneInfo("Europe/Moscow")
 CAL_CACHE = {"ts": 0.0, "data": None}
 
@@ -131,7 +131,7 @@ DEFAULT_SOURCES = [
 
 # MyMemory API: бесплатный перевод без ключа. С email-параметром (de=) лимит 50K симв./день вместо 5K.
 # Email НЕ светится в клиенте — проксируется только нашим сервером.
-MYMEMORY_EMAIL = "dmgromov03@gmail.com"
+MYMEMORY_EMAIL = os.environ.get("MYMEMORY_EMAIL", "dmgromov03@gmail.com")
 MYMEMORY_MAX_CHARS = 2000  # жёсткий лимит на запрос (MyMemory: аноним 500, с email больше)
 
 
@@ -158,7 +158,57 @@ def translate_mymemory(text: str, lang_from: str, lang_to: str) -> dict:
 
 
 DIGEST_CACHE = {"ts": 0.0, "data": None}
+CAL_CACHE = {"ts": 0.0, "data": None}
 CACHE_LOCK = threading.Lock()
+
+
+def _refresh_digest_cache(force=False):
+    """Обновляет кеш дайджеста (сеть/AI — ВНЕ блокировки). Возвращает данные или None."""
+    try:
+        data = build_digest_json()
+    except Exception as ex:
+        sys.stderr.write("[miniapp] digest refresh error: %s\n" % ex)
+        return None
+    with CACHE_LOCK:
+        DIGEST_CACHE["data"] = data
+        DIGEST_CACHE["ts"] = time.time()
+    return data
+
+
+def _refresh_calendar_cache():
+    """Обновляет кеш календаря (вне блокировки)."""
+    try:
+        data = build_calendar_json(days=7)
+    except Exception as ex:
+        sys.stderr.write("[miniapp] calendar refresh error: %s\n" % ex)
+        return None
+    with CACHE_LOCK:
+        CAL_CACHE["data"] = data
+        CAL_CACHE["ts"] = time.time()
+    return data
+
+
+def _cache_worker():
+    """Фоновый поток: держит кеши тёплыми (stale-while-revalidate), не блокируя HTTP."""
+    while True:
+        try:
+            now = time.time()
+            with CACHE_LOCK:
+                need_digest = DIGEST_CACHE["data"] is None or now - DIGEST_CACHE["ts"] > CACHE_TTL
+                need_cal = CAL_CACHE["data"] is None or now - CAL_CACHE["ts"] > 300
+            if need_digest:
+                _refresh_digest_cache()
+            if need_cal:
+                _refresh_calendar_cache()
+        except Exception as ex:
+            sys.stderr.write("[miniapp] cache worker error: %s\n" % ex)
+        time.sleep(60)
+
+
+def start_cache_worker():
+    t = threading.Thread(target=_cache_worker, daemon=True)
+    t.start()
+    return t
 
 
 def load_sources():
@@ -224,6 +274,12 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STATIC, **kwargs)
 
+    def _norm_path(self, path):
+        """Снимает префикс /miniapp, чтобы API работал и напрямую, и за nginx."""
+        if path.startswith("/miniapp/"):
+            return path[len("/miniapp"):]
+        return path
+
     # ---------- helpers ----------
     def _send_json(self, obj, code=200):
         body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
@@ -261,6 +317,7 @@ class Handler(SimpleHTTPRequestHandler):
     # ---------- routes ----------
     def do_GET(self):
         p = urlparse(self.path)
+        p = p._replace(path=self._norm_path(p.path))
         if p.path in ("/", "/index.html"):
             # index.html отдаём с no-cache, чтобы Telegram WebView не держал старую версию
             try:
@@ -276,6 +333,26 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+        if p.path == "/api/bootstrap":
+            """Единый эндпоинт старта: user + sources + calendar + digest + curs одним ответом."""
+            user = self._require_auth()
+            if user is None:
+                return
+            out = {"ok": True, "user": {
+                "id": user["id"], "telegram_id": user["telegram_id"],
+                "username": user["username"], "first_name": user["first_name"],
+                "role": user["role"], "allowed": bool(user["allowed"]),
+            }}
+            try:
+                out["sources"] = load_sources()
+            except Exception:
+                out["sources"] = []
+            with CACHE_LOCK:
+                d = DIGEST_CACHE["data"]
+                c = CAL_CACHE["data"]
+            out["digest"] = d
+            out["calendar"] = c
+            return self._send_json(out)
         if p.path == "/api/auth/me":
             user = self._require_auth()
             if user is None:
@@ -298,12 +375,13 @@ class Handler(SimpleHTTPRequestHandler):
         if p.path == "/api/digest":
             if self._require_auth() is None:
                 return
-            now = time.time()
             with CACHE_LOCK:
-                if DIGEST_CACHE["data"] is None or now - DIGEST_CACHE["ts"] > CACHE_TTL:
-                    DIGEST_CACHE["data"] = build_digest_json()
-                    DIGEST_CACHE["ts"] = now
                 data = DIGEST_CACHE["data"]
+                ts = DIGEST_CACHE["ts"]
+            if data is None:
+                data = _refresh_digest_cache()
+                if data is None:
+                    return self._send_json({"error": "digest unavailable"}, 502)
             return self._send_json(data)
         if p.path == "/api/sources":
             if self._require_auth() is None:
@@ -312,15 +390,12 @@ class Handler(SimpleHTTPRequestHandler):
         if p.path == "/api/calendar":
             if self._require_auth() is None:
                 return
-            now = time.time()
             with CACHE_LOCK:
-                if CAL_CACHE["data"] is None or now - CAL_CACHE["ts"] > 300:
-                    try:
-                        CAL_CACHE["data"] = build_calendar_json(days=7)
-                        CAL_CACHE["ts"] = now
-                    except Exception as ex:
-                        return self._send_json({"error": str(ex), "days": []}, 500)
                 data = CAL_CACHE["data"]
+            if data is None:
+                data = _refresh_calendar_cache()
+                if data is None:
+                    return self._send_json({"error": "calendar unavailable", "days": []}, 502)
             return self._send_json(data)
         if p.path == "/api/quiz":
             # Прокси к Open Trivia DB (https) — jservice.io мёртв с 2022
@@ -363,6 +438,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         p = urlparse(self.path)
+        p = p._replace(path=self._norm_path(p.path))
         if p.path == "/api/auth":
             try:
                 length = int(self.headers.get("Content-Length", 0))
@@ -391,17 +467,8 @@ class Handler(SimpleHTTPRequestHandler):
                     return self._send_json({"error": err}, 400)
                 return self._send_json({"ok": True})
             init_data = (body.get("initData") or "").strip()
-            # диагностика: сохраняем КАЖДЫЙ initData с таймстампом + полный в лог
-            ts = int(time.time())
-            try:
-                with open("/tmp/miniapp_initdata_%d.txt" % ts, "w", encoding="utf-8") as f:
-                    f.write(init_data)
-                with open("/tmp/miniapp_initdata_last.txt", "w", encoding="utf-8") as f:
-                    f.write(init_data)
-            except Exception:
-                pass
-            sys.stderr.write("[auth] initData len=%d ts=%d head=%s tail=%s\n" % (
-                len(init_data), ts, init_data[:120], init_data[-60:] if len(init_data) > 60 else ""))
+            # лог ТОЛЬКО длины и времени — сырые initData/токены не пишем (ни в файлы, ни в лог)
+            sys.stderr.write("[auth] initData len=%d ts=%d\n" % (len(init_data), int(time.time())))
             if not init_data:
                 # десктоп/браузер без Telegram: вход по логину + мастер-паролю
                 username = (body.get("username") or "").strip()
@@ -491,6 +558,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_DELETE(self):
         p = urlparse(self.path)
+        p = p._replace(path=self._norm_path(p.path))
         if p.path == "/api/admin/users":
             user = self._require_admin()
             if user is None:
@@ -524,6 +592,7 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     miniapp_auth.init_db()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+    start_cache_worker()  # фоновый тёплый кеш — запросы не ждут сеть/AI
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     print(f"MiniApp server on :{port} (static: {STATIC})", flush=True)
     server.serve_forever()

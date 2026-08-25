@@ -205,7 +205,7 @@ def collect_digest(sources, hours=24):
 def build_digest_json(use_ai=True):
     """Собирает дайджест; каждый блок — источник с AI-саммари (DeepSeek) + сырые посты."""
     sources = load_sources()
-    blocks, total = collect_digest(sources)
+    blocks, total = collect_digest(sources, hours=3)
     if use_ai:
         for b in blocks:
             try:

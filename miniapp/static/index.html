@@ -1170,35 +1170,6 @@
                 </div>
               </div>
 
-              {/* ===== Card: Лента & RSS + Дайджест ===== */}
-              <div className="card">
-                <div className="row" onClick={() => { haptic(); setShowFeed(!showFeed); }}>
-                  <div className="ic"><i className="ph ph-broadcast"></i></div>
-                  <div className="body">
-                    <div className="title">Лента каналов & RSS</div>
-                    <div className="status">Подключено источников: {sources.length}</div>
-                  </div>
-                  <div className="chev">{showFeed ? '▲' : '▼'}</div>
-                </div>
-                {showFeed && (
-                  <div className="block space-y-2.5">
-                    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                      <div className="text-xs text-slate-600 truncate">
-                        {sources.map(s => s.name).join(', ') || 'Нет источников — добавьте в Источники'}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => { haptic(); setView('sources'); }} className="flex-1 py-3 bg-slate-100 active:scale-95 text-slate-700 rounded-2xl font-bold text-xs transition border border-slate-200">
-                        Источники
-                      </button>
-                      <button onClick={() => { haptic('medium'); setView('digest'); }} className="flex-1 py-3 bg-blue-600 active:scale-95 text-white rounded-2xl font-bold text-xs transition shadow-md shadow-blue-500/20">
-                        📖 Дайджест →
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* ===== Card: Конвертер валют (ЦБ) ===== */}
               <div className="card" id="ratesBlock">
                 <div className="row" onClick={() => { haptic(); setShowRates(!showRates); }}>
@@ -1487,6 +1458,17 @@
                 </div>
                 <div className="btn" onClick={() => { haptic('light'); loadDigest(); }}>
                   <i className="ph ph-arrows-clockwise"></i>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="row" onClick={() => { haptic(); setView('sources'); }}>
+                  <div className="ic"><i className="ph ph-broadcast"></i></div>
+                  <div className="body">
+                    <div className="title">Источники</div>
+                    <div className="status">{sources.length} подключено · каналы и RSS</div>
+                  </div>
+                  <div className="chev">›</div>
                 </div>
               </div>
 

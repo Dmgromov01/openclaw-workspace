@@ -232,7 +232,7 @@
 </div>
 
 <!-- WeatherCard: 2.6:1, фон по состоянию погоды -->
-<section class="weather-card weather--partly-cloudy" id="weatherCard" style="background-image:url('./weather-assets/card-backgrounds/partly-cloudy-background.png?v=5');background-size:cover;background-position:right center;" aria-label="Погода в Москве">
+<section class="weather-card weather--partly-cloudy" id="weatherCard" style="background-image:url('./weather-assets/card-backgrounds/partly-cloudy-background.png?v=6');background-size:cover;background-position:right center;" aria-label="Погода в Москве">
   <div class="weather-card__top">
     <div class="weather-card__content">
       <div class="weather-card__city">Москва</div>
@@ -421,26 +421,26 @@
 
   // ===== WEATHER STATES: 14 дневных + 6 ночных, иконки Meteocons (SVG), ночные фоны =====
   const WEATHER_STATES = [
-    {"key":"sunny","label_ru":"Солнечно","bg":"./weather-assets/card-backgrounds/sunny-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/clear-night.png?v=5","icon":"clear-day"},
-    {"key":"mostly-sunny","label_ru":"Преимущественно солнечно","bg":"./weather-assets/card-backgrounds/mostly-sunny-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=5","icon":"partly-cloudy-day"},
-    {"key":"partly-cloudy","label_ru":"Облачно с прояснениями","bg":"./weather-assets/card-backgrounds/partly-cloudy-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=5","icon":"partly-cloudy-day"},
-    {"key":"cloudy","label_ru":"Облачно","bg":"./weather-assets/card-backgrounds/cloudy-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=5","icon":"cloudy"},
-    {"key":"overcast","label_ru":"Пасмурно","bg":"./weather-assets/card-backgrounds/overcast-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=5","icon":"overcast"},
-    {"key":"drizzle","label_ru":"Морось","bg":"./weather-assets/card-backgrounds/drizzle-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=5","icon":"drizzle"},
-    {"key":"rain","label_ru":"Дождь","bg":"./weather-assets/card-backgrounds/rain-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=5","icon":"rain"},
-    {"key":"heavy-rain","label_ru":"Сильный ливень","bg":"./weather-assets/card-backgrounds/heavy-rain-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=5","icon":"rain"},
-    {"key":"thunderstorm","label_ru":"Гроза","bg":"./weather-assets/card-backgrounds/thunderstorm-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/thunderstorm-night.png?v=5","icon":"thunderstorms"},
-    {"key":"snow","label_ru":"Снег","bg":"./weather-assets/card-backgrounds/snow-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=5","icon":"snow"},
-    {"key":"light-snow","label_ru":"Небольшой снег","bg":"./weather-assets/card-backgrounds/light-snow-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=5","icon":"snow"},
-    {"key":"sleet","label_ru":"Мокрый снег","bg":"./weather-assets/card-backgrounds/sleet-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=5","icon":"sleet"},
-    {"key":"fog","label_ru":"Туман","bg":"./weather-assets/card-backgrounds/fog-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=5","icon":"fog"},
-    {"key":"wind","label_ru":"Ветрено","bg":"./weather-assets/card-backgrounds/wind-background.png?v=5","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=5","icon":"wind"},
-    {"key":"clear-night","label_ru":"Ясная ночь","bg":"./weather-assets/card-backgrounds/clear-night.png?v=5","night_bg":"./weather-assets/card-backgrounds/clear-night.png?v=5","icon":"clear-night"},
-    {"key":"partly-cloudy-night","label_ru":"Облачно с прояснениями","bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=5","night_bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=5","icon":"partly-cloudy-night"},
-    {"key":"cloudy-night","label_ru":"Облачно","bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=5","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=5","icon":"overcast-night"},
-    {"key":"rain-night","label_ru":"Дождь","bg":"./weather-assets/card-backgrounds/rain-night.png?v=5","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=5","icon":"rain"},
-    {"key":"snow-night","label_ru":"Снег","bg":"./weather-assets/card-backgrounds/snow-night.png?v=5","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=5","icon":"snow"},
-    {"key":"thunderstorm-night","label_ru":"Гроза","bg":"./weather-assets/card-backgrounds/thunderstorm-night.png?v=5","night_bg":"./weather-assets/card-backgrounds/thunderstorm-night.png?v=5","icon":"thunderstorms"}
+    {"key":"sunny","label_ru":"Солнечно","bg":"./weather-assets/card-backgrounds/sunny-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/clear-night.png?v=6","icon":"clear-day"},
+    {"key":"mostly-sunny","label_ru":"Преимущественно солнечно","bg":"./weather-assets/card-backgrounds/mostly-sunny-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=6","icon":"partly-cloudy-day"},
+    {"key":"partly-cloudy","label_ru":"Облачно с прояснениями","bg":"./weather-assets/card-backgrounds/partly-cloudy-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=6","icon":"partly-cloudy-day"},
+    {"key":"cloudy","label_ru":"Облачно","bg":"./weather-assets/card-backgrounds/cloudy-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=6","icon":"cloudy"},
+    {"key":"overcast","label_ru":"Пасмурно","bg":"./weather-assets/card-backgrounds/overcast-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=6","icon":"overcast"},
+    {"key":"drizzle","label_ru":"Морось","bg":"./weather-assets/card-backgrounds/drizzle-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=6","icon":"drizzle"},
+    {"key":"rain","label_ru":"Дождь","bg":"./weather-assets/card-backgrounds/rain-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=6","icon":"rain"},
+    {"key":"heavy-rain","label_ru":"Сильный ливень","bg":"./weather-assets/card-backgrounds/heavy-rain-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=6","icon":"rain"},
+    {"key":"thunderstorm","label_ru":"Гроза","bg":"./weather-assets/card-backgrounds/thunderstorm-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/thunderstorm-night.png?v=6","icon":"thunderstorms"},
+    {"key":"snow","label_ru":"Снег","bg":"./weather-assets/card-backgrounds/snow-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=6","icon":"snow"},
+    {"key":"light-snow","label_ru":"Небольшой снег","bg":"./weather-assets/card-backgrounds/light-snow-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=6","icon":"snow"},
+    {"key":"sleet","label_ru":"Мокрый снег","bg":"./weather-assets/card-backgrounds/sleet-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=6","icon":"sleet"},
+    {"key":"fog","label_ru":"Туман","bg":"./weather-assets/card-backgrounds/fog-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=6","icon":"fog"},
+    {"key":"wind","label_ru":"Ветрено","bg":"./weather-assets/card-backgrounds/wind-background.png?v=6","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=6","icon":"wind"},
+    {"key":"clear-night","label_ru":"Ясная ночь","bg":"./weather-assets/card-backgrounds/clear-night.png?v=6","night_bg":"./weather-assets/card-backgrounds/clear-night.png?v=6","icon":"clear-night"},
+    {"key":"partly-cloudy-night","label_ru":"Облачно с прояснениями","bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=6","night_bg":"./weather-assets/card-backgrounds/partly-cloudy-night.png?v=6","icon":"partly-cloudy-night"},
+    {"key":"cloudy-night","label_ru":"Облачно","bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=6","night_bg":"./weather-assets/card-backgrounds/cloudy-night.png?v=6","icon":"overcast-night"},
+    {"key":"rain-night","label_ru":"Дождь","bg":"./weather-assets/card-backgrounds/rain-night.png?v=6","night_bg":"./weather-assets/card-backgrounds/rain-night.png?v=6","icon":"rain"},
+    {"key":"snow-night","label_ru":"Снег","bg":"./weather-assets/card-backgrounds/snow-night.png?v=6","night_bg":"./weather-assets/card-backgrounds/snow-night.png?v=6","icon":"snow"},
+    {"key":"thunderstorm-night","label_ru":"Гроза","bg":"./weather-assets/card-backgrounds/thunderstorm-night.png?v=6","night_bg":"./weather-assets/card-backgrounds/thunderstorm-night.png?v=6","icon":"thunderstorms"}
   ];
   function isNight() {
     if (location.search.includes('night=1')) return true;

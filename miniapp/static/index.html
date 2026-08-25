@@ -138,9 +138,11 @@
     .weather-card__desc { font-size:15px; font-weight:800; color:var(--fc); margin-top:2px; text-shadow:0 1px 3px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.35); }
     .weather-card__wind { font-size:13px; font-weight:700; color:var(--fc2); margin-top:2px; text-shadow:0 1px 3px rgba(0,0,0,0.8); }
     .weather-card__divider { height:1px; background:var(--div); margin:4px 16px 0; position:relative; z-index:1; }
-    .weather-card__hourly { position:relative; z-index:1; display:flex; gap:6px; overflow-x:auto; padding:8px 16px 12px; scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; scroll-padding-inline:16px; }
+    .weather-card__hourly { position:relative; z-index:1; display:flex; gap:8px; overflow-x:auto; padding:8px 0 12px 16px; scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; scroll-padding-inline:16px; }
+    .h-item { text-align:center; scroll-snap-align:start; min-width:0; flex: 0 0 calc((100% - 40px) / 6); }
+    .h-item:last-child { margin-right: 16px; }
+    
     .weather-card__hourly::-webkit-scrollbar { display:none; }
-    .h-item { text-align:center; flex:0 0 48px; scroll-snap-align:center; }
     .h-item .h-time { font-size:13px; color:var(--fc); font-weight:800; text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.35); }
     .h-item .h-ic { width:36px; height:36px; margin:3px auto; display:block; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.9)) drop-shadow(0 0 4px rgba(255,255,255,0.55)) saturate(2.4) contrast(1.35) brightness(1.35); }
     .h-item .h-t { font-size:17px; font-weight:800; color:var(--fc); text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.35); }
@@ -187,6 +189,21 @@
     .block { padding: 14px 16px 16px; border-top: 0.5px solid var(--border); }
     .block .b-title { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; }
 
+
+
+    /* ===== Единая типографика (гиперпедант: одна шкала по всему приложению) ===== */
+    .text-\[10px\] { font-size: 11px !important; line-height: 1.35 !important; }
+    .text-\[11px\] { font-size: 11px !important; line-height: 1.35 !important; }
+    .text-xs { font-size: 12px !important; line-height: 1.4 !important; }
+    .text-sm { font-size: 14px !important; line-height: 1.4 !important; }
+    .text-base { font-size: 15px !important; line-height: 1.4 !important; }
+    .text-lg { font-size: 17px !important; line-height: 1.35 !important; }
+    .text-xl { font-size: 20px !important; line-height: 1.3 !important; }
+    .font-medium { font-weight: 500 !important; }
+    .font-semibold { font-weight: 600 !important; }
+    .font-bold { font-weight: 700 !important; }
+    .font-black { font-weight: 800 !important; }
+    .font-mono { font-family: inherit !important; font-variant-numeric: tabular-nums !important; }
 
     /* ===== Token overrides: под-экраны (архив/источники/дайджест/викторины/переводчик/админ) ===== */
     .bg-slate-50 { background: var(--surface-subtle) !important; }
@@ -1041,7 +1058,7 @@
                     const nowTs = Date.now();
                     let startIdx = om.hourly.time.findIndex(t => new Date(t).getTime() >= nowTs - 60 * 60 * 1000);
                     if (startIdx < 0) startIdx = 0;
-                    return om.hourly.time.slice(startIdx, startIdx + 12).map((t, i) => {
+                    return om.hourly.time.slice(startIdx, startIdx + 10).map((t, i) => {
                       const j = startIdx + i;
                       const r = om.hourly.rain?.[j] || 0;
                       const s = om.hourly.snowfall?.[j] || 0;
@@ -1324,27 +1341,20 @@
 
 {/* ================= 2. ЭКРАН: АРХИВ ВЫПОЛНЕННЫХ ДЕЛ ================= */}
           {auth.state === 'ok' && view === 'archive' && (
-            <div className="space-y-5 animate-fade-in pb-24">
-              <div className="flex justify-between items-center">
-                <button
-                  onClick={() => { haptic(); setView('main'); }}
-                  className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
-                >
-                  ← Назад к делам
-                </button>
-                {completedTasks.length > 0 && (
-                  <button
-                    onClick={clearArchive}
-                    className="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 active:scale-95"
-                  >
-                    Очистить весь архив
-                  </button>
-                )}
-              </div>
-
-              <div>
-                <h1 className="text-xl font-black" style={{color:"var(--text)"}}>Архив выполненных дел</h1>
-                <div className="text-xs text-slate-500 mt-0.5">Кликните на задачу, чтобы вернуть её обратно в список дел.</div>
+            <div className="space-y-4 animate-fade-in pb-24">
+              <div className="header">
+                <div className="btn" onClick={() => { haptic(); setView('main'); }}>
+                  <i className="ph ph-arrow-left"></i>
+                </div>
+                <div className="mid">
+                  <div className="title">Архив дел</div>
+                  <div className="subtitle">Выполненные задачи</div>
+                </div>
+                {completedTasks.length > 0 ? (
+                  <div className="btn" onClick={clearArchive}>
+                    <i className="ph ph-trash"></i>
+                  </div>
+                ) : <div className="btn" style={{opacity:0.3}}><i className="ph ph-trash"></i></div>}
               </div>
 
               <div className="space-y-2.5">
@@ -1384,17 +1394,18 @@
 
           {/* ================= 3. ЭКРАН: УПРАВЛЕНИЕ ИСТОЧНИКАМИ ================= */}
           {auth.state === 'ok' && view === 'sources' && (
-            <div className="space-y-5 animate-fade-in pb-24">
-              <button
-                onClick={() => { haptic(); setView('main'); }}
-                className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
-              >
-                ← Назад на главную
-              </button>
-
-              <div>
-                <h1 className="text-xl font-black" style={{color:"var(--text)"}}>Подключенные источники</h1>
-                <div className="text-xs text-slate-500 mt-0.5">Каналы и RSS-ленты, с которых собирается AI-Дайджест.</div>
+            <div className="space-y-4 animate-fade-in pb-24">
+              <div className="header">
+                <div className="btn" onClick={() => { haptic(); setView('main'); }}>
+                  <i className="ph ph-arrow-left"></i>
+                </div>
+                <div className="mid">
+                  <div className="title">Источники</div>
+                  <div className="subtitle">Каналы и RSS для дайджеста</div>
+                </div>
+                <div className="btn" onClick={() => { haptic(); setSourceType(sourceType === 'TG' ? 'RSS' : 'TG'); }}>
+                  <i className="ph ph-plus"></i>
+                </div>
               </div>
 
               {/* Список текущих источников */}
@@ -1465,17 +1476,18 @@
           )}
 
           {auth.state === 'ok' && view === 'digest' && (
-            <div className="space-y-5 animate-fade-in pb-24">
-              <button
-                onClick={() => { haptic(); setView('main'); }}
-                className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
-              >
-                ← Назад на главную
-              </button>
-
-              <div>
-                <h1 className="text-xl font-black" style={{color:"var(--text)"}}>AI-Дайджест новостей</h1>
-                <div className="text-xs text-slate-500 mt-0.5">Сформирован на основе ваших {sources.length} подключенных источников.</div>
+            <div className="space-y-4 animate-fade-in pb-24">
+              <div className="header">
+                <div className="btn" onClick={() => { haptic(); setView('main'); }}>
+                  <i className="ph ph-arrow-left"></i>
+                </div>
+                <div className="mid">
+                  <div className="title">Дайджест</div>
+                  <div className="subtitle">{sources.length} источников</div>
+                </div>
+                <div className="btn" onClick={() => { haptic('light'); loadDigest(); }}>
+                  <i className="ph ph-arrows-clockwise"></i>
+                </div>
               </div>
 
               <div className="space-y-3.5">
@@ -1527,134 +1539,147 @@
 
           {/* ================= 5. ЭКРАН: ВИКТОРИНЫ & ИДЕИ ================= */}
           {auth.state === 'ok' && view === 'fun' && (
-            <div className="space-y-5 animate-fade-in pb-24">
-              <button
-                onClick={() => { haptic(); setView('main'); }}
-                className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
-              >
-                ← Назад на главную
-              </button>
+            <div className="space-y-4 pb-24 animate-fade-in">
 
-              <div>
-                <h1 className="text-xl font-black" style={{color:"var(--text)"}}>Викторины & Идеи</h1>
-                <div className="text-xs text-slate-500 mt-0.5">Вопросы с jservice.io и занятия с BoredAPI</div>
+              {/* Header экрана (стиль прототипа) */}
+              <div className="header">
+                <div className="btn" onClick={() => { haptic(); setView('main'); }}>
+                  <i className="ph ph-arrow-left"></i>
+                </div>
+                <div className="mid">
+                  <div className="title">Викторины & Идеи</div>
+                  <div className="subtitle">Вопросы и занятия</div>
+                </div>
+                <div className="btn" onClick={() => { haptic('light'); loadQuiz(); }}>
+                  <i className="ph ph-shuffle"></i>
+                </div>
               </div>
 
               {/* Викторина */}
-              <div className="card p-5 space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Вопрос для викторины</span>
+              <div className="card">
+                <div className="row">
+                  <div className="ic acc"><i className="ph ph-brain"></i></div>
+                  <div className="body">
+                    <div className="title">Вопрос для викторины</div>
+                    <div className="status">Open Trivia DB</div>
+                  </div>
                   <button
                     onClick={() => { haptic('light'); loadQuiz(); }}
                     disabled={quizLoading}
-                    className="px-3 py-1.5 bg-blue-600 active:scale-95 text-white rounded-xl font-bold text-xs transition disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-xl font-bold text-xs transition active:scale-95 disabled:opacity-50 text-white"
+                    style={{ background: 'var(--accent)' }}
                   >
-                    {quizLoading ? '…' : 'Новый вопрос'}
+                    {quizLoading ? '…' : 'Новый'}
                   </button>
                 </div>
-
-                {quizError && <div className="text-xs font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{quizError}</div>}
-
-                {quizLoading && !quiz && (
-                  <div className="text-center py-6 text-xs text-slate-400">Загружаем вопрос…</div>
-                )}
-
-                {quiz && !quizLoading && (
-                  <div className="space-y-3">
-                    {quiz.category && (
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
-                          {quiz.category.title || 'Без категории'}
-                        </span>
-                        {quiz.value && (
-                          <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200">
-                            ${quiz.value}
+                <div className="block space-y-3">
+                  {quizError && <div className="text-xs font-bold px-3 py-2 rounded-xl" style={{ color: '#EF4444', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>{quizError}</div>}
+                  {quizLoading && !quiz && (
+                    <div className="text-center py-6 text-xs" style={{ color: 'var(--text-muted)' }}>Загружаем вопрос…</div>
+                  )}
+                  {quiz && !quizLoading && (
+                    <div className="space-y-3">
+                      {quiz.category && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold" style={{ color: 'var(--accent)', background: 'var(--accent-soft)' }}>
+                            {quiz.category.title || 'Без категории'}
                           </span>
-                        )}
+                          {quiz.value && (
+                            <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold" style={{ color: '#D97706', background: 'rgba(245,158,11,0.12)' }}>
+                              ${quiz.value}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className="text-sm font-bold leading-snug" style={{ color: 'var(--text)' }}>
+                        {quiz.question || '(вопрос не найден)'}
                       </div>
-                    )}
-                    <div className="text-sm font-bold text-slate-900 leading-snug">
-                      {quiz.question || '(вопрос не найден)'}
+                      {!showAnswer ? (
+                        <button
+                          onClick={() => { haptic('medium'); setShowAnswer(true); }}
+                          className="w-full py-3 rounded-2xl font-bold text-xs transition active:scale-95 text-white"
+                          style={{ background: 'var(--text)' }}
+                        >
+                          Показать ответ
+                        </button>
+                      ) : (
+                        <div className="p-3.5 rounded-2xl" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
+                          <div className="text-[11px] font-bold uppercase tracking-wide mb-0.5" style={{ color: '#10B981' }}>Ответ</div>
+                          <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>{quiz.answer || '—'}</div>
+                        </div>
+                      )}
+                      {quiz.airdate && (
+                        <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Эфир: {new Date(quiz.airdate).toLocaleDateString('ru-RU')}</div>
+                      )}
                     </div>
-                    {!showAnswer ? (
-                      <button
-                        onClick={() => { haptic('medium'); setShowAnswer(true); }}
-                        className="w-full py-3 bg-slate-900 active:scale-98 text-white rounded-2xl font-bold text-xs transition"
-                      >
-                        💡 Показать ответ
-                      </button>
-                    ) : (
-                      <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl">
-                        <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide mb-0.5">Ответ</div>
-                        <div className="text-sm font-black text-emerald-800">{quiz.answer || '—'}</div>
-                      </div>
-                    )}
-                    {quiz.airdate && (
-                      <div className="text-[10px] text-slate-400">Эфир: {new Date(quiz.airdate).toLocaleDateString('ru-RU')}</div>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Чем заняться */}
-              <div className="card p-5 space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Чем заняться</span>
+              <div className="card">
+                <div className="row">
+                  <div className="ic"><i className="ph ph-lightbulb"></i></div>
+                  <div className="body">
+                    <div className="title">Чем заняться</div>
+                    <div className="status">BoredAPI</div>
+                  </div>
                   <button
                     onClick={() => { haptic('light'); loadActivity(); }}
                     disabled={activityLoading}
-                    className="px-3 py-1.5 bg-slate-900 active:scale-95 text-white rounded-xl font-bold text-xs transition disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-xl font-bold text-xs transition active:scale-95 disabled:opacity-50 text-white"
+                    style={{ background: 'var(--text)' }}
                   >
-                    {activityLoading ? '…' : 'Другая идея'}
+                    {activityLoading ? '…' : 'Идея'}
                   </button>
                 </div>
-
-                {activityError && <div className="text-xs font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{activityError}</div>}
-
-                {activityLoading && !activity && (
-                  <div className="text-center py-6 text-xs text-slate-400">Подбираем занятие…</div>
-                )}
-
-                {activity && !activityLoading && (
-                  <div className="space-y-3">
-                    <div className="text-sm font-bold text-slate-900 leading-snug">
-                      {activity.activity}
+                <div className="block space-y-3">
+                  {activityError && <div className="text-xs font-bold px-3 py-2 rounded-xl" style={{ color: '#EF4444', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>{activityError}</div>}
+                  {activityLoading && !activity && (
+                    <div className="text-center py-6 text-xs" style={{ color: 'var(--text-muted)' }}>Подбираем занятие…</div>
+                  )}
+                  {activity && !activityLoading && (
+                    <div className="space-y-3">
+                      <div className="text-sm font-bold leading-snug" style={{ color: 'var(--text)' }}>
+                        {activity.activity}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold capitalize" style={{ color: '#8B5CF6', background: 'rgba(139,92,246,0.12)' }}>
+                          {activity.type || 'разное'}
+                        </span>
+                        {activity.participants && (
+                          <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold" style={{ color: 'var(--text-muted)', background: 'var(--surface-subtle)' }}>
+                            {activity.participants} {activity.participants === 1 ? 'участник' : activity.participants < 5 ? 'участника' : 'участников'}
+                          </span>
+                        )}
+                        {priceLabel(activity.price) && (
+                          <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold" style={{ color: '#059669', background: 'rgba(16,185,129,0.1)' }}>
+                            {priceLabel(activity.price)}
+                          </span>
+                        )}
+                        {accessLabel(activity.accessibility) && (
+                          <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold" style={{ color: '#D97706', background: 'rgba(245,158,11,0.12)' }}>
+                            {accessLabel(activity.accessibility)}
+                          </span>
+                        )}
+                      </div>
+                      {activity.link && (
+                        <a
+                          href={activity.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-center text-xs font-bold underline underline-offset-2"
+                          style={{ color: 'var(--accent)' }}
+                        >
+                          Подробнее →
+                        </a>
+                      )}
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      <span className="px-2 py-0.5 rounded-lg bg-violet-50 text-violet-700 text-[10px] font-bold border border-violet-200 capitalize">
-                        {activity.type || 'разное'}
-                      </span>
-                      {activity.participants && (
-                        <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
-                          👥 {activity.participants} {activity.participants === 1 ? 'участник' : activity.participants < 5 ? 'участника' : 'участников'}
-                        </span>
-                      )}
-                      {priceLabel(activity.price) && (
-                        <span className="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                          💰 {priceLabel(activity.price)}
-                        </span>
-                      )}
-                      {accessLabel(activity.accessibility) && (
-                        <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200">
-                          🧩 {accessLabel(activity.accessibility)}
-                        </span>
-                      )}
-                    </div>
-                    {activity.link && (
-                      <a
-                        href={activity.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block text-center text-xs font-bold text-blue-600 underline underline-offset-2"
-                      >
-                        Подробнее →
-                      </a>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
-                <div className="text-center text-[10px] text-slate-400 pb-2">
+              <div className="text-center text-[11px]" style={{ color: 'var(--text-muted)' }}>
                 Данные: Open Trivia DB · BoredAPI
               </div>
             </div>

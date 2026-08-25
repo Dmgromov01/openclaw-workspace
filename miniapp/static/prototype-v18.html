@@ -107,9 +107,9 @@
 
   /* ===== WeatherCard — 2.6:1, атмосферный фон, тёмный текст слева ===== */
   .weather-card {
-    --fc: #1C1C1E;          /* цвет текста (дневной) */
-    --fc2: rgba(28,28,30,0.72); /* вторичный текст */
-    --div: rgba(28,28,30,0.12); /* разделитель */
+    --fc: #FFFFFF;          /* цвет текста: белый, контраст на любом фоне */
+    --fc2: rgba(255,255,255,0.88); /* вторичный текст */
+    --div: rgba(255,255,255,0.25); /* разделитель */
     margin: 0 16px 12px;
     min-height: 190px;
     border-radius: 24px;
@@ -121,13 +121,13 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    color: #1C1C1E;
+    color: #FFFFFF;
   }
-  /* затемнение для читаемости текста на светлых фонах — мягкое, слева */
-  .weather-card.dark { --fc: #FFFFFF; --fc2: rgba(255,255,255,0.78); --div: rgba(255,255,255,0.2); }
+  /* затемнение для читаемости белого текста — мягкий тёмный градиент слева */
+  .weather-card.dark { --fc: #FFFFFF; --fc2: rgba(255,255,255,0.88); --div: rgba(255,255,255,0.25); }
   .weather-card::before {
     content:""; position:absolute; inset:0;
-    background: linear-gradient(90deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.12) 38%, rgba(255,255,255,0) 55%);
+    background: linear-gradient(90deg, rgba(10,15,30,0.55) 0%, rgba(10,15,30,0.28) 42%, rgba(10,15,30,0.08) 60%, rgba(10,15,30,0) 75%);
     pointer-events:none;
   }
   .weather-card__top {

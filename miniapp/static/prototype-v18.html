@@ -111,7 +111,7 @@
     --fc2: rgba(28,28,30,0.72); /* вторичный текст */
     --div: rgba(28,28,30,0.12); /* разделитель */
     margin: 0 16px 12px;
-    aspect-ratio: 2.6 / 1;
+    min-height: 190px;
     border-radius: 24px;
     overflow: hidden;
     position: relative;
@@ -125,7 +125,6 @@
   }
   /* затемнение для читаемости текста на светлых фонах — мягкое, слева */
   .weather-card.dark { --fc: #FFFFFF; --fc2: rgba(255,255,255,0.78); --div: rgba(255,255,255,0.2); }
-  .weather-card.dark .weather-card__badge { background: rgba(20,20,30,0.4); border-color: rgba(255,255,255,0.25); }
   .weather-card::before {
     content:""; position:absolute; inset:0;
     background: linear-gradient(90deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.12) 38%, rgba(255,255,255,0) 55%);
@@ -137,19 +136,6 @@
     padding: 14px 16px 4px;
   }
   .weather-card__content { min-width:0; }
-  .weather-card__city { font-size:14px; font-weight:700; color:var(--fc); }
-  .weather-card__temp { font-size:44px; font-weight:200; letter-spacing:-2px; line-height:1; color:var(--fc); }
-  .weather-card__temp sup { font-size:22px; font-weight:300; }
-  .weather-card__desc { font-size:12px; font-weight:600; color:var(--fc2); margin-top:2px; }
-  .weather-card__badge {
-    background: rgba(255,255,255,0.45);
-    border: 1px solid rgba(255,255,255,0.55);
-    border-radius: 999px;
-    padding: 5px 12px;
-    font-size: 11px; font-weight: 700; color: var(--fc);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    flex-shrink: 0;
-  }
   .weather-card__divider { height: 1px; background: var(--div); margin: 4px 16px 0; position:relative; z-index:1; }
   .weather-card__hourly {
     position: relative; z-index: 1;
@@ -160,7 +146,7 @@
   .weather-card__hourly::-webkit-scrollbar { display:none; }
   .h-item { text-align:center; flex:0 0 40px; scroll-snap-align:center; }
   .h-item .h-time { font-size:10px; color:var(--fc2); font-weight:600; }
-  .h-item .h-ic { width:24px; height:24px; margin:2px auto; display:block; }
+  .h-item .h-ic { width:28px; height:28px; margin:2px auto; display:block; }
   .h-item .h-t { font-size:13px; font-weight:700; color:var(--fc); }
 
   /* ===== Cards (translator + services, radius 20-22px) ===== */
@@ -253,7 +239,6 @@
       <div class="weather-card__temp" id="tempVal">19<sup>°C</sup></div>
       <div class="weather-card__desc" id="descVal">Облачно с прояснениями</div>
     </div>
-    <div class="weather-card__badge" id="badgeVal">19°</div>
   </div>
   <div class="weather-card__divider"></div>
   <div class="weather-card__hourly" id="hourlyRow"></div>
@@ -515,8 +500,6 @@
     cardEl.classList.add('weather-card', 'weather--' + st.key);
     const desc = document.getElementById('descVal');
     if (desc) desc.textContent = st.label_ru;
-    const badge = document.getElementById('badgeVal');
-    if (badge) badge.textContent = '19°';
     applyTheme();
   });
   // Стартовый фон: с учётом ночи

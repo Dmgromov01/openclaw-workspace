@@ -634,7 +634,7 @@
       };
 
       useEffect(() => {
-        if (view === 'digest' && !digestData) loadDigest();
+        if (view === 'digest') loadDigest();
       }, [view]);
 
       // ================= 5. ВАЛЮТЫ & ПАРОЛИ =================
@@ -1507,6 +1507,11 @@
                           </span>
                           <span className="text-[10px] font-semibold text-slate-400">{block.posts.length} постов</span>
                         </div>
+                        {block.summary && (
+                          <div className="text-sm font-semibold text-slate-800 leading-snug whitespace-pre-wrap">
+                            {block.summary}
+                          </div>
+                        )}
                         <div className="space-y-2">
                           {block.posts.map((p, pi) => (
                             <div key={pi} className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl">

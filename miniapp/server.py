@@ -202,9 +202,18 @@ def collect_digest(sources, hours=24):
     return blocks, total
 
 
-def build_digest_json():
+def build_digest_json(use_ai=True):
+    """Собирает дайджест; каждый блок — источник с AI-саммари (DeepSeek) + сырые посты."""
     sources = load_sources()
     blocks, total = collect_digest(sources)
+    if use_ai:
+        for b in blocks:
+            try:
+                summ = digest._summarize_source(b["title"], [(t, None) for t in b["posts"]])
+                if summ:
+                    b["summary"] = summ
+            except Exception:
+                pass
     try:
         curs = digest._curs()
     except Exception:

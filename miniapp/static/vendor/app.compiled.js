@@ -1006,7 +1006,7 @@ function App() {
     onClick: () => {
       haptic('medium');
       setShowRates(true);
-      setView('digest');
+      setView('rates');
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "ic"
@@ -1584,6 +1584,105 @@ function App() {
   }, sources.length, " \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u043E \xB7 \u043A\u0430\u043D\u0430\u043B\u044B \u0438 RSS")), /*#__PURE__*/React.createElement("div", {
     className: "chev"
   }, "\u203A"))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3.5"
+  }, digestLoading && /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-8 text-xs text-slate-400"
+  }, "\u0421\u043E\u0431\u0438\u0440\u0430\u0435\u043C \u0434\u0430\u0439\u0434\u0436\u0435\u0441\u0442\u2026"), digestError && !digestLoading && /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-6 text-xs text-red-500"
+  }, digestError), !digestLoading && !digestError && digestData && /*#__PURE__*/React.createElement(React.Fragment, null, digestData.blocks && digestData.blocks.length > 0 ? digestData.blocks.map((block, bi) => /*#__PURE__*/React.createElement("div", {
+    key: bi,
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "row",
+    style: {
+      paddingTop: 10,
+      paddingBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "ic"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: block.type === 'TG' ? 'ph ph-paper-plane-tilt' : 'ph ph-rss'
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "body"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "title"
+  }, block.title), /*#__PURE__*/React.createElement("div", {
+    className: "status"
+  }, block.posts.length, " \u043F\u043E\u0441\u0442\u043E\u0432 \u0437\u0430 3 \u0447\u0430\u0441\u0430")), /*#__PURE__*/React.createElement("div", {
+    className: "chev"
+  }, openPosts[bi] ? '▲' : '▼')), /*#__PURE__*/React.createElement("div", {
+    className: "block space-y-2.5"
+  }, block.summary && /*#__PURE__*/React.createElement("div", {
+    className: "text-sm leading-relaxed whitespace-pre-wrap",
+    style: {
+      color: 'var(--text)'
+    }
+  }, block.summary), openPosts[bi] && /*#__PURE__*/React.createElement("div", {
+    className: "space-y-1.5 pt-1"
+  }, block.posts.map((p, pi) => /*#__PURE__*/React.createElement("div", {
+    key: pi,
+    className: "text-xs rounded-xl px-3 py-2",
+    style: {
+      background: 'var(--surface-subtle)',
+      color: 'var(--text-muted)',
+      lineHeight: 1.45
+    }
+  }, p))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      haptic('light');
+      setOpenPosts(s => ({
+        ...s,
+        [bi]: !s[bi]
+      }));
+    },
+    className: "w-full py-2 rounded-xl font-bold text-xs transition active:scale-95",
+    style: {
+      background: 'var(--surface-subtle)',
+      color: 'var(--accent)'
+    }
+  }, openPosts[bi] ? 'Скрыть посты' : 'Показать посты (' + block.posts.length + ')')))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-8 text-xs text-slate-400"
+  }, "\u0417\u0430 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0439 \u043F\u0435\u0440\u0438\u043E\u0434 \u0441\u0432\u0435\u0436\u0438\u0445 \u043F\u043E\u0441\u0442\u043E\u0432 \u043D\u0435\u0442."), digestData.curs && /*#__PURE__*/React.createElement("div", {
+    className: "card p-4 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1"
+  }, "\u041A\u0443\u0440\u0441 (\u0426\u0411)"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-black text-slate-700"
+  }, digestData.curs), /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] text-slate-400 mt-1"
+  }, "\u2B50 \u0412\u0441\u0435\u0433\u043E \u043F\u043E\u0441\u0442\u043E\u0432: ", digestData.total)))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      haptic('light');
+      loadDigest();
+    },
+    className: "w-full py-3 bg-slate-900 active:scale-98 text-white rounded-2xl font-bold text-xs transition"
+  }, "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0434\u0430\u0439\u0434\u0436\u0435\u0441\u0442")), auth.state === 'ok' && view === 'rates' && /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4 pb-24 animate-fade-in"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "header"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "btn",
+    onClick: () => {
+      haptic();
+      setView('main');
+    }
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "ph ph-arrow-left"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mid"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "title"
+  }, "\u0412\u0430\u043B\u044E\u0442\u044B & \u041A\u043E\u043D\u0432\u0435\u0440\u0442\u0435\u0440"), /*#__PURE__*/React.createElement("div", {
+    className: "subtitle"
+  }, "\u041A\u0443\u0440\u0441\u044B \u0426\u0411 \u0420\u0424 \xB7 USD ", rates.USD ? Math.round(rates.USD) : '—', "\u20BD")), /*#__PURE__*/React.createElement("div", {
+    className: "btn",
+    onClick: () => {
+      haptic();
+      setShowRates(!showRates);
+    }
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "ph ph-coins"
+  }))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     id: "ratesBlock"
   }, /*#__PURE__*/React.createElement("div", {
@@ -1666,80 +1765,7 @@ function App() {
       fontVariantNumeric: 'tabular-nums',
       lineHeight: 1.2
     }
-  }, convertValue(), " ", toCurr)))), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-3.5"
-  }, digestLoading && /*#__PURE__*/React.createElement("div", {
-    className: "text-center py-8 text-xs text-slate-400"
-  }, "\u0421\u043E\u0431\u0438\u0440\u0430\u0435\u043C \u0434\u0430\u0439\u0434\u0436\u0435\u0441\u0442\u2026"), digestError && !digestLoading && /*#__PURE__*/React.createElement("div", {
-    className: "text-center py-6 text-xs text-red-500"
-  }, digestError), !digestLoading && !digestError && digestData && /*#__PURE__*/React.createElement(React.Fragment, null, digestData.blocks && digestData.blocks.length > 0 ? digestData.blocks.map((block, bi) => /*#__PURE__*/React.createElement("div", {
-    key: bi,
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "row",
-    style: {
-      paddingTop: 10,
-      paddingBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "ic"
-  }, /*#__PURE__*/React.createElement("i", {
-    className: block.type === 'TG' ? 'ph ph-paper-plane-tilt' : 'ph ph-rss'
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "body"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "title"
-  }, block.title), /*#__PURE__*/React.createElement("div", {
-    className: "status"
-  }, block.posts.length, " \u043F\u043E\u0441\u0442\u043E\u0432 \u0437\u0430 3 \u0447\u0430\u0441\u0430")), /*#__PURE__*/React.createElement("div", {
-    className: "chev"
-  }, openPosts[bi] ? '▲' : '▼')), /*#__PURE__*/React.createElement("div", {
-    className: "block space-y-2.5"
-  }, block.summary && /*#__PURE__*/React.createElement("div", {
-    className: "text-sm leading-relaxed whitespace-pre-wrap",
-    style: {
-      color: 'var(--text)'
-    }
-  }, block.summary), openPosts[bi] && /*#__PURE__*/React.createElement("div", {
-    className: "space-y-1.5 pt-1"
-  }, block.posts.map((p, pi) => /*#__PURE__*/React.createElement("div", {
-    key: pi,
-    className: "text-xs rounded-xl px-3 py-2",
-    style: {
-      background: 'var(--surface-subtle)',
-      color: 'var(--text-muted)',
-      lineHeight: 1.45
-    }
-  }, p))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      haptic('light');
-      setOpenPosts(s => ({
-        ...s,
-        [bi]: !s[bi]
-      }));
-    },
-    className: "w-full py-2 rounded-xl font-bold text-xs transition active:scale-95",
-    style: {
-      background: 'var(--surface-subtle)',
-      color: 'var(--accent)'
-    }
-  }, openPosts[bi] ? 'Скрыть посты' : 'Показать посты (' + block.posts.length + ')')))) : /*#__PURE__*/React.createElement("div", {
-    className: "text-center py-8 text-xs text-slate-400"
-  }, "\u0417\u0430 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0439 \u043F\u0435\u0440\u0438\u043E\u0434 \u0441\u0432\u0435\u0436\u0438\u0445 \u043F\u043E\u0441\u0442\u043E\u0432 \u043D\u0435\u0442."), digestData.curs && /*#__PURE__*/React.createElement("div", {
-    className: "card p-4 text-center"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1"
-  }, "\u041A\u0443\u0440\u0441 (\u0426\u0411)"), /*#__PURE__*/React.createElement("div", {
-    className: "text-xs font-black text-slate-700"
-  }, digestData.curs), /*#__PURE__*/React.createElement("div", {
-    className: "text-[10px] text-slate-400 mt-1"
-  }, "\u2B50 \u0412\u0441\u0435\u0433\u043E \u043F\u043E\u0441\u0442\u043E\u0432: ", digestData.total)))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      haptic('light');
-      loadDigest();
-    },
-    className: "w-full py-3 bg-slate-900 active:scale-98 text-white rounded-2xl font-bold text-xs transition"
-  }, "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0434\u0430\u0439\u0434\u0436\u0435\u0441\u0442")), auth.state === 'ok' && view === 'fun' && /*#__PURE__*/React.createElement("div", {
+  }, convertValue(), " ", toCurr))))), auth.state === 'ok' && view === 'fun' && /*#__PURE__*/React.createElement("div", {
     className: "space-y-4 pb-24 animate-fade-in"
   }, /*#__PURE__*/React.createElement("div", {
     className: "header"

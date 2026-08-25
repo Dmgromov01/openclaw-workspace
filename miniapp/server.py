@@ -180,24 +180,23 @@ def save_sources(sources):
 
 def collect_digest(sources, hours=24):
     """Собирает посты по источникам из sources.json; возвращает (blocks, total)."""
-    emoji = {"TG": "🟣", "RSS": "📡"}
     blocks = []
     total = 0
-    for src in sources:
+    for s in sources:
         try:
-            if src.get("type") == "TG":
-                ch = src["name"].lstrip("@")
+            if s.get("type") == "TG":
+                ch = s["name"].lstrip("@")
                 posts = digest._channel(ch, hours=hours, limit=6)
-                label = src.get("title") or ch
+                label = s.get("title") or ch
             else:
-                url = src["name"]
+                url = s["name"]
                 posts = digest._rss(url, limit=10, hours=hours)
-                label = src.get("title") or url
+                label = s.get("title") or url
         except Exception:
             continue
         texts = [t for t, _d in posts]
         if texts:
-            blocks.append({"title": f"{emoji.get(src.get('type'), '•')} {label}", "posts": texts})
+            blocks.append({"title": label, "type": s.get("type"), "posts": texts})
             total += len(texts)
     return blocks, total
 

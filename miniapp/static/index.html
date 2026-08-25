@@ -609,6 +609,7 @@
       const [digestData, setDigestData] = useState(null);
       const [digestLoading, setDigestLoading] = useState(false);
       const [digestError, setDigestError] = useState('');
+      const [openPosts, setOpenPosts] = useState({}); // какие блоки дайджеста развёрнуты
 
       // ================= 4.5. GOOGLE КАЛЕНДАРЬ (через /api/calendar) =================
       const [calendarData, setCalendarData] = useState(null);
@@ -1010,7 +1011,7 @@
                   <div className="ic"><i className="ph ph-newspaper"></i></div>
                   <div className="txt">Дайджест</div><div className="chev">›</div>
                 </div>
-                <div className="pill" onClick={() => { haptic('medium'); setShowRates(true); setView('digest'); }}>
+                <div className="pill" onClick={() => { haptic('medium'); setShowRates(true); setView('main'); setTimeout(() => document.getElementById('ratesBlock')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120); }}>
                   <div className="ic"><i className="ph ph-coins"></i></div>
                   <div className="txt">{rates.USD ? Math.round(rates.USD) : '—'} ₽/$</div><div className="chev">›</div>
                 </div>
@@ -1086,6 +1087,46 @@
 
               {/* Ползунок прогноза убран — почасовка листается пальцем */}
 
+              {/* ===== Card: Валюты & Конвертер (ЦБ) ===== */}
+              <div className="card" id="ratesBlock">
+                <div className="row" onClick={() => { haptic(); setShowRates(!showRates); }}>
+                  <div className="ic"><i className="ph ph-coins"></i></div>
+                  <div className="body">
+                    <div className="title">Валюты & Конвертер</div>
+                    <div className="status">Курсы ЦБ РФ · USD {rates.USD ? Math.round(rates.USD) : '—'}₽</div>
+                  </div>
+                  <div className="chev">{showRates ? '▲' : '▼'}</div>
+                </div>
+                {showRates && (
+                  <div className="block space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number" value={calcAmount}
+                        onChange={(e) => setCalcAmount(Number(e.target.value))}
+                        className="flex-1 min-w-0 basis-20 rounded-xl px-3 py-2.5 text-base font-bold outline-none border"
+                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                      />
+                      <select value={fromCurr} onChange={(e) => setFromCurr(e.target.value)}
+                        className="shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border"
+                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}>
+                        {['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <i className="ph ph-arrow-right shrink-0" style={{ color: 'var(--text-muted)', fontSize: '16px' }}></i>
+                      <select value={toCurr} onChange={(e) => setToCurr(e.target.value)}
+                        className="shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border"
+                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}>
+                        {['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between rounded-xl px-3.5 py-3" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
+                      <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Результат</span>
+                      <span className="text-base font-black" style={{ color: '#059669', fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>{convertValue()} {toCurr}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              
               {/* ===== Card: Задачи & Архив ===== */}
               <div className="card" id="tasksBlock">
                 <div className="row" onClick={() => { haptic(); setView('archive'); }}>
@@ -1442,45 +1483,6 @@
                 </div>
               </div>
 
-              {/* Валюты & Конвертер — на экране дайджеста */}
-              <div className="card" id="ratesBlock">
-                <div className="row" onClick={() => { haptic(); setShowRates(!showRates); }}>
-                  <div className="ic"><i className="ph ph-coins"></i></div>
-                  <div className="body">
-                    <div className="title">Валюты & Конвертер</div>
-                    <div className="status">Курсы ЦБ РФ · USD {rates.USD ? Math.round(rates.USD) : '—'}₽</div>
-                  </div>
-                  <div className="chev">{showRates ? '▲' : '▼'}</div>
-                </div>
-                {showRates && (
-                  <div className="block space-y-2.5">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number" value={calcAmount}
-                        onChange={(e) => setCalcAmount(Number(e.target.value))}
-                        className="flex-1 min-w-0 basis-20 rounded-xl px-3 py-2.5 text-base font-bold outline-none border"
-                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                      />
-                      <select value={fromCurr} onChange={(e) => setFromCurr(e.target.value)}
-                        className="shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border"
-                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}>
-                        {['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <i className="ph ph-arrow-right shrink-0" style={{ color: 'var(--text-muted)', fontSize: '16px' }}></i>
-                      <select value={toCurr} onChange={(e) => setToCurr(e.target.value)}
-                        className="shrink-0 rounded-xl px-2 py-2.5 text-xs font-bold outline-none border"
-                        style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border)', color: 'var(--text)' }}>
-                        {['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl px-3.5 py-3" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
-                      <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Результат</span>
-                      <span className="text-base font-black" style={{ color: '#059669', fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>{convertValue()} {toCurr}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               <div className="space-y-3.5">
                 {digestLoading && (
                   <div className="text-center py-8 text-xs text-slate-400">Собираем дайджест…</div>
@@ -1491,24 +1493,37 @@
                 {!digestLoading && !digestError && digestData && (
                   <>
                     {digestData.blocks && digestData.blocks.length > 0 ? digestData.blocks.map((block, bi) => (
-                      <div key={bi} className="card p-4 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
-                            {block.title}
-                          </span>
-                          <span className="text-[10px] font-semibold text-slate-400">{block.posts.length} постов</span>
-                        </div>
-                        {block.summary && (
-                          <div className="text-sm font-semibold text-slate-800 leading-snug whitespace-pre-wrap">
-                            {block.summary}
+                      <div key={bi} className="card">
+                        <div className="row" style={{ paddingTop: 10, paddingBottom: 10 }}>
+                          <div className="ic"><i className={block.type === 'TG' ? 'ph ph-paper-plane-tilt' : 'ph ph-rss'}></i></div>
+                          <div className="body">
+                            <div className="title">{block.title}</div>
+                            <div className="status">{block.posts.length} постов за 3 часа</div>
                           </div>
-                        )}
-                        <div className="space-y-2">
-                          {block.posts.map((p, pi) => (
-                            <div key={pi} className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl">
-                              • {p}
+                          <div className="chev">{openPosts[bi] ? '▲' : '▼'}</div>
+                        </div>
+                        <div className="block space-y-2.5">
+                          {block.summary && (
+                            <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text)' }}>
+                              {block.summary}
                             </div>
-                          ))}
+                          )}
+                          {openPosts[bi] && (
+                            <div className="space-y-1.5 pt-1">
+                              {block.posts.map((p, pi) => (
+                                <div key={pi} className="text-xs rounded-xl px-3 py-2" style={{ background: 'var(--surface-subtle)', color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                                  {p}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <button
+                            onClick={() => { haptic('light'); setOpenPosts(s => ({ ...s, [bi]: !s[bi] })); }}
+                            className="w-full py-2 rounded-xl font-bold text-xs transition active:scale-95"
+                            style={{ background: 'var(--surface-subtle)', color: 'var(--accent)' }}
+                          >
+                            {openPosts[bi] ? 'Скрыть посты' : 'Показать посты (' + block.posts.length + ')'}
+                          </button>
                         </div>
                       </div>
                     )) : (

@@ -155,3 +155,10 @@ _Курируемые воспоминания, свёрнутые из днев
   - Hourly time scrubber (-2h to +30m).
 - **Sources Management**:
   - Live list of connected TG channels & RSS feeds with 1-click delete.
+
+## Promoted From Short-Term Memory (2026-08-25)
+
+<!-- openclaw-memory-promotion:memory:memory/2026-08-19.md:41:43 -->
+- ⚠️ Хвосты: R2D2 (11:00): "API provider billing error — ключ без кредитов" — проверить балансы DeepSeek/OpenRouter/Google.; telegram-user-svc: авторизация (номер/код/2FA).; Проверить, что плагин tg-user-tools реально загрузился. [score=0.848 recalls=0 avg=0.620 source=memory/2026-08-19.md:41-43]
+<!-- openclaw-memory-promotion:memory:memory/2026-08-20.md:42:44 -->
+- ⚠️ УРОК: RainViewer max zoom = 7: Дмитрий прислал скриншот «не работает»: поверх карты **«Zoom Level Not Supported»** — RainViewer 256px-тайлы отдают данные только до **zoom 7** (z=8+ → PNG-заглушка 1370b с этим текстом; md5 одинаковый 2cc6649e). 1024px на z=9 тоже заглушка (7310b, md5 759062a2 — проверил через vision).; Решение: вернул **zoom 7 + maxZoom 7**, тайлы 256px. На zoom 7 с maxBounds видно ровно Москву+МО+ближайшие регионы — это то, что просил Дмитрий.; Пустой тайл (334b, прозрачный) на z=7 = просто нет осадков сейчас, НЕ ошибка. [score=0.848 recalls=0 avg=0.620 source=memory/2026-08-20.md:42-44]

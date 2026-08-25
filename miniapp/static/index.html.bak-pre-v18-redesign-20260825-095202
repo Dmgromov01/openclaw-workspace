@@ -2,198 +2,34 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>R2D2 · мини-приложение</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Personal Hub</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Phosphor Icons (система) + Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.css">
-
   <!-- Leaflet Map CSS & JS for Interactive Precipitation Radar -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    /* ===== Токены (DESIGN_SPEC, из prototype-v18) ===== */
-    :root {
-      --bg: #F7F8FA;
-      --surface: #FFFFFF;
-      --surface-subtle: #F3F5F7;
-      --border: #E6E9EE;
-      --border-strong: #D9DEE6;
-      --text: #121826;
-      --text-muted: #6B7280;
-      --icon: #737B86;
-      --icon-active: #5964E8;
-      --accent: #5964E8;
-      --accent-soft: #EEF1FF;
-      --radius-card: 20px;
-      --radius-card-lg: 24px;
-      --radius-icon: 999px;
-      --shadow-soft: 0 8px 24px rgba(16, 24, 40, 0.04);
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #15171A;
-        --surface: #1C1F24;
-        --surface-subtle: #232730;
-        --border: #2D3440;
-        --border-strong: #3A4352;
-        --text: #F3F5F7;
-        --text-muted: #A0A8B5;
-        --icon: #A0A8B5;
-        --icon-active: #7C88FF;
-        --accent: #7C88FF;
-        --accent-soft: #2A3150;
-        --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.25);
-      }
-    }
-
-    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html, body { height:100%; }
     body {
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
-      background: var(--bg); color: var(--text);
-      -webkit-font-smoothing: antialiased;
+      background-color: #F8FAFC;
+      color: #0F172A;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
-      padding-bottom: calc(86px + env(safe-area-inset-bottom));
     }
-    .ph { color: var(--icon); }
-    .ph-fill { color: var(--icon-active); }
-    .leaflet-container { border-radius: 1rem; z-index: 10; }
-
-    /* ===== Header Telegram shell ===== */
-    .header {
-      display:flex; align-items:center; justify-content:space-between;
-      height:58px;
-      padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
-      position:sticky; top:0; z-index:20;
-      background: var(--bg);
+    .card-white {
+      background: #FFFFFF;
+      border: 1.5px solid #E2E8F0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
     }
-    .header .btn {
-      width:36px; height:36px; border-radius:var(--radius-icon);
-      background: var(--surface-subtle);
-      border: 1px solid var(--border);
-      color: var(--text);
-      display:flex; align-items:center; justify-content:center;
-      flex-shrink:0; cursor:pointer;
+    .leaflet-container {
+      border-radius: 1rem;
+      z-index: 10;
     }
-    .header .btn .ph { font-size:20px; line-height:1; }
-    .header .mid { text-align:center; flex:1; min-width:0; padding:0 8px; }
-    .header .title { font-size:17px; font-weight:600; letter-spacing:-0.2px; line-height:1.2; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .header .subtitle { font-size:11px; color:var(--text-muted); font-weight:500; line-height:1.3; }
-
-    /* ===== Summary strip ===== */
-    .summary { display:flex; gap:8px; overflow-x:auto; padding:0 16px 12px; scrollbar-width:none; }
-    .summary::-webkit-scrollbar { display:none; }
-    .summary .pill {
-      flex:0 0 auto; display:flex; align-items:center; gap:8px;
-      height:46px; background: var(--surface); border:1px solid var(--border);
-      border-radius:18px; padding:0 14px; color:var(--text); cursor:pointer;
-    }
-    .summary .pill .ic {
-      width:28px; height:28px; border-radius:var(--radius-icon);
-      background:var(--accent-soft); color:var(--accent);
-      display:flex; align-items:center; justify-content:center; flex-shrink:0;
-    }
-    .summary .pill .ic .ph { font-size:16px; line-height:1; }
-    .summary .pill .txt { font-size:13px; font-weight:600; white-space:nowrap; }
-    .summary .pill .chev { color:var(--text-muted); font-size:13px; margin-left:2px; }
-
-    /* ===== WeatherCard (белый текст, тёмный градиент слева) ===== */
-    .weather-card {
-      --fc: #FFFFFF; --fc2: rgba(255,255,255,0.88); --div: rgba(255,255,255,0.25);
-      margin: 0 16px 12px;
-      min-height: 190px;
-      border-radius: 24px;
-      overflow: hidden;
-      position: relative;
-      background-size: cover;
-      background-position: right center;
-      background-repeat: no-repeat;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      color: #FFFFFF;
-    }
-    .weather-card::before {
-      content:""; position:absolute; inset:0;
-      background: linear-gradient(90deg, rgba(10,15,30,0.55) 0%, rgba(10,15,30,0.28) 42%, rgba(10,15,30,0.08) 60%, rgba(10,15,30,0) 75%);
-      pointer-events:none;
-    }
-    .weather-card__top { position:relative; z-index:1; display:flex; align-items:flex-start; justify-content:space-between; padding:14px 16px 4px; }
-    .weather-card__content { min-width:0; }
-    .weather-card__city { font-size:15px; font-weight:800; color:var(--fc); text-shadow:0 1px 4px rgba(0,0,0,0.45); }
-    .weather-card__temp { font-size:48px; font-weight:700; letter-spacing:-2px; line-height:1; color:var(--fc); text-shadow:0 2px 10px rgba(0,0,0,0.35); }
-    .weather-card__temp sup { font-size:24px; font-weight:600; }
-    .weather-card__desc { font-size:14px; font-weight:700; color:var(--fc); margin-top:2px; text-shadow:0 1px 4px rgba(0,0,0,0.45); }
-    .weather-card__wind { font-size:12px; font-weight:600; color:var(--fc2); margin-top:2px; text-shadow:0 1px 3px rgba(0,0,0,0.4); }
-    .weather-card__divider { height:1px; background:var(--div); margin:4px 16px 0; position:relative; z-index:1; }
-    .weather-card__hourly { position:relative; z-index:1; display:flex; gap:6px; overflow-x:auto; padding:6px 16px 10px; scrollbar-width:none; scroll-snap-type:x mandatory; }
-    .weather-card__hourly::-webkit-scrollbar { display:none; }
-    .h-item { text-align:center; flex:0 0 46px; scroll-snap-align:center; }
-    .h-item .h-time { font-size:12px; color:var(--fc); font-weight:800; text-shadow:0 1px 3px rgba(0,0,0,0.4); }
-    .h-item .h-ic { width:36px; height:36px; margin:3px auto; display:block; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.65)) drop-shadow(0 0 3px rgba(255,255,255,0.35)) saturate(2.2) contrast(1.3) brightness(1.2); }
-    .h-item .h-t { font-size:16px; font-weight:800; color:var(--fc); text-shadow:0 1px 3px rgba(0,0,0,0.4); }
-
-    /* ===== Cards & rows (Apple Settings style) ===== */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-card);
-      margin: 0 16px 12px;
-      overflow: hidden;
-    }
-    .row { display:flex; align-items:center; gap:12px; min-height:64px; padding:8px 14px; position:relative; cursor:pointer; }
-    .row + .row::before { content:""; position:absolute; left:62px; right:0; top:0; height:0.5px; background:var(--border); }
-    .row .ic {
-      width:40px; height:40px; border-radius:var(--radius-icon);
-      background:var(--surface-subtle); border:1px solid var(--border);
-      color:var(--text);
-      display:flex; align-items:center; justify-content:center; flex-shrink:0;
-    }
-    .row .ic .ph { font-size:21px; line-height:1; }
-    .row .ic.acc { background:var(--accent-soft); color:var(--accent); border-color:transparent; }
-    .row .ic.acc .ph { color:var(--accent); }
-    .row .body { flex:1; min-width:0; }
-    .row .title { font-size:15px; font-weight:600; color:var(--text); line-height:1.3; }
-    .row .status { font-size:12px; color:var(--text-muted); font-weight:500; line-height:1.3; margin-top:1px; }
-    .row .chev { color:var(--text-muted); font-weight:500; font-size:14px; margin-left:4px; flex-shrink:0; }
-
-    /* ===== Tab bar ===== */
-    .tabbar {
-      position:fixed; left:0; right:0; bottom:0; z-index:100;
-      display:flex; justify-content:space-around; align-items:center;
-      height:74px; background:var(--surface);
-      border-top:1px solid var(--border);
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .tab { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:56px; min-height:44px; justify-content:center; cursor:pointer; }
-    .tab .ti { width:21px; height:21px; font-size:21px; line-height:1; color:var(--icon); display:flex; align-items:center; justify-content:center; }
-    .tab .tl { font-size:10px; font-weight:500; color:var(--text-muted); }
-    .tab.active .ti { color:var(--icon-active); }
-    .tab.active .tl { color:var(--icon-active); }
-
-    /* ===== Inline block inside card (раскрывающиеся секции) ===== */
-    .block { padding: 14px 16px 16px; border-top: 0.5px solid var(--border); }
-    .block .b-title { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; }
-
-    .toast {
-      position:fixed; left:50%; bottom:100px; transform:translateX(-50%) translateY(20px);
-      background:rgba(18,24,38,0.92); color:#fff; font-size:13px; font-weight:500;
-      padding:10px 16px; border-radius:12px; opacity:0; pointer-events:none;
-      transition:opacity .25s, transform .25s; z-index:300; white-space:nowrap;
-    }
-    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
   </style>
 </head>
 <body class="min-h-screen font-sans antialiased">
@@ -643,13 +479,6 @@
         window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(type);
       };
 
-      // день/ночь для фона погодной карточки (21:00–06:00 — ночь, ?night=1 — принудительно)
-      const isNightTime = () => {
-        if (location.search.includes('night=1')) return true;
-        const h = new Date().getHours();
-        return h >= 21 || h < 6;
-      };
-
       const convertValue = () => {
         const inRub = calcAmount * rates[fromCurr];
         const res = inRub / rates[toCurr];
@@ -783,7 +612,7 @@
       };
 
       return (
-        <div className="max-w-xl mx-auto font-sans pb-4">
+        <div className="max-w-xl mx-auto px-5 py-4 font-sans">
 
           {/* ================= 0. ЭКРАН ВХОДА ================= */}
           {auth.state === 'loading' && (
@@ -796,7 +625,7 @@
           {auth.state === 'login' && (
             <div className="flex flex-col items-center justify-center py-24 space-y-4 text-center">
               <div className="w-20 h-20 rounded-3xl bg-blue-50 border border-blue-200 flex items-center justify-center text-4xl">🔒</div>
-              <div className="text-xl font-black" style={{color:"var(--text)"}}>Personal Hub</div>
+              <div className="text-xl font-black text-slate-900">Personal Hub</div>
               <div className="text-xs text-slate-500 max-w-60 leading-relaxed">
                 Вход через Telegram. Для подтверждения может потребоваться FaceID / Touch ID.
               </div>
@@ -867,49 +696,47 @@
 
           {/* ================= 1. ГЛАВНЫЙ ЭКРАН ================= */}
           {auth.state === 'ok' && view === 'main' && (
-            <div className="space-y-5 pb-4">
+            <div className="space-y-5">
 
-              {/* Header: закрыть | R2D2 · мини-приложение | меню */}
-              <div className="header">
-                <div className="btn" onClick={() => { try { window.Telegram?.WebApp?.close(); } catch(e){} }}>
-                  <i className="ph ph-x"></i>
-                </div>
-                <div className="mid">
-                  <div className="title">R2D2</div>
-                  <div className="subtitle">мини-приложение</div>
-                </div>
-                <div className="btn" onClick={() => { haptic(); setPassState(s => ({ ...s, showSet: !s.showSet, msg: '' })); }}>
-                  <i className="ph ph-dots-three"></i>
-                </div>
-              </div>
-
-              {/* Пользователь + быстрые действия (админ/пароль/выйти) */}
+              {/* Шапка: пользователь + админка (только для admin) */}
               {auth.user && (
-                <div className="flex items-center justify-between px-4 -mt-1">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500">👤 {auth.user.first_name || auth.user.username || 'Пользователь'}</span>
+                    <span className="text-xs font-bold text-slate-700">👤 {auth.user.first_name || auth.user.username || 'Пользователь'}</span>
                     {auth.user.role === 'admin' && (
                       <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-lg border border-purple-200">admin</span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
                     {auth.user.role === 'admin' && (
-                      <button onClick={() => { haptic(); setView('admin'); }} className="text-xs font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200 active:scale-95 transition">
+                      <button
+                        onClick={() => { haptic(); setView('admin'); }}
+                        className="text-xs font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200 active:scale-95 transition"
+                      >
                         🛡 Админ
                       </button>
                     )}
-                    <button onClick={doLogout} className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 active:scale-95 transition">
+                    <button
+                      onClick={() => { haptic('light'); setPassState(s => ({ ...s, showSet: !s.showSet, msg: '' })); }}
+                      className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 active:scale-95 transition"
+                    >
+                      🔑 Пароль
+                    </button>
+                    <button
+                      onClick={doLogout}
+                      className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 active:scale-95 transition"
+                    >
                       Выйти
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Установка пароля (десктоп/браузер) */}
-              {passState.showSet && (
-                <div className="card p-4 space-y-2">
-                  <div className="b-title">🔑 Пароль для входа на десктопе</div>
-                  <div className="text-[10px] text-slate-500">Задай свой пароль — им будешь входить на Mac/браузере (логин: твой username Telegram)</div>
+              {/* Установка пароля (вход на десктопе/браузере) */}
+              {auth.state === 'ok' && view === 'main' && passState.showSet && (
+                <div className="card-white rounded-3xl p-4 space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">🔑 Пароль для входа на десктопе</div>
+                  <div className="text-[10px] text-slate-500">Задай свой пароль — им будешь входить на Mac/браузере (логин: твой username Telegram, например Dm_GRM)</div>
                   <input
                     type="password"
                     placeholder="Новый пароль (мин. 4 символа)"
@@ -918,361 +745,360 @@
                     className="w-full bg-slate-50 border-2 border-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-600"
                   />
                   {passState.msg && <div className="text-[10px] font-bold text-blue-600">{passState.msg}</div>}
-                  <button onClick={setMyPassword} className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs transition active:scale-95">
+                  <button
+                    onClick={setMyPassword}
+                    className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs transition active:scale-95"
+                  >
                     Сохранить пароль
                   </button>
                 </div>
               )}
 
-              {/* Summary strip: Задачи | Дайджест | Валюты */}
-              <div className="summary">
-                <div className="pill" onClick={() => { haptic(); document.getElementById('tasksBlock')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
-                  <div className="ic"><i className="ph ph-checks"></i></div>
-                  <div className="txt">{activeTasks.length} задач</div><div className="chev">›</div>
+              {/* 1. Погода */}
+              <div className="card-white rounded-3xl p-5 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Погода</span>
                 </div>
-                <div className="pill" onClick={() => { haptic('medium'); setView('digest'); }}>
-                  <div className="ic"><i className="ph ph-newspaper"></i></div>
-                  <div className="txt">Дайджест</div><div className="chev">›</div>
+
+                <div className="flex items-center justify-between">
+                  <div className="text-4xl font-black text-slate-900">{weather.temp}°C</div>
+                  <div className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <img src={'weather-icons/meteocons/' + (weather.icon || 'cloudy') + '.svg'} alt="" className="w-11 h-11" />
+                      <div className="text-base font-bold text-slate-800">{weather.condition}</div>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">Ветер {weather.wind} • {weather.city}</div>
+                  </div>
                 </div>
-                <div className="pill" onClick={() => { haptic(); document.getElementById('ratesBlock')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
-                  <div className="ic"><i className="ph ph-coins"></i></div>
-                  <div className="txt">{rates.USD ? Math.round(rates.USD) : '—'} ₽/$</div><div className="chev">›</div>
-                </div>
+
+                {/* Осадки по Москве (Open-Meteo): сейчас + ближайшие 12ч, визуализация мелкий дождь → ливень */}
+                {om && om.hourly && (
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Осадки в Москве · 12ч</span>
+                      <span className="text-xs font-bold text-blue-600">{om.current ? (om.current.rain > 0 ? '💧 ' + om.current.rain.toFixed(1) + ' мм/ч' : om.current.snowfall > 0 ? '❄️ ' + om.current.snowfall.toFixed(1) + ' см' : 'сухо') : ''}</span>
+                    </div>
+
+                    {/* Ползунок: +0..+12 часов вперёд */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range"
+                        min="0"
+                        max="12"
+                        value={hourOffset}
+                        onChange={e => setHourOffset(parseInt(e.target.value))}
+                        className="flex-1 h-1.5 accent-blue-600"
+                      />
+                      <span className="text-[11px] font-bold text-slate-600 w-12 text-right whitespace-nowrap">+{hourOffset} ч</span>
+                    </div>
+
+                    <div className="flex gap-1.5 overflow-x-auto pb-1">
+                      {(() => {
+                        // старт окна: текущий час (не 00:00) + ползунок
+                        const nowTs = Date.now();
+                        let startIdx = om.hourly.time.findIndex(t => new Date(t).getTime() >= nowTs - 60 * 60 * 1000);
+                        if (startIdx < 0) startIdx = 0;
+                        return om.hourly.time.slice(startIdx + hourOffset, startIdx + hourOffset + 12).map((t, i) => {
+                          const j = startIdx + hourOffset + i;
+                          const r = om.hourly.rain?.[j] || 0;
+                          const s = om.hourly.snowfall?.[j] || 0;
+                          const wc = om.hourly.weathercode?.[j] ?? 0;
+                          const total = r + s;
+                          // иконка неба: сухо → по облачности (☀️/⛅/☁️), осадки → дождь/ливень
+                          let icon;
+                          if (total > 0) {
+                            icon = total < 0.3 ? 'drizzle' : total < 3 ? 'rain' : 'thunderstorms';
+                          } else {
+                            icon = wc === 0 ? 'clear-day' : wc <= 2 ? 'partly-cloudy-day' : wc >= 95 ? 'thunderstorms' : wc >= 80 ? 'rain' : wc >= 71 ? 'snow' : wc >= 61 ? 'rain' : wc >= 51 ? 'drizzle' : wc >= 45 ? 'fog' : 'cloudy';
+                          }
+                          // визуализация: сухо → морось → мелкий → дождь → сильный → ливень
+                          const lvl = total <= 0 ? 0 : total < 0.3 ? 1 : total < 1 ? 2 : total < 3 ? 3 : total < 6 ? 4 : 5;
+                          const labels = ['сухо', 'морось', 'мелкий', 'дождь', 'сильный', 'ливень'];
+                          const bg = ['bg-slate-50', 'bg-sky-100', 'bg-sky-200', 'bg-blue-200', 'bg-indigo-300', 'bg-red-300'];
+                          const txt = ['text-slate-400', 'text-sky-700', 'text-sky-800', 'text-blue-900', 'text-indigo-900', 'text-red-900'];
+                          return (
+                            <div key={t} className={`flex-shrink-0 w-14 rounded-xl ${bg[lvl]} border border-slate-200 px-1 py-1.5 text-center`}>
+                              <div className="text-[10px] font-bold text-slate-500">{new Date(t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+                              <img src={'weather-icons/meteocons/' + icon + '.svg'} alt="" className="w-7 h-7 mx-auto my-0.5" />
+                              <div className={`text-[9px] font-bold ${txt[lvl]}`}>{s > 0 ? '❄ ' + s.toFixed(1) : labels[lvl]}</div>
+                              <div className="text-xs font-black text-slate-800">{Math.round(om.hourly.temperature_2m[j])}°</div>
+                              <div className="text-[9px] font-semibold text-slate-500">{Math.round(om.hourly.wind_speed_10m?.[j] || 0)} м/с</div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-semibold text-center">Ползунок: прогноз на +12 часов · каждая ячейка: осадки, температура, ветер</div>
+                  </div>
+                )}
               </div>
 
-              {/* WeatherCard: фон по погоде (день/ночь) + Meteocons + почасовка */}
-              <section
-                className="weather-card"
-                style={{
-                  backgroundImage: `url('weather-assets/card-backgrounds/${(() => {
-                    const n = isNightTime();
-                    const map = {
-                      'clear-day': n ? 'clear-night' : 'sunny-background',
-                      'partly-cloudy-day': n ? 'partly-cloudy-night' : 'partly-cloudy-background',
-                      'cloudy': n ? 'cloudy-night' : 'cloudy-background',
-                      'overcast': n ? 'cloudy-night' : 'overcast-background',
-                      'fog': n ? 'cloudy-night' : 'fog-background',
-                      'drizzle': n ? 'rain-night' : 'drizzle-background',
-                      'rain': n ? 'rain-night' : 'rain-background',
-                      'thunderstorms': n ? 'thunderstorm-night' : 'thunderstorm-background',
-                      'snow': n ? 'snow-night' : 'snow-background',
-                      'sleet': n ? 'snow-night' : 'sleet-background',
-                      'wind': n ? 'cloudy-night' : 'wind-background',
-                      'clear-night': 'clear-night',
-                      'partly-cloudy-night': 'partly-cloudy-night'
-                    };
-                    return (map[weather.icon] || 'partly-cloudy-background') + '.png?v=6';
-                  })()}'`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'right center'
-                }}
-                aria-label="Погода в Москве"
-              >
-                <div className="weather-card__top">
-                  <div className="weather-card__content">
-                    <div className="weather-card__city">{weather.city}</div>
-                    <div className="weather-card__temp">{weather.temp}<sup>°C</sup></div>
-                    <div className="weather-card__desc">{weather.condition}</div>
-                    <div className="weather-card__wind">Ветер {weather.wind}</div>
-                  </div>
+              {/* 1.5. Google Календарь */}
+              <div className="card-white rounded-3xl p-5 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">📅 Google Календарь</span>
+                  <span className="text-[10px] font-bold text-slate-400">7 дней</span>
                 </div>
-                <div className="weather-card__divider"></div>
-                <div className="weather-card__hourly">
-                  {om && om.hourly ? (() => {
-                    const nowTs = Date.now();
-                    let startIdx = om.hourly.time.findIndex(t => new Date(t).getTime() >= nowTs - 60 * 60 * 1000);
-                    if (startIdx < 0) startIdx = 0;
-                    return om.hourly.time.slice(startIdx + hourOffset, startIdx + hourOffset + 10).map((t, i) => {
-                      const j = startIdx + hourOffset + i;
-                      const r = om.hourly.rain?.[j] || 0;
-                      const s = om.hourly.snowfall?.[j] || 0;
-                      const wc = om.hourly.weathercode?.[j] ?? 0;
-                      const total = r + s;
-                      let icon;
-                      if (total > 0) {
-                        icon = total < 0.3 ? 'drizzle' : total < 3 ? 'rain' : 'thunderstorms';
-                      } else {
-                        icon = wc === 0 ? 'clear-day' : wc <= 2 ? 'partly-cloudy-day' : wc >= 95 ? 'thunderstorms' : wc >= 80 ? 'rain' : wc >= 71 ? 'snow' : wc >= 61 ? 'rain' : wc >= 51 ? 'drizzle' : wc >= 45 ? 'fog' : 'cloudy';
-                      }
-                      return (
-                        <div key={t} className="h-item">
-                          <div className="h-time">{new Date(t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
-                          <img className="h-ic" src={'weather-icons/meteocons/' + icon + '.svg'} alt="" />
-                          <div className="h-t">{Math.round(om.hourly.temperature_2m[j])}°</div>
+                {calendarError ? (
+                  <div className="text-xs text-red-500">{calendarError}</div>
+                ) : !calendarData ? (
+                  <div className="text-center py-2 text-xs text-slate-400">Загружаем события…</div>
+                ) : (
+                  <div className="space-y-2">
+                    {calendarData.days && calendarData.days.filter(d => d.events.length > 0).length === 0 && (
+                      <div className="text-center py-2 text-xs text-slate-400">На ближайшие 7 дней событий нет.</div>
+                    )}
+                    {calendarData.days && calendarData.days.map(d => d.events.length > 0 && (
+                      <div key={d.date} className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">{d.label}</div>
+                        <div className="space-y-1.5">
+                          {d.events.map((ev, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                              <span className="font-mono text-xs font-black text-blue-600 shrink-0 mt-0.5">{ev.time}</span>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-bold text-slate-800 leading-snug">{ev.summary}</div>
+                                {ev.location && <div className="text-[10px] text-slate-400 truncate">📍 {ev.location}</div>}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      );
-                    });
-                  })() : (
-                    <div className="h-item"><div className="h-time">--:--</div><div className="h-t">—°</div></div>
-                  )}
-                </div>
-              </section>
-
-              {/* Ползунок прогноза +12ч */}
-              {om && om.hourly && (
-                <div className="flex items-center gap-2 px-6 -mt-3">
-                  <input
-                    type="range" min="0" max="12" value={hourOffset}
-                    onChange={e => setHourOffset(parseInt(e.target.value))}
-                    className="flex-1 h-1.5 accent-blue-600"
-                  />
-                  <span className="text-[11px] font-bold text-slate-500 w-12 text-right whitespace-nowrap">+{hourOffset} ч</span>
-                </div>
-              )}
-
-              {/* ===== Card: Задачи & Архив ===== */}
-              <div className="card" id="tasksBlock">
-                <div className="row" onClick={() => { haptic(); setView('archive'); }}>
-                  <div className="ic acc"><i className="ph ph-checks"></i></div>
-                  <div className="body">
-                    <div className="title">Задачи</div>
-                    <div className="status">{activeTasks.length} активных · {completedTasks.length} в архиве</div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="chev">›</div>
+                )}
+              </div>
+
+              {/* 2. Запланированные дела & Архив */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-black text-slate-900">📋 Запланированные дела</div>
+                  <button
+                    onClick={() => { haptic(); setView('archive'); }}
+                    className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 hover:bg-blue-100 transition active:scale-95"
+                  >
+                    📦 Архив ({completedTasks.length}) →
+                  </button>
                 </div>
-                <div className="block space-y-2">
+
+                {/* Список активных задач */}
+                <div className="space-y-2">
                   {activeTasks.map(t => (
-                    <div key={t.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div
+                      key={t.id}
+                      className="p-3.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-2xl transition"
+                    >
+                      <div className="text-[10px] font-mono text-slate-400 mb-1">🕒 {t.createdAt}</div>
                       <div
                         onClick={() => toggleTask(t.id)}
-                        className="w-6 h-6 rounded-lg border-2 border-slate-300 flex items-center justify-center bg-white shrink-0 active:scale-90 transition cursor-pointer"
+                        className="flex items-center gap-3 cursor-pointer"
                       >
-                        {t.done && <span className="text-blue-600 text-xs font-black">✓</span>}
+                        <div className="w-6 h-6 rounded-lg border-2 border-slate-300 flex items-center justify-center bg-white shrink-0 active:scale-90 transition">
+                          {t.done && <span className="text-blue-600 text-xs font-black">✓</span>}
+                        </div>
+                        <span className="text-xs font-bold text-slate-800 leading-snug flex-1">
+                          {t.text}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}
+                          className="text-slate-300 hover:text-red-500 text-sm font-black shrink-0 px-1"
+                        >×</button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[10px] font-mono text-slate-400">🕒 {t.createdAt}</div>
-                        <div className="text-xs font-bold text-slate-800 leading-snug">{t.text}</div>
-                      </div>
-                      <button onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }} className="text-slate-300 hover:text-red-500 text-sm font-black shrink-0 px-1">×</button>
                     </div>
                   ))}
+
                   {activeTasks.length === 0 && (
-                    <div className="text-center py-3 text-xs text-slate-400">Все дела выполнены! Добавь новую задачу ниже.</div>
+                    <div className="text-center py-4 text-xs text-slate-400">
+                      Все запланированные дела выполнены! Добавьте новую задачу ниже.
+                    </div>
                   )}
-                  <div className="flex gap-2 pt-1">
+                </div>
+
+                {/* Добавление задачи: текст + микрофон + плюс */}
+                <div className="space-y-1.5 pt-1">
+                  {voiceError && <div className="text-[10px] font-bold text-red-500">{voiceError}</div>}
+                  <div className="flex gap-2">
                     <input
-                      type="text" placeholder="Новая задача..." value={taskInput}
+                      type="text"
+                      placeholder="Новая задача..."
+                      value={taskInput}
                       onChange={(e) => setTaskInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleAddTask(); }}
-                      className="flex-1 bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-4 py-3 focus:outline-none focus:border-blue-600"
+                      className="flex-1 bg-slate-50 border-2 border-slate-200 text-xs rounded-2xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600"
                     />
-                    <button type="button" onClick={startVoiceInput} title="Надиктовать голосом" className="px-4 py-3 bg-blue-50 active:scale-95 text-blue-600 rounded-2xl font-black text-lg transition border border-blue-200">🎤</button>
-                    <button type="button" onClick={() => handleAddTask()} className="px-5 py-3 bg-slate-900 active:scale-95 text-white rounded-2xl font-black text-lg transition">+</button>
-                  </div>
-                  {voiceError && <div className="text-[10px] font-bold text-red-500">{voiceError}</div>}
-                </div>
-              </div>
-
-              {/* ===== Card: Google Календарь ===== */}
-              <div className="card">
-                <div className="row" onClick={() => { haptic(); document.getElementById('calBlock')?.scrollIntoView({ behavior: 'smooth' }); }}>
-                  <div className="ic"><i className="ph ph-calendar-dots"></i></div>
-                  <div className="body">
-                    <div className="title">Календарь</div>
-                    <div className="status">Google Calendar · 7 дней</div>
-                  </div>
-                  <div className="chev">›</div>
-                </div>
-                <div className="block" id="calBlock">
-                  {calendarError ? (
-                    <div className="text-xs text-red-500">{calendarError}</div>
-                  ) : !calendarData ? (
-                    <div className="text-center py-2 text-xs text-slate-400">Загружаем события…</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {calendarData.days && calendarData.days.filter(d => d.events.length > 0).length === 0 && (
-                        <div className="text-center py-2 text-xs text-slate-400">На ближайшие 7 дней событий нет.</div>
-                      )}
-                      {calendarData.days && calendarData.days.map(d => d.events.length > 0 && (
-                        <div key={d.date} className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
-                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">{d.label}</div>
-                          <div className="space-y-1.5">
-                            {d.events.map((ev, i) => (
-                              <div key={i} className="flex items-start gap-2">
-                                <span className="font-mono text-xs font-black text-blue-600 shrink-0 mt-0.5">{ev.time}</span>
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-xs font-bold text-slate-800 leading-snug">{ev.summary}</div>
-                                  {ev.location && <div className="text-[10px] text-slate-400 truncate">📍 {ev.location}</div>}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ===== Card: Лента & RSS + Дайджест ===== */}
-              <div className="card">
-                <div className="row" onClick={() => { haptic(); setShowFeed(!showFeed); }}>
-                  <div className="ic"><i className="ph ph-broadcast"></i></div>
-                  <div className="body">
-                    <div className="title">Лента каналов & RSS</div>
-                    <div className="status">Подключено источников: {sources.length}</div>
-                  </div>
-                  <div className="chev">{showFeed ? '▲' : '▼'}</div>
-                </div>
-                {showFeed && (
-                  <div className="block space-y-2.5">
-                    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                      <div className="text-xs text-slate-600 truncate">
-                        {sources.map(s => s.name).join(', ') || 'Нет источников — добавьте в ⚙ Источники'}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => { haptic(); setView('sources'); }} className="flex-1 py-3 bg-slate-100 active:scale-95 text-slate-700 rounded-2xl font-bold text-xs transition border border-slate-200">
-                        ⚙ Источники
-                      </button>
-                      <button onClick={() => { haptic('medium'); setView('digest'); }} className="flex-1 py-3 bg-blue-600 active:scale-95 text-white rounded-2xl font-bold text-xs transition shadow-md shadow-blue-500/20">
-                        📖 Дайджест →
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ===== Card: Конвертер валют (ЦБ) ===== */}
-              <div className="card" id="ratesBlock">
-                <div className="row" onClick={() => { haptic(); setShowRates(!showRates); }}>
-                  <div className="ic"><i className="ph ph-coins"></i></div>
-                  <div className="body">
-                    <div className="title">Валюты & Конвертер</div>
-                    <div className="status">Курсы ЦБ РФ · USD {rates.USD ? Math.round(rates.USD) : '—'}₽</div>
-                  </div>
-                  <div className="chev">{showRates ? '▲' : '▼'}</div>
-                </div>
-                {showRates && (
-                  <div className="block space-y-3">
-                    <div className="flex flex-wrap gap-1.5 items-stretch">
-                      <input
-                        type="number" value={calcAmount}
-                        onChange={(e) => setCalcAmount(Number(e.target.value))}
-                        className="flex-1 min-w-0 basis-24 bg-slate-50 border-2 border-slate-200 text-base font-black rounded-2xl px-3 py-2.5 focus:outline-none focus:border-blue-600"
-                      />
-                      <select value={fromCurr} onChange={(e) => setFromCurr(e.target.value)} className="shrink-0 bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2 py-2.5">
-                        {['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <span className="text-slate-400 font-bold self-center shrink-0">→</span>
-                      <select value={toCurr} onChange={(e) => setToCurr(e.target.value)} className="shrink-0 bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2 py-2.5">
-                        {['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                    <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex flex-col items-center gap-0.5 text-center">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Результат</span>
-                      <span className="text-lg font-black text-emerald-700 font-mono">{convertValue()} {toCurr}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ===== Card: Генератор паролей ===== */}
-              <div className="card">
-                <div className="row" onClick={() => { haptic(); setShowPass(!showPass); }}>
-                  <div className="ic"><i className="ph ph-key"></i></div>
-                  <div className="body">
-                    <div className="title">Пароли</div>
-                    <div className="status">Генератор надёжных паролей</div>
-                  </div>
-                  <div className="chev">{showPass ? '▲' : '▼'}</div>
-                </div>
-                {showPass && (
-                  <div className="block space-y-3">
-                    <input
-                      type="range" min="12" max="32" value={passLength}
-                      onChange={(e) => setPassLength(Number(e.target.value))}
-                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                    <div className="text-xs font-black text-blue-600 font-mono">{passLength} симв.</div>
-                    <div
-                      onClick={copyToClipboard}
-                      className="p-3.5 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-between cursor-pointer active:scale-98 transition"
+                    <button
+                      type="button"
+                      onClick={startVoiceInput}
+                      title="Надиктовать голосом"
+                      className="px-4 py-3 bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-600 rounded-2xl font-black text-lg transition flex items-center justify-center border border-blue-200"
                     >
-                      <span className="font-mono text-xs font-bold break-all">{password}</span>
-                      <span className="text-xs font-bold text-blue-600 ml-2 shrink-0">{copied ? 'Скопировано ✓' : 'Копировать'}</span>
-                    </div>
-                    <button onClick={generatePassword} className="w-full py-3 bg-slate-900 active:scale-98 text-white rounded-2xl font-bold text-xs transition">
-                      Сгенерировать новый пароль
+                      🎤
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddTask()}
+                      className="px-5 py-3 bg-slate-900 hover:bg-black active:scale-95 text-white rounded-2xl font-black text-lg transition flex items-center justify-center"
+                    >
+                      +
                     </button>
                   </div>
-                )}
-              </div>
-
-              {/* ===== Card: Викторины & Идеи → fun ===== */}
-              <div className="card">
-                <div className="row" onClick={() => { haptic('medium'); setView('fun'); }}>
-                  <div className="ic"><i className="ph ph-brain"></i></div>
-                  <div className="body">
-                    <div className="title">Викторины & Идеи</div>
-                    <div className="status">Вопросы + чем заняться</div>
-                  </div>
-                  <div className="chev">›</div>
                 </div>
               </div>
 
-              {/* ===== Card: Переводчик → translate ===== */}
-              <div className="card">
-                <div className="row" onClick={() => { haptic('medium'); setView('translate'); }}>
-                  <div className="ic"><i className="ph ph-translate"></i></div>
-                  <div className="body">
-                    <div className="title">Переводчик & Словарь</div>
-                    <div className="status">Английский ↔ русский · испанский ↔ русский</div>
+              {/* 3. Лента каналов & RSS (по клику на значок) */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <button
+                  onClick={() => { haptic(); setShowFeed(!showFeed); }}
+                  className="w-full flex items-center justify-between gap-1.5 active:scale-98 transition"
+                >
+                  <div className="text-base font-black text-slate-900">📡 Лента каналов & RSS</div>
+                  <span className="text-xs font-bold text-blue-600">{showFeed ? '▲' : '▼'}</span>
+                </button>
+
+                {showFeed && (<>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold text-blue-600 mb-0">● Подключено источников: {sources.length}</div>
+                  <button
+                    onClick={() => { haptic(); setView('sources'); }}
+                    className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs border border-blue-200 active:scale-95 transition"
+                  >
+                    ⚙ Источники
+                  </button>
+                </div>
+
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div className="text-xs text-slate-600 truncate">
+                    {sources.map(s => s.name).join(', ') || 'Нет источников — добавьте в ⚙'}
                   </div>
-                  <div className="chev">›</div>
+                </div>
+
+                <button
+                  onClick={() => { haptic('medium'); setView('digest'); }}
+                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white rounded-2xl font-bold text-xs transition shadow-md shadow-blue-500/20"
+                >
+                  📖 Читать полный AI-Дайджест →
+                </button>
+                </>)}
+              </div>
+
+              {/* 4. Конвертер валют (по клику на значок) */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <button
+                  onClick={() => { haptic(); setShowRates(!showRates); }}
+                  className="w-full flex items-center justify-between gap-1.5 active:scale-98 transition"
+                >
+                  <div className="text-base font-black text-slate-900">💱 Конвертер валют</div>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap">ЦБ РФ {showRates ? '▲' : '▼'}</span>
+                </button>
+
+                {showRates && (<>
+                <div className="flex flex-wrap gap-1.5 items-stretch">
+                  <input
+                    type="number"
+                    value={calcAmount}
+                    onChange={(e) => setCalcAmount(Number(e.target.value))}
+                    className="flex-1 min-w-0 basis-24 bg-slate-50 border-2 border-slate-200 text-base font-black rounded-2xl px-3 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
+                  />
+                  <select
+                    value={fromCurr}
+                    onChange={(e) => setFromCurr(e.target.value)}
+                    className="shrink-0 bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2 py-2.5 text-slate-800"
+                  >
+                    {['USD', 'EUR', 'CNY', 'JPY', 'GBP', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <span className="text-slate-400 font-bold self-center shrink-0">→</span>
+                  <select
+                    value={toCurr}
+                    onChange={(e) => setToCurr(e.target.value)}
+                    className="shrink-0 bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-2xl px-2 py-2.5 text-slate-800"
+                  >
+                    {['RUB', 'USD', 'EUR', 'CNY', 'JPY', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex flex-col items-center gap-0.5 text-center">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Результат</span>
+                  <span className="text-lg font-black text-emerald-700 font-mono">{convertValue()} {toCurr}</span>
+                </div>
+                </>)}
+              </div>
+
+              {/* 5. Генератор паролей (по клику на значок) */}
+              <div className="card-white rounded-3xl p-5 space-y-3.5">
+                <button
+                  onClick={() => { haptic(); setShowPass(!showPass); }}
+                  className="w-full flex items-center justify-between active:scale-98 transition"
+                >
+                  <div className="text-base font-black text-slate-900">🔐 Генератор паролей</div>
+                  <span className="text-xs font-black text-blue-600">{showPass ? '▲' : '▼'}</span>
+                </button>
+
+                {showPass && (<>
+                <input
+                  type="range" min="12" max="32" value={passLength}
+                  onChange={(e) => setPassLength(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-blue-600 font-mono">{passLength} симв.</span>
+                </div>
+
+                <div
+                  onClick={copyToClipboard}
+                  className="p-3.5 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-between cursor-pointer active:scale-98 transition"
+                >
+                  <span className="font-mono text-xs font-bold text-slate-900 break-all">{password}</span>
+                  <span className="text-xs font-bold text-blue-600 ml-2 shrink-0">
+                    {copied ? 'Скопировано ✓' : 'Копировать'}
+                  </span>
+                </div>
+
+                <button
+                  onClick={generatePassword}
+                  className="w-full py-3 bg-slate-900 hover:bg-black active:scale-98 text-white rounded-2xl font-bold text-xs transition"
+                >
+                  Сгенерировать новый пароль
+                </button>
+                </>)}
+              </div>
+
+              {/* 6. Викторины & Идеи (по клику на значок) */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <button
+                  onClick={() => { haptic('medium'); setView('fun'); }}
+                  className="w-full flex items-center justify-between gap-1.5 active:scale-98 transition"
+                >
+                  <div className="text-base font-black text-slate-900">🎲 Викторины & Идеи</div>
+                  <span className="text-xs font-black text-blue-600">→</span>
+                </button>
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div className="text-xs text-slate-600">Вопросы для викторин + идеи, чем заняться, когда скучно.</div>
                 </div>
               </div>
 
-              {/* Админ (только admin) */}
-              {auth.user?.role === 'admin' && (
-                <div className="card">
-                  <div className="row" onClick={() => { haptic(); setView('admin'); }}>
-                    <div className="ic acc"><i className="ph ph-shield-check"></i></div>
-                    <div className="body">
-                      <div className="title">Админ-панель</div>
-                      <div className="status">Пользователи и аудит</div>
-                    </div>
-                    <div className="chev">›</div>
-                  </div>
+              {/* 7. Переводчик (по клику на значок) */}
+              <div className="card-white rounded-3xl p-5 space-y-4">
+                <button
+                  onClick={() => { haptic('medium'); setView('translate'); }}
+                  className="w-full flex items-center justify-between gap-1.5 active:scale-98 transition"
+                >
+                  <div className="text-base font-black text-slate-900">🌐 Переводчик & Словарь</div>
+                  <span className="text-xs font-black text-blue-600">→</span>
+                </button>
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div className="text-xs text-slate-600">Английский ↔ русский, испанский ↔ русский. Свой словарик.</div>
                 </div>
-              )}
-
-              {/* ===== Tab bar (только реальные экраны) ===== */}
-              <div className="tabbar">
-                <div className="tab active" onClick={() => { haptic(); setView('main'); }}>
-                  <i className="ti ph ph-house"></i>
-                  <div className="tl">Главная</div>
-                </div>
-                <div className="tab" onClick={() => { haptic('medium'); setView('digest'); }}>
-                  <i className="ti ph ph-newspaper"></i>
-                  <div className="tl">Дайджест</div>
-                </div>
-                <div className="tab" onClick={() => { haptic('medium'); setView('fun'); }}>
-                  <i className="ti ph ph-brain"></i>
-                  <div className="tl">Викторины</div>
-                </div>
-                <div className="tab" onClick={() => { haptic('medium'); setView('translate'); }}>
-                  <i className="ti ph ph-translate"></i>
-                  <div className="tl">Перевод</div>
-                </div>
-                {auth.user?.role === 'admin' && (
-                  <div className="tab" onClick={() => { haptic(); setView('admin'); }}>
-                    <i className="ti ph ph-shield-check"></i>
-                    <div className="tl">Админ</div>
-                  </div>
-                )}
               </div>
 
             </div>
           )}
 
-{/* ================= 2. ЭКРАН: АРХИВ ВЫПОЛНЕННЫХ ДЕЛ ================= */}
+          {/* ================= 2. ЭКРАН: АРХИВ ВЫПОЛНЕННЫХ ДЕЛ ================= */}
           {auth.state === 'ok' && view === 'archive' && (
             <div className="space-y-5 animate-fade-in">
               <div className="flex justify-between items-center">
                 <button
                   onClick={() => { haptic(); setView('main'); }}
-                  className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
+                  className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition"
                 >
                   ← Назад к делам
                 </button>
@@ -1287,7 +1113,7 @@
               </div>
 
               <div>
-                <h1 className="text-xl font-black" style={{color:"var(--text)"}}>Архив выполненных дел</h1>
+                <h1 className="text-xl font-black text-slate-900">Архив выполненных дел</h1>
                 <div className="text-xs text-slate-500 mt-0.5">Кликните на задачу, чтобы вернуть её обратно в список дел.</div>
               </div>
 
@@ -1318,7 +1144,7 @@
                 ))}
 
                 {completedTasks.length === 0 && (
-                  <div className="text-center py-10 text-xs text-slate-400 card p-6">
+                  <div className="text-center py-10 text-xs text-slate-400 card-white rounded-3xl p-6">
                     В архиве нет выполненных задач.
                   </div>
                 )}
@@ -1331,20 +1157,20 @@
             <div className="space-y-5 animate-fade-in">
               <button
                 onClick={() => { haptic(); setView('main'); }}
-                className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
+                className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition"
               >
                 ← Назад на главную
               </button>
 
               <div>
-                <h1 className="text-xl font-black" style={{color:"var(--text)"}}>Подключенные источники</h1>
+                <h1 className="text-xl font-black text-slate-900">Подключенные источники</h1>
                 <div className="text-xs text-slate-500 mt-0.5">Каналы и RSS-ленты, с которых собирается AI-Дайджест.</div>
               </div>
 
               {/* Список текущих источников */}
               <div className="space-y-2">
                 {sources.map(s => (
-                  <div key={s.id} className="card p-3.5 flex items-center justify-between">
+                  <div key={s.id} className="card-white rounded-2xl p-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-50 text-blue-600 border border-blue-200">
                         {s.type}
@@ -1365,7 +1191,7 @@
               </div>
 
               {/* Форма добавления */}
-              <div className="card p-5 space-y-3.5">
+              <div className="card-white rounded-3xl p-5 space-y-3.5">
                 <div className="text-xs font-bold text-slate-800">Добавить новый канал или ленту</div>
                 <div className="flex gap-2">
                   <button
@@ -1412,13 +1238,13 @@
             <div className="space-y-5 animate-fade-in">
               <button
                 onClick={() => { haptic(); setView('main'); }}
-                className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
+                className="px-3.5 py-1.5 bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition"
               >
                 ← Назад на главную
               </button>
 
               <div>
-                <h1 className="text-xl font-black" style={{color:"var(--text)"}}>AI-Дайджест новостей</h1>
+                <h1 className="text-xl font-black text-slate-900">AI-Дайджест новостей</h1>
                 <div className="text-xs text-slate-500 mt-0.5">Сформирован на основе ваших {sources.length} подключенных источников.</div>
               </div>
 
@@ -1432,7 +1258,7 @@
                 {!digestLoading && !digestError && digestData && (
                   <>
                     {digestData.blocks && digestData.blocks.length > 0 ? digestData.blocks.map((block, bi) => (
-                      <div key={bi} className="card p-4 space-y-2">
+                      <div key={bi} className="card-white rounded-3xl p-4 space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
                             {block.title}
@@ -1451,7 +1277,7 @@
                       <div className="text-center py-8 text-xs text-slate-400">За выбранный период свежих постов нет.</div>
                     )}
                     {digestData.curs && (
-                      <div className="card p-4 text-center">
+                      <div className="card-white rounded-3xl p-4 text-center">
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">💱 Курс (ЦБ)</div>
                         <div className="text-xs font-black text-slate-700">{digestData.curs}</div>
                         <div className="text-[10px] text-slate-400 mt-1">⭐ Всего постов: {digestData.total}</div>
@@ -1474,18 +1300,18 @@
             <div className="space-y-5 animate-fade-in">
               <button
                 onClick={() => { haptic(); setView('main'); }}
-                className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
+                className="px-3.5 py-1.5 bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition"
               >
                 ← Назад на главную
               </button>
 
               <div>
-                <h1 className="text-xl font-black" style={{color:"var(--text)"}}>🎲 Викторины & Идеи</h1>
+                <h1 className="text-xl font-black text-slate-900">🎲 Викторины & Идеи</h1>
                 <div className="text-xs text-slate-500 mt-0.5">Вопросы с jservice.io и занятия с BoredAPI</div>
               </div>
 
               {/* Викторина */}
-              <div className="card p-5 space-y-3.5">
+              <div className="card-white rounded-3xl p-5 space-y-3.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">🧠 Вопрос для викторины</span>
                   <button
@@ -1541,7 +1367,7 @@
               </div>
 
               {/* Чем заняться */}
-              <div className="card p-5 space-y-3.5">
+              <div className="card-white rounded-3xl p-5 space-y-3.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">😴 Чем заняться</span>
                   <button
@@ -1609,13 +1435,13 @@
             <div className="space-y-5 animate-fade-in">
               <button
                 onClick={() => { haptic(); setView('main'); }}
-                className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
+                className="px-3.5 py-1.5 bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition"
               >
                 ← Назад на главную
               </button>
 
               <div>
-                <h1 className="text-xl font-black" style={{color:"var(--text)"}}>🌐 Переводчик</h1>
+                <h1 className="text-xl font-black text-slate-900">🌐 Переводчик</h1>
                 <div className="text-xs text-slate-500 mt-0.5">Английский ↔ русский · испанский ↔ русский</div>
               </div>
 
@@ -1633,7 +1459,7 @@
               </div>
 
               {/* Ввод текста */}
-              <div className="card p-4 space-y-3">
+              <div className="card-white rounded-3xl p-4 space-y-3">
                 <textarea
                   value={trText}
                   onChange={e => setTrText(e.target.value)}
@@ -1682,7 +1508,7 @@
               </div>
 
               {/* Словарь */}
-              <div className="card p-4 space-y-3">
+              <div className="card-white rounded-3xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">📚 Словарь ({dict.length})</span>
                   <span className="text-[10px] text-slate-400">хранится на устройстве</span>
@@ -1790,7 +1616,7 @@
           <div className="flex items-center justify-between">
             <button
               onClick={() => { haptic(); onBack(); }}
-              className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95"
+              className="px-3.5 py-1.5 bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition"
             >
               ← Назад
             </button>
@@ -1801,7 +1627,7 @@
           {err && <div className="text-xs font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{err}</div>}
 
           {/* Пользователи */}
-          <div className="card p-4 space-y-2">
+          <div className="card-white rounded-3xl p-4 space-y-2">
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1">Пользователи</div>
             {users.map(u => (
               <div key={u.telegram_id} className="flex items-center justify-between gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200">
@@ -1843,7 +1669,7 @@
           </div>
 
           {/* Аудит */}
-          <div className="card p-4 space-y-1.5">
+          <div className="card-white rounded-3xl p-4 space-y-1.5">
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1">Аудит входов (последние 50)</div>
             {audit.map((a, i) => (
               <div key={i} className="flex items-center justify-between gap-2 text-[10px]">

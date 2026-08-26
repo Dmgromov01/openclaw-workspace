@@ -34,3 +34,4 @@ venv/
 .venv/
 *.db
 *.sqlite
+travel/am_captcha*.jpg

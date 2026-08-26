@@ -13,6 +13,7 @@ import json
 import os
 import sys
 import time
+import hashlib
 import threading
 import urllib.request
 import urllib.parse
@@ -26,6 +27,25 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 STATIC = os.environ.get("MINIAPP_STATIC", os.path.join(BASE, "static"))
 SOURCES_FILE = os.environ.get("MINIAPP_SOURCES", os.path.join(BASE, "sources.json"))
 CACHE_TTL = 900  # 15 минут
+
+# AI через OpenClaw gateway (OpenAI-совместимый), НЕ напрямую в DeepSeek.
+# Значения берутся из env или .env (systemd env не прокидывает .env напрямую).
+def _read_env_file():
+    """Читает .env в dict (значения не логируем)."""
+    env = os.environ.get("MINIAPP_ENV", "/root/.openclaw/.env")
+    vals = {}
+    if os.path.exists(env):
+        for line in open(env, encoding="utf-8"):
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, _, v = line.partition("=")
+                vals[k.strip()] = v.strip().strip('"').strip("'")
+    return vals
+
+_env_vals = _read_env_file()
+GATEWAY_URL = (os.environ.get("OPENCLAW_GATEWAY_URL") or _env_vals.get("OPENCLAW_GATEWAY_URL") or "http://127.0.0.1:18789").rstrip("/")
+GATEWAY_TOKEN = os.environ.get("OPENCLAW_GATEWAY_TOKEN") or _env_vals.get("OPENCLAW_GATEWAY_TOKEN") or ""
+MAX_SOURCES = 12  # лимит источников (SKILL.md: только https, без внутренних IP)
 
 sys.path.insert(0, os.environ.get("OPENCLAW_CALENDAR_DIR", "/root/openclaw/calendar"))
 import digest  # переиспользуем парсеры каналов/RSS и курс ЦБ
@@ -118,6 +138,71 @@ def _proxy_json(url, timeout=12):
             return json.loads(r.read().decode("utf-8", "replace")), None
     except Exception as ex:
         return None, str(ex)
+
+
+def _is_private_host(host):
+    """SSRF-защита: True, если host — localhost/private/reserved IP или не резолвится."""
+    import ipaddress
+    import socket
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except Exception:
+        return True
+    for info in infos:
+        ip = info[4][0]
+        try:
+            a = ipaddress.ip_address(ip.split("%")[0])
+        except Exception:
+            return True
+        if a.is_private or a.is_loopback or a.is_link_local or a.is_reserved or a.is_multicast or a.is_unspecified:
+            return True
+    return False
+
+
+def _validate_source_url(url):
+    """SSRF: RSS только https, не private IP. Возвращает (ok, err)."""
+    if not url.startswith("https://"):
+        return False, "RSS должен быть https://"
+    from urllib.parse import urlparse
+    host = urlparse(url).hostname or ""
+    if not host:
+        return False, "Некорректный URL"
+    if _is_private_host(host):
+        return False, "URL ведёт на внутренний адрес"
+    return True, None
+
+
+def _summarize_via_gateway(name, posts_text):
+    """AI-саммари через OpenClaw gateway (не DeepSeek напрямую). Возвращает текст или None."""
+    if not GATEWAY_TOKEN or not posts_text:
+        return None
+    joined = "\n".join(posts_text[:12])
+    prompt = (
+        f"Сделай краткое связное саммари новостей из источника «{name}» на русском. "
+        "Сохрани ключевые факты и цифры, не искажай смысл, не выдумывай. "
+        "Если новостей нет — напиши «—».\n\nНовости:\n" + joined[:12000]
+    )
+    body = json.dumps({
+        "model": "deepseek/deepseek-v4-flash",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 800,
+        "temperature": 0.3,
+    }).encode()
+    req = urllib.request.Request(
+        GATEWAY_URL + "/v1/chat/completions",
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + GATEWAY_TOKEN,
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=90) as r:
+            d = json.loads(r.read().decode("utf-8", "replace"))
+        return (d.get("choices") or [{}])[0].get("message", {}).get("content") or None
+    except Exception as ex:
+        sys.stderr.write("[miniapp] gateway summarize error: %s\n" % ex)
+        return None
 
 
 DEFAULT_SOURCES = [
@@ -252,13 +337,13 @@ def collect_digest(sources, hours=24):
 
 
 def build_digest_json(use_ai=True):
-    """Собирает дайджест; каждый блок — источник с AI-саммари (DeepSeek) + сырые посты."""
+    """Собирает дайджест; каждый блок — источник с AI-саммари (через OpenClaw gateway) + сырые посты."""
     sources = load_sources()
     blocks, total = collect_digest(sources, hours=3)
     if use_ai:
         for b in blocks:
             try:
-                summ = digest._summarize_source(b["title"], [(t, None) for t in b["posts"]])
+                summ = _summarize_via_gateway(b["title"], b["posts"])
                 if summ:
                     b["summary"] = summ
             except Exception:
@@ -397,6 +482,12 @@ class Handler(SimpleHTTPRequestHandler):
                 if data is None:
                     return self._send_json({"error": "calendar unavailable", "days": []}, 502)
             return self._send_json(data)
+        if p.path == "/api/keys":
+            # BYOK: список ключей (только id/name/tail — без значений)
+            user = self._require_auth()
+            if user is None:
+                return
+            return self._send_json({"ok": True, "keys": miniapp_auth.list_api_keys(user["telegram_id"])})
         if p.path == "/api/quiz":
             # Прокси к Open Trivia DB (https) — jservice.io мёртв с 2022
             if self._require_auth() is None:
@@ -493,6 +584,55 @@ class Handler(SimpleHTTPRequestHandler):
             h = self.headers.get("Authorization", "")
             miniapp_auth.logout(h[7:].strip())
             return self._send_json({"ok": True})
+        if p.path == "/api/ai/chat":
+            # AI-чат через OpenClaw gateway (не напрямую в DeepSeek).
+            # BYOK-ключ пользователя, иначе общий AI (квота до вызова).
+            user = self._require_auth()
+            if user is None:
+                return
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length) or b"{}")
+            except Exception:
+                return self._send_json({"error": "bad json"}, 400)
+            messages = body.get("messages") or []
+            if not messages or not isinstance(messages, list):
+                return self._send_json({"error": "messages required"}, 400)
+            model = (body.get("model") or "deepseek/deepseek-v4-flash").strip()
+            key_plain = None
+            keys = miniapp_auth.list_api_keys(user["telegram_id"])
+            if keys:
+                key_plain = miniapp_auth.get_api_key(user["telegram_id"], keys[0]["id"])
+            if not key_plain:
+                ok, err = miniapp_auth.check_quota(user)
+                if not ok:
+                    return self._send_json({"error": err}, 429)
+            try:
+                req_body = json.dumps({"model": model, "messages": messages, "max_tokens": 2000}).encode()
+                headers = {"Content-Type": "application/json"}
+                headers["Authorization"] = "Bearer " + (key_plain or GATEWAY_TOKEN)
+                req = urllib.request.Request(GATEWAY_URL + "/v1/chat/completions", data=req_body, headers=headers)
+                with urllib.request.urlopen(req, timeout=120) as r:
+                    d = json.loads(r.read().decode("utf-8", "replace"))
+                return self._send_json(d)
+            except Exception as ex:
+                return self._send_json({"error": str(ex)}, 502)
+        if p.path == "/api/keys":
+            # BYOK: сохранить ключ (AES-256-GCM; в UI только хвост)
+            user = self._require_auth()
+            if user is None:
+                return
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length) or b"{}")
+            except Exception:
+                return self._send_json({"error": "bad json"}, 400)
+            name = (body.get("name") or "").strip() or "Ключ"
+            key = (body.get("key") or "").strip()
+            if not key:
+                return self._send_json({"error": "key required"}, 400)
+            kid = miniapp_auth.add_api_key(user["telegram_id"], name, key)
+            return self._send_json({"ok": True, "keys": miniapp_auth.list_api_keys(user["telegram_id"])})
         if p.path == "/api/admin/users":
             user = self._require_admin()
             if user is None:
@@ -507,9 +647,11 @@ class Handler(SimpleHTTPRequestHandler):
                 tid,
                 allowed=body.get("allowed"),
                 role=body.get("role"),
+                allow_global_ai=body.get("allow_global_ai"),
+                quota_daily=body.get("quota_daily"),
             )
             if not ok:
-                return self._send_json({"error": "cannot update (owner or not found)"}, 400)
+                return self._send_json({"error": "cannot update (owner/last admin/not found)"}, 400)
             return self._send_json({"ok": True, "users": miniapp_auth.list_users()})
         if p.path == "/api/sources":
             if self._require_auth() is None:
@@ -522,11 +664,18 @@ class Handler(SimpleHTTPRequestHandler):
             name = (body.get("name") or "").strip()
             if not name:
                 return self._send_json({"error": "name required"}, 400)
+            stype = "RSS" if body.get("type") == "RSS" else "TG"
+            if stype == "RSS":
+                ok, err = _validate_source_url(name)
+                if not ok:
+                    return self._send_json({"error": err}, 400)
             sources = load_sources()
+            if len(sources) >= MAX_SOURCES:
+                return self._send_json({"error": f"лимит источников: {MAX_SOURCES}"}, 400)
             new_id = max([s["id"] for s in sources], default=0) + 1
             sources.append({
                 "id": new_id,
-                "type": "RSS" if body.get("type") == "RSS" else "TG",
+                "type": stype,
                 "name": name,
                 "title": (body.get("title") or name).strip(),
             })
@@ -571,6 +720,18 @@ class Handler(SimpleHTTPRequestHandler):
             if not miniapp_auth.delete_user(tid):
                 return self._send_json({"error": "cannot delete (owner or not found)"}, 400)
             return self._send_json({"ok": True, "users": miniapp_auth.list_users()})
+        if p.path == "/api/keys":
+            # BYOK: удалить ключ
+            user = self._require_auth()
+            if user is None:
+                return
+            q = parse_qs(p.query)
+            try:
+                kid = int(q.get("id", ["0"])[0])
+            except Exception:
+                return self._send_json({"error": "bad id"}, 400)
+            miniapp_auth.delete_api_key(user["telegram_id"], kid)
+            return self._send_json({"ok": True, "keys": miniapp_auth.list_api_keys(user["telegram_id"])})
         if p.path == "/api/sources":
             if self._require_auth() is None:
                 return
@@ -591,6 +752,24 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     miniapp_auth.init_db()
+    # миграция старых сессий: plaintext-токены → SHA-256 хеш (один раз, с сохранением данных)
+    try:
+        c = miniapp_auth._conn()
+        cols = [r[1] for r in c.execute("PRAGMA table_info(sessions)").fetchall()]
+        if "token" in cols and "token_hash" not in cols:
+            c.execute("ALTER TABLE sessions RENAME TO sessions_legacy")
+            c.execute("CREATE TABLE sessions (token_hash TEXT PRIMARY KEY, telegram_id INTEGER, created_at INTEGER, expires_at INTEGER)")
+            rows = c.execute("SELECT token, telegram_id, created_at, expires_at FROM sessions_legacy").fetchall()
+            for r in rows:
+                c.execute(
+                    "INSERT OR IGNORE INTO sessions (token_hash, telegram_id, created_at, expires_at) VALUES (?,?,?,?)",
+                    (hashlib.sha256(r["token"].encode()).hexdigest(), r["telegram_id"], r["created_at"], r["expires_at"]),
+                )
+            c.execute("DROP TABLE sessions_legacy")
+            c.commit()
+        c.close()
+    except Exception as ex:
+        sys.stderr.write("[miniapp] session migration skipped: %s\n" % ex)
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
     start_cache_worker()  # фоновый тёплый кеш — запросы не ждут сеть/AI
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)

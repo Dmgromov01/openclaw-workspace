@@ -34,6 +34,11 @@
 - **Bot token @Dmbotmy_bot РОТИРОВАН 24.08 12:09** (утёк в git-историю; старый мёртв 401, новый в openclaw.json+.env, вне git).
 - Плагины прод: deepseek, tg-user-tools, openrouter, google, perplexity, parallel, memory-core, **jina-tools** (24.08).
 
+## 📱 Mini App (Personal Hub)
+- Стек: **Python** (`miniapp/server.py` + `auth.py`), systemd `miniapp.service`, nginx `/miniapp/` → 127.0.0.1:8080 (loopback, наружу закрыт).
+- **Фаза 1 безопасности (26.08)**: сессии в БД = **SHA-256 хеш** токена (не plaintext); пароли **PBKDF2 100k** (старый sha256-формат при логине автоматически переписывается в PBKDF2); владелец — из `TELEGRAM_OWNER_ID` (env, без хардкода); **AI через OpenClaw gateway** (`/v1/chat/completions`), не DeepSeek напрямую; **BYOK** AES-256-GCM (в UI только хвост ключа); админка: allowed / role / allow_global_ai / quota_daily / удаление / аудит; источники RSS — только https, не private IP, лимит 12.
+- Env (в `.env`, вне git): `TELEGRAM_OWNER_ID`, `OPENCLAW_GATEWAY_URL`, `OPENCLAW_GATEWAY_TOKEN`, `AI_KEY_SECRET`, `TELEGRAM_BOT_TOKEN`.
+
 ## 🔴 Активные хвосты (кратко)
 1. Дайджест @de574574 (Екатерина) — личный TG авторизован (20.08), реализовать отправку при необходимости.
 2. Image-gen через `image_generate` tool — Gemini-ретушь ждёт квоты (429).

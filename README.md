@@ -2,45 +2,34 @@
 
 Личное рабочее пространство OpenClaw-агента (main). Содержит скрипты, заметки и интеграции.
 
-> 🔒 Это **приватный** репозиторий. Секреты (api_id/api_hash, 2FA-пароли, токены, телефоны, сессии) в него **не попадают** — вычищены при первом коммите, исключены через `.gitignore`.
+> 🔒 Это **приватный** репозиторий. Секреты (токены, сессии, 2FA) в него **не попадают** — исключены через `.gitignore`.
 
 ## Структура
 
-- **`calendar/`** — календарь и Telegram-логика:
-  - `gcal_reader.py` — **актуальный** календарь (Google Calendar API, чтение today/week/list)
-  - `icloud_calendar.py` — УСТАРЕЛ (старая система iCloud, остался legacy; см. STATE.md)
-  - `command_parser.py` — парсер команд «действие + дата + время + @ник»
-  - `orchestrator.py` — связка парсер → календарь → .ics → отправка в Telegram
-  - `digest.py` — сбор дайджеста (новости + курс валют)
-  - `ics_generator.py` — генерация .ics-приглашений
-  - `tg_sender.py` — отправка через личный Telegram (Telethon, proxy)
-  - `bot_sender.py` — отправка через бота @Dmbotmy_bot
-  - `image_gen.py` — генерация картинок без ключа (Pollinations/Flux)
-- **`memory/`** — дневники сессий (сырые логи), `MEMORY.md` — курируемая долгосрочная память.
-- **`AGENTS.md`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`** — документы самоидентификации и поведения агента.
+- **`calendar/`** — календарь и Telegram-логика (`gcal_reader.py`, `digest.py`, `bot_sender.py`)
+- **`services/`** — systemd-шаблоны и watchdog (хаб, gateway, диск)
+- **`docs/PROMPT-run6.md`** — промпт агенту main: gateway как system-юнит, без апрувов exec
+- **`memory/`** — дневники сессий, `MEMORY.md` — долгосрочная память
+- **`AGENTS.md`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `STATE.md`** — поведение агента
 
-## Быстрый старт (календарь — GOOGLE, чтение)
+## Календарь (GOOGLE, чтение)
 
 ```bash
-# Расписание (Google Calendar, актуально)
-python3 calendar/gcal_reader.py today   # сегодня
-python3 calendar/gcal_reader.py week    # неделя
+python3 calendar/gcal_reader.py today
+python3 calendar/gcal_reader.py week
 python3 calendar/gcal_reader.py list --days N
-
-# ⚠️ Добавление/удаление событий на Google пока НЕ реализовано (gcal_reader читает).
-# Старый icloud_calendar.py (add/delete) — legacy от iCloud, не использовать как основной.
 ```
 
-Подробнее — `calendar/README.md` и `STATE.md` (актуальное состояние).
+Подробнее — `STATE.md`.
 
-## Конфигурация и секреты
+## Секреты и модели
 
-- Секреты подтягиваются из окружения/файлов вне репозитория (`.env`, `config.json`, `openclaw.json`) — в коде захардкоженных значений нет.
-- `.gitignore` исключает: `.env*`, `.session`, токены, `media/`, `_trash_/`, `tg-mtproto/`, `openclaw-workspace-state.json`, `node_modules/`.
-- Модель по умолчанию: `deepseek/deepseek-chat` (DeepSeek V4 Flash, прямой API).
+- Секреты вне репо (`.env`, `openclaw.json`).
+- Чат: DeepSeek V4 Flash. Фото: DeepSeek Vision. Генерация: OpenRouter Gemini Flash. Google не использовать как LLM/vision.
 
-## Связанные сервисы (вне репо)
+## Сервисы (вне репо)
 
-- `telegram-user-svc` — HTTP-сервис личного Telegram (systemd): `/auth/status`, `/send`, `/dialogs`, `/history`.
-- Xray/VPN для обхода региональных ограничений (Telegram API).
-- Корневые автоматизации: `daily-digest`, `server-check` (через OpenClaw cron).
+- `openclaw-gateway` — после run6 **system**-юнит, 127.0.0.1:18789. Рестарт: `systemctl restart openclaw-gateway`.
+- `r2d2-hub` — хаб https://hub.gbkz.uk (:8091). Код в Dmgromov01/atlas-green-pearl-dawn, здесь не править.
+- `telegram-user-svc` — 127.0.0.1:8765.
+- Watchdog шлюза: `services/loop-watchdog-cron.sh` (алерты @HubAlertsbot).

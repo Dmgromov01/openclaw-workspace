@@ -11,8 +11,10 @@ User=root
 WorkingDirectory=/root/openclaw
 Environment=HOME=/root
 Environment=OPENCLAW_SERVICE_REPAIR_POLICY=external
+Environment=OPENCLAW_NO_RESPAWN=1
+Environment=NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache
 ExecStart=/usr/bin/openclaw gateway --port 18789
-Restart=on-failure
+Restart=always
 RestartSec=5
 RestartPreventExitStatus=78
 TimeoutStopSec=30

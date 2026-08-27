@@ -35,3 +35,7 @@ venv/
 *.db
 *.sqlite
 travel/am_captcha*.jpg
+credentials
+*.key
+*.token
+session*

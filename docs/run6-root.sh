@@ -4,12 +4,27 @@
 set -u
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/0}"
 
+wait_port() {
+  local n="${1:-30}"
+  local i
+  for i in $(seq 1 "$n"); do
+    if ss -lptn | grep -q ':18789'; then
+      echo "port 18789 bound after ${i}s"
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
 rollback_user() {
-  echo "ROLLBACK: system unit failed, starting user unit"
+  echo "ROLLBACK: stopping system unit, starting user unit"
+  systemctl stop openclaw-gateway.service 2>/dev/null || true
+  sleep 2
   systemctl --user unmask openclaw-gateway.service 2>/dev/null || true
   systemctl --user start openclaw-gateway.service || true
-  sleep 3
-  systemctl --user is-active openclaw-gateway.service
+  wait_port 30 || true
+  systemctl --user is-active openclaw-gateway.service || true
   ss -lptn | grep 18789 || true
 }
 
@@ -20,23 +35,31 @@ systemctl daemon-reload
 
 echo "-- stop user unit --"
 systemctl --user stop openclaw-gateway.service || true
-for i in $(seq 1 20); do
-  ss -lptn | grep -q ':18789' || break
-  sleep 1
-done
+wait_port 5 && {
+  echo "port 18789 still busy after user stop; abort"
+  ss -lptn | grep 18789 || true
+  rollback_user
+  exit 1
+}
+# wait_port returns 0 if bound — here we want it GONE
 if ss -lptn | grep -q ':18789'; then
-  echo "port 18789 still busy after stop; abort"
+  echo "port 18789 still busy after user stop; abort"
+  ss -lptn | grep 18789 || true
   rollback_user
   exit 1
 fi
 
 echo "-- start system unit --"
 systemctl enable --now openclaw-gateway.service
-sleep 4
-if ! systemctl is-active --quiet openclaw-gateway.service || ! ss -lptn | grep -q ':18789'; then
+if ! wait_port 30; then
   echo "system unit did not bind :18789"
   systemctl --no-pager --full status openclaw-gateway.service || true
   journalctl -u openclaw-gateway -n 40 --no-pager || true
+  rollback_user
+  exit 1
+fi
+if ! systemctl is-active --quiet openclaw-gateway.service; then
+  echo "system unit not active"
   rollback_user
   exit 1
 fi

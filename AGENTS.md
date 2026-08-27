@@ -37,7 +37,4 @@ Follow HEARTBEAT.md. Disk >85% → one message. Else HEARTBEAT_OK. Do not restar
 - НЕ трогать: код хаба, ufw, zram, Parallel, Context7, GitHub MCP, агент hub (`tools.allow=[]`).
 - Exec: `tools.exec.mode=allowlist`, без апрувов. Не `security=full`, не `ask=on-miss`.
 - Этот файл и `SOUL.md` не переписывать «для порядка» и не размножать один абзац несколько раз.
-
-## Run6 (вечер 27.08, прямо разрешено хозяином)
-
-Разовый прогон по `docs/PROMPT-run6.md`: gateway → system-юнит, linger root, watchdog :18789+:8765, снять execApprovals, расширить allowlist, выжечь Google из LLM/vision. После прогона systemctl/loginctl снова не в allowlist.
+- **НЕ** рестартить gateway, не вызывать `systemctl`, не кормить себя `docs/PROMPT-run6.md`. Шлюз мигрирует только хозяин с SSH.

@@ -132,3 +132,19 @@ This is a starting point. Add your own conventions, style, and rules as you figu
 - [Default AGENTS.md](/reference/AGENTS.default)
 - [Scheduled tasks vs heartbeat](/automation#scheduled-tasks-cron-vs-heartbeat)
 - [Heartbeat](/gateway/heartbeat)
+
+## 🔒 Неприкосновенное (правило от 27.08)
+- НЕ править: `openclaw.json`, `SOUL.md`, `AGENTS.md` и `credentials`.
+- Правки — только текстом, ждать подтверждения хозяина.
+
+## 🔒 Неприкосновенное (правило 27.08, от Дмитрия)
+- НЕ править: `openclaw.json`, `SOUL.md`, `AGENTS.md` и `credentials`.
+- Правки — только текстом, ждать подтверждения.
+
+## 🔒 Неприкосновенное (правило 27.08)
+- НЕ править: `openclaw.json`, `SOUL.md`, `AGENTS.md` и `credentials`.
+- Правки — только текстом, ждать подтверждения хозяина.
+
+## 🔒 Неприкосновенное (правило 27.08)
+- НЕ править: `openclaw.json`, `SOUL.md`, `AGENTS.md`, `credentials`.
+- Правки — только текстом, ждать подтверждения хозяина.

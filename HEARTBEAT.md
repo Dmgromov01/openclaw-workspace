@@ -1,5 +1,5 @@
-<!-- Heartbeat template; comments-only content prevents scheduled heartbeat API calls. -->
+# Heartbeat checklist
 
-# Keep this file empty (or with only comments) to skip heartbeat API calls.
-
-# Add tasks below when you want the agent to check something periodically.
+- Если диск / > 85% — одно сообщение хозяину (не рестартить сервисы).
+- Иначе — ничего не писать в Telegram (HEARTBEAT_OK).
+- Без рассылок в группы. tg_send — только по прямой нужде из пункта выше.

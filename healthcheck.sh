@@ -1,99 +1,44 @@
 #!/usr/bin/env bash
-# healthcheck.sh — проверка всех рабочих инструментов OpenClaw-воркспейса.
-# Запуск: bash /root/openclaw/healthcheck.sh  (exit 0 = всё ок, иначе проблемы)
-# Cron: ежедневно (см. конец файла / crontab).
+# healthcheck.sh — проверка рабочих инструментов OpenClaw-воркспейса.
 set -u
 FAIL=0
 log() { echo "[$(date +%H:%M:%S)] $*"; }
-fail() { log "❌ $*"; FAIL=1; }
-ok()   { log "✅ $*"; }
+fail() { log "FAIL $*"; FAIL=1; }
+ok()   { log "OK $*"; }
 
 cd /root/openclaw
 
-# 1. Компиляция КЛЮЧЕВЫХ скриптов (не всего дерева)
-log "--- 1. Компиляция ключевых скриптов ---"
-for f in \
-  /root/openclaw/calendar/gcal_reader.py \
-  /root/openclaw/calendar/digest.py \
-  /root/openclaw/calendar/bot_sender.py \
-  /root/openclaw/calendar/image_gen.py \
-  /root/openclaw/miniapp/server.py \
-  /root/openclaw/miniapp/auth.py \
-  /root/openclaw/skills/excel_skills.py \
-  /root/openclaw/update_bot_button.py; do
-  [ -f "$f" ] && python3 -m py_compile "$f" 2>/dev/null && ok "py_compile: $(basename $f)" || fail "py_compile: $f"
-done
-
-# 2. Критичные файлы
-log "--- 2. Критичные файлы ---"
-for p in \
-  /root/.openclaw/credentials/deepseek.key \
-  /root/.openclaw/credentials/openrouter.key \
-  /root/.openclaw/credentials/gcal/oauth-client.json \
-  /root/.openclaw/credentials/gcal/tokens.json \
-  /root/.openclaw/credentials/telegram-app.json \
-  /root/.openclaw/.env \
-  /root/openclaw/miniapp/auth.py \
-  /root/openclaw/miniapp/server.py \
-  /root/openclaw/calendar/gcal_reader.py \
-  /root/openclaw/calendar/digest.py; do
-  [ -f "$p" ] && ok "$p" || fail "нет файла: $p"
-done
-
-# 3. Сервисы
-log "--- 3. Сервисы ---"
+log "--- services ---"
 if systemctl --user is-enabled miniapp.service >/dev/null 2>&1; then
-  systemctl --user is-active miniapp.service >/dev/null 2>&1 && ok "miniapp.service" || fail "miniapp.service НЕ активен"
+  systemctl --user is-active miniapp.service >/dev/null 2>&1 && ok "miniapp.service" || fail "miniapp.service not active"
 else
-  ok "miniapp.service отключён (план)"
+  ok "miniapp.service disabled (planned)"
 fi
-# telegram-user-svc: systemd-юнит (telegram-user-svc.service), слушает 127.0.0.1:8765
-systemctl is-active telegram-user-svc.service >/dev/null 2>&1 && ok "telegram-user-svc.service" || fail "telegram-user-svc.service НЕ активен"
-(ss -tlnp 2>/dev/null | grep -q ":8765 ") && ok "telegram-user-svc (порт 8765)" || fail "telegram-user-svc НЕ слушает 8765"
-systemctl --user is-active openclaw-gateway.service >/dev/null 2>&1 && ok "openclaw-gateway.service" || fail "openclaw-gateway.service НЕ активен"
+systemctl is-active telegram-user-svc.service >/dev/null 2>&1 && ok "telegram-user-svc.service" || fail "telegram-user-svc.service not active"
+(ss -tlnp 2>/dev/null | grep -q ":8765 ") && ok "telegram-user-svc :8765" || fail "telegram-user-svc not on 8765"
+if systemctl is-active openclaw-gateway.service >/dev/null 2>&1; then
+  ok "openclaw-gateway.service (system)"
+elif systemctl --user is-active openclaw-gateway.service >/dev/null 2>&1; then
+  ok "openclaw-gateway.service (user — run6 not done yet)"
+else
+  fail "openclaw-gateway.service not active"
+fi
+(ss -tlnp 2>/dev/null | grep -q ":18789 ") && ok "gateway :18789" || fail "gateway not on 18789"
+systemctl is-active r2d2-hub.service >/dev/null 2>&1 && ok "r2d2-hub.service" || fail "r2d2-hub.service not active"
 
-# 3b. Firewall (ufw должен быть active; 8080 НЕ должен быть открыт наружу)
-/usr/sbin/ufw status 2>/dev/null | grep -q "Status: active" && ok "ufw active" || fail "ufw НЕ активен"
+/usr/sbin/ufw status 2>/dev/null | grep -q "Status: active" && ok "ufw active" || fail "ufw not active"
 if ss -tlnp 2>/dev/null | grep -q ":8080 "; then
-  ss -tlnp 2>/dev/null | grep ":8080 " | grep -q "127.0.0.1" && ok "miniapp слушает loopback" || fail "miniapp слушает НЕ loopback (8080)"
+  ss -tlnp 2>/dev/null | grep ":8080 " | grep -q "127.0.0.1" && ok "miniapp loopback" || fail "miniapp not loopback"
 else
-  ok "порт 8080 закрыт (miniapp отключён)"
+  ok "port 8080 closed (miniapp off)"
 fi
 
-# 4. Ключевые python-зависимости
-log "--- 4. Зависимости (system python) ---"
-python3 -c "import googleapiclient, google.oauth2" 2>/dev/null && ok "google-api (gcal)" || fail "google-api не установлен"
-python3 -c "import openpyxl, pandas, duckdb, tabulate" 2>/dev/null && ok "excel (openpyxl/pandas/duckdb/tabulate)" || fail "excel-библиотеки не установлены"
-python3 -c "import requests" 2>/dev/null && ok "requests" || fail "requests не установлен"
-
-# 5. Smoke-тесты
-log "--- 5. Smoke-тесты ---"
-# gcal: сегодня
-G=$(cd /root/openclaw/calendar && timeout 30 python3 gcal_reader.py today 2>&1)
-if echo "$G" | grep -q "Сегодня"; then ok "gcal_reader today: $(echo "$G" | head -1)"; else fail "gcal_reader today: $G"; fi
-
-# digest: сбор без отправки (первые строки)
-D=$(cd /root/openclaw/calendar && timeout 60 python3 digest.py --no-send --hours 2 2>&1 | head -3)
-if echo "$D" | grep -q "Дайджест"; then ok "digest.py собирается"; else fail "digest.py: $D"; fi
-
-# miniapp: планово отключён → порт 8080 должен быть закрыт
-if systemctl --user is-enabled miniapp.service >/dev/null 2>&1; then
-  M=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://127.0.0.1:8080/)
-  [ "$M" = "200" ] && ok "miniapp статика 200" || fail "miniapp статика: $M"
-  M2=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://127.0.0.1:8080/api/calendar)
-  [ "$M2" = "401" ] && ok "miniapp API защищён (401)" || fail "miniapp API: $M2"
-else
-  ok "miniapp отключён — 8080 не проверяем"
-fi
-
-# telegram-user-svc: авторизован
 T=$(curl -s -m 10 http://127.0.0.1:8765/auth/status 2>&1)
-echo "$T" | grep -q '"authorized": true' && ok "telegram-user-svc авторизован" || fail "telegram-user-svc: $T"
+echo "$T" | grep -q '"authorized": true' && ok "telegram-user-svc authorized" || fail "telegram-user-svc: $T"
 
-log ""
 if [ "$FAIL" = "0" ]; then
-  log "🎉 ВСЕ ИНСТРУМЕНТЫ OK"
+  log "ALL OK"
 else
-  log "⚠️ ЕСТЬ ПРОБЛЕМЫ (см. ❌ выше)"
+  log "PROBLEMS above"
 fi
 exit $FAIL

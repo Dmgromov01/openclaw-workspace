@@ -42,7 +42,11 @@ done
 
 # 3. Сервисы
 log "--- 3. Сервисы ---"
-systemctl --user is-active miniapp.service >/dev/null 2>&1 && ok "miniapp.service" || fail "miniapp.service НЕ активен"
+if systemctl --user is-enabled miniapp.service >/dev/null 2>&1; then
+  systemctl --user is-active miniapp.service >/dev/null 2>&1 && ok "miniapp.service" || fail "miniapp.service НЕ активен"
+else
+  ok "miniapp.service отключён (план)"
+fi
 # telegram-user-svc: systemd-юнит (telegram-user-svc.service), слушает 127.0.0.1:8765
 systemctl is-active telegram-user-svc.service >/dev/null 2>&1 && ok "telegram-user-svc.service" || fail "telegram-user-svc.service НЕ активен"
 (ss -tlnp 2>/dev/null | grep -q ":8765 ") && ok "telegram-user-svc (порт 8765)" || fail "telegram-user-svc НЕ слушает 8765"
@@ -53,7 +57,7 @@ systemctl --user is-active openclaw-gateway.service >/dev/null 2>&1 && ok "openc
 if ss -tlnp 2>/dev/null | grep -q ":8080 "; then
   ss -tlnp 2>/dev/null | grep ":8080 " | grep -q "127.0.0.1" && ok "miniapp слушает loopback" || fail "miniapp слушает НЕ loopback (8080)"
 else
-  fail "miniapp не слушает 8080"
+  ok "порт 8080 закрыт (miniapp отключён)"
 fi
 
 # 4. Ключевые python-зависимости
@@ -72,11 +76,15 @@ if echo "$G" | grep -q "Сегодня"; then ok "gcal_reader today: $(echo "$G"
 D=$(cd /root/openclaw/calendar && timeout 60 python3 digest.py --no-send --hours 2 2>&1 | head -3)
 if echo "$D" | grep -q "Дайджест"; then ok "digest.py собирается"; else fail "digest.py: $D"; fi
 
-# miniapp: статика 200 + API защищён (401)
-M=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://127.0.0.1:8080/)
-[ "$M" = "200" ] && ok "miniapp статика 200" || fail "miniapp статика: $M"
-M2=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://127.0.0.1:8080/api/calendar)
-[ "$M2" = "401" ] && ok "miniapp API защищён (401)" || fail "miniapp API: $M2"
+# miniapp: планово отключён → порт 8080 должен быть закрыт
+if systemctl --user is-enabled miniapp.service >/dev/null 2>&1; then
+  M=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://127.0.0.1:8080/)
+  [ "$M" = "200" ] && ok "miniapp статика 200" || fail "miniapp статика: $M"
+  M2=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://127.0.0.1:8080/api/calendar)
+  [ "$M2" = "401" ] && ok "miniapp API защищён (401)" || fail "miniapp API: $M2"
+else
+  ok "miniapp отключён — 8080 не проверяем"
+fi
 
 # telegram-user-svc: авторизован
 T=$(curl -s -m 10 http://127.0.0.1:8765/auth/status 2>&1)

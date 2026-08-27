@@ -1,0 +1,18 @@
+[Unit]
+Description=R2D2 Personal AI Hub (TanStack Start SSR, :8091)
+After=network-online.target
+Wants=network-online.target
+StartLimitBurst=5
+StartLimitIntervalSec=120
+
+[Service]
+Type=simple
+WorkingDirectory=/root/atlas-green-pearl-dawn
+EnvironmentFile=/root/atlas-green-pearl-dawn/.env
+ExecStart=/usr/bin/node /root/atlas-green-pearl-dawn/node_modules/.bin/vite preview --host 0.0.0.0 --port 8091
+Restart=on-failure
+RestartSec=5
+Environment=HOME=/root
+
+[Install]
+WantedBy=multi-user.target

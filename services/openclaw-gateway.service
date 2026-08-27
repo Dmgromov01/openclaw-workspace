@@ -1,0 +1,25 @@
+[Unit]
+Description=OpenClaw Gateway (system, :18789 loopback)
+After=network-online.target
+Wants=network-online.target
+StartLimitBurst=5
+StartLimitIntervalSec=120
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/openclaw
+Environment=HOME=/root
+Environment=OPENCLAW_SERVICE_REPAIR_POLICY=external
+ExecStart=/usr/bin/openclaw gateway --port 18789
+Restart=on-failure
+RestartSec=5
+RestartPreventExitStatus=78
+TimeoutStopSec=30
+TimeoutStartSec=30
+SuccessExitStatus=0 143
+OOMPolicy=continue
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target

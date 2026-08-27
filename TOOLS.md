@@ -1,33 +1,38 @@
-# TOOLS.md - Local Notes
+# TOOLS.md — локальная шпаргалка
 
-Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup: camera names and locations, SSH hosts and aliases, preferred TTS voices, speaker/room names, device nicknames, anything environment-specific.
+## Exec (агент main, run6)
 
-## Examples
+- `tools.exec.mode=allowlist` → security=allowlist, ask=off. Апрувов нет.
+- telegram `execApprovals.enabled=false`
+- allowlist: ls cat head tail df journalctl date uname free zramctl mkdir mv tar gpg git ss curl openclaw
+- запрещено даже спрашивать: rm reboot shutdown poweroff dd mkfs ufw iptables passwd chmod chown systemctl
+- не security=full, не ask=on-miss
+- вне списка → сразу deny, без зависания и без кнопки /approve
 
-```markdown
-### Cameras
+## Модели (не Google как LLM/vision)
 
-- living-room → Main area, 180° wide angle
-- front-door → Entrance, motion-triggered
+- чат/heartbeat: deepseek/deepseek-v4-flash
+- глубоко: deepseek/deepseek-v4-pro
+- входящее фото: deepseek/deepseek-v4-flash-vision-exp (не CLI media, не google vision)
+- генерация картинок: OpenRouter → Gemini Flash image
+- Google Calendar хаба = gcal, это не LLM
 
-### SSH
+## Сервисы
 
-- home-server → 192.168.1.100, user: admin
+- gateway: system-юнит `openclaw-gateway` :18789 loopback. Рестарт: `systemctl restart openclaw-gateway` (без --user)
+- хаб: system-юнит `r2d2-hub` :8091 → https://hub.gbkz.uk
+- telegram-user-svc: 127.0.0.1:8765
+- miniapp: disabled, :8080 не слушает
+- watchdog хаба: cron каждую минуту, 3 провала → restart r2d2-hub
+- watchdog шлюза: `services/loop-watchdog-cron.sh` :18789 и :8765, антишторм 60с, алерты @HubAlertsbot
 
-### TTS
+## MCP / поиск
 
-- Preferred voice: "Nova" (warm, slightly British)
-- Default speaker: Kitchen HomePod
-```
+- оставить: GitHub MCP, Context7, Parallel
+- Perplexity off
+- агент hub: tools.allow=[] — не включать
 
-## Why Separate?
+## Node (iPhone)
 
-Skills are shared. Your setup is yours. Keeping them apart means you can update skills without losing your notes, and share skills without leaking your infrastructure.
-
----
-
-Add whatever helps you do your job. This is your cheat sheet.
-
-## Related
-
-- [Agent workspace](/concepts/agent-workspace)
+- camera.snap разрешён
+- sms / contacts / callLog — deny

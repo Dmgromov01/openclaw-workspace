@@ -1,26 +1,35 @@
 # Profile — система и окружение
 
 ## Сервер
-- VPS vps-7182, IP 138.124.180.178 (Франкфурт DE), Ubuntu 24.04, 2 vCPU / 2 GB RAM / 20 GB SSD (старый IP 45.95.2.246 — устарел, не использовать)
-- Host Tailscale: hiplet-109548 = 100.113.115.17 (таилнет tail6a4baa)
-- Swap 2GB создан
+- VPS, IP 138.124.180.178 (Франкфурт DE), Ubuntu 24.04
+- Tailscale: tail6a4baa.ts.net (хост в git-коммитах hiplet-109548; в handoff фигурировал hiplet-112102)
+- RAM ~3.8G, zram0 ~2G priority 100. Swapfile не ставить.
+- Ядро после ребута 27.08: 6.8.0-138-generic
 
 ## Стек
-- Node.js v24.19.0, npm/npx 11.17.0, Python3
-- OpenClaw gateway: user-systemd юнит `openclaw-gateway.service`, порт 18789 (loopback)
-- Модель: deepseek/deepseek-v4-flash (прямой API, 1M ctx). Провайдеры: deepseek · openrouter (auto, qwen/qwen-image-3-pro) · google (gemini-3.1-flash-image-preview, gemini-2.5-flash)
-- DeepSeek не принимает картинки — для image использовать Gemini/OpenRouter
-- Ключи: /root/.openclaw/credentials/ (openrouter.key, ai-studio.key, github.token, telegram-app.json, cloudflare/r2.json — все chmod 600, ВНЕ git)
+- OpenClaw 2026.7.1-2, workspace `/root/openclaw`, конфиг `/root/.openclaw/openclaw.json`
+- Gateway: цель = system-юнит `openclaw-gateway` :18789 loopback, auth=token, chatCompletions вкл
+- Хаб: system-юнит `r2d2-hub` :8091 → https://hub.gbkz.uk
+- telegram-user-svc: 127.0.0.1:8765
+- miniapp: disabled
+
+## Модели (хозяин 27.08)
+- чат/heartbeat: deepseek/deepseek-v4-flash
+- глубоко: deepseek/deepseek-v4-pro
+- входящее фото: deepseek/deepseek-v4-flash-vision-exp
+- генерация картинок: OpenRouter → Gemini Flash image
+- Google как LLM/vision — не нужен. Календарь хаба = gcal отдельно.
 
 ## Домен/вход
-- gbkz.uk (Cloudflare DNS+прокси) → nginx (TLS Let's Encrypt) → 127.0.0.1:18789
-- gateway.remote.url = wss://gbkz.uk; auth mode = token
+- gbkz.uk (Cloudflare DNS+прокси) → nginx (TLS) → 127.0.0.1:18789
+- хаб: https://hub.gbkz.uk (сайт, не Mini App)
+- iPhone сопряжён как node+operator
 
 ## Интеграции
-- Календарь: Google Calendar (dmgromov03@gmail.com), `gcal_reader.py` — читает + add
-- Telegram-бот: владелец id 1916536646, bot @Dmbotmy_bot
-- Личный TG (MTProto): telegram-user-svc, HTTP 127.0.0.1:8765, systemd
-- MCP: context7 (док-сервер, npx @upstash/context7-mcp)
+- Календарь хаба: Google Calendar
+- Telegram: хозяин 1916536646, оператор @Dmbotmy_bot, пейджер @HubAlertsbot
+- MCP: Context7 + GitHub. Parallel on. Perplexity off
+- Ключи вне git: `/root/.openclaw/credentials/`, `/etc/openclaw/secrets.json`
 
 ## Пользователь
 - Дмитрий (@Dm_GRM), русскоязычный, Europe/Moscow

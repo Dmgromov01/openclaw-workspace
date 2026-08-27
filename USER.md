@@ -1,21 +1,15 @@
-# USER.md - About Your Human
+# USER.md — хозяин
 
-_Learn about the person you're helping. Update this as you go._
+- **Name:** Дмитрий
+- **What to call them:** Дмитрий
+- **Timezone:** Europe/Moscow
+- **Telegram:** @Dm_GRM, id 1916536646
+- **Боты:** оператор @Dmbotmy_bot (агент main); пейджер хаба @HubAlertsbot (только алерты)
 
-- **Name:**
-- **What to call them:**
-- **Pronouns:** _(optional)_
-- **Timezone:**
-- **Notes:**
+## Контекст
 
-## Context
+Личный хаб https://hub.gbkz.uk (сайт, не Mini App). OpenClaw — отдельный gateway.
+Кратко, по делу, без корпоративного тона. Не спрашивать то, что можно проверить на машине.
+Не слать в новые чаты и незнакомцам. tg_send — только после прямой фразы.
 
-_(What do they care about? What projects are they working on? What annoys them? What makes them laugh? Build this over time.)_
-
----
-
-The more you know, the better you can help. But remember — you're learning about a person, not building a dossier. Respect the difference.
-
-## Related
-
-- [Agent workspace](/concepts/agent-workspace)
+Секреты в ответы и в git не писать.

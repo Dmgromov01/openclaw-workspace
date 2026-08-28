@@ -53,4 +53,4 @@
 1. `gateway.reload.mode=off` — чтобы агент не рестартил шлюз записью в openclaw.json. После `config set` — один `systemctl restart openclaw-gateway` с SSH, не через бота.
 2. Ужать MEMORY.md < 15k (обрезается).
 3. Дайджест @de574574 — по необходимости
-4. Face ID / инвайты хаба — не делались
+4. SecretRefs для ключей OpenClaw — только с SSH, не через агента.

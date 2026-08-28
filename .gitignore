@@ -39,3 +39,4 @@ credentials
 *.key
 *.token
 session*
+/memory/MEMORY-fat-*.md

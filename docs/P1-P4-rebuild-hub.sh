@@ -1,5 +1,5 @@
 #!/bin/bash
-# P1–P4: pull хаба, сборка Nitro, tick-cron, без рестарта шлюза.
+# P1–P4: pull хаба, npm install, сборка Nitro, tick-cron, без рестарта шлюза.
 # Только SSH. Не давать Telegram-агенту.
 set -euo pipefail
 
@@ -21,9 +21,10 @@ if ! grep -q '^INTERNAL_CRON_SECRET=' "$ENVF"; then
 fi
 grep -q '^SESSION_TTL_SECONDS=' "$ENVF" || echo 'SESSION_TTL_SECONDS=43200' >> "$ENVF"
 
-echo "==== build ===="
+echo "==== install + build ===="
 cd "$HUB"
 export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=1536}"
+npm install --omit=dev=false
 npm run build
 test -f "$HUB/.output/server/index.mjs"
 

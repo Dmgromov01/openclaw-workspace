@@ -1,1 +1,0 @@
-import{E as e,r as t}from"./haptic-BLi9TdvA.js";var n=e();function r({className:e,...r}){return(0,n.jsx)(`div`,{className:t(`overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-[var(--shadow-soft)]`,e),...r})}export{r as t};

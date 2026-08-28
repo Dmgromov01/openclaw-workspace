@@ -1,1 +1,0 @@
-import{E as e,r as t}from"./haptic-BLi9TdvA.js";var n=e();function r({className:e}){return(0,n.jsx)(`div`,{className:t(`animate-pulse rounded-xl bg-muted`,e)})}export{r as t};

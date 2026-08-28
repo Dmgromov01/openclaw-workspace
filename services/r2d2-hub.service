@@ -1,18 +1,24 @@
 [Unit]
-Description=R2D2 Personal AI Hub (TanStack Start SSR, :8091)
+Description=R2D2 Personal AI Hub (Nitro node-server, :8091 loopback)
 After=network-online.target
 Wants=network-online.target
-StartLimitBurst=5
+StartLimitBurst=8
 StartLimitIntervalSec=120
 
 [Service]
 Type=simple
 WorkingDirectory=/root/atlas-green-pearl-dawn
 EnvironmentFile=/root/atlas-green-pearl-dawn/.env
-ExecStart=/usr/bin/node /root/atlas-green-pearl-dawn/node_modules/.bin/vite preview --host 0.0.0.0 --port 8091
-Restart=on-failure
+ExecStart=/usr/bin/node /root/atlas-green-pearl-dawn/.output/server/index.mjs
+Restart=always
 RestartSec=5
+TimeoutStopSec=30
 Environment=HOME=/root
+Environment=NODE_ENV=production
+Environment=NITRO_PORT=8091
+Environment=NITRO_HOST=127.0.0.1
+Environment=PORT=8091
+Environment=HOST=127.0.0.1
 
 [Install]
 WantedBy=multi-user.target

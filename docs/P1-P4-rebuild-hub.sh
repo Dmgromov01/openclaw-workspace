@@ -46,4 +46,4 @@ chmod +x "$HUB/scripts/hub-tick-cron.sh"
 crontab -l | grep hub-tick || true
 
 echo "==== done (gateway not touched) ===="
-echo "First visit to https://hub.gbkz.uk assigns the owner (name + PIN + Face ID)."
+echo "First visit: name + PIN, then Face ID (required). Family joins only via invite."

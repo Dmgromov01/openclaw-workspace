@@ -9,7 +9,7 @@ import pandas as pd
 from aiogram import Bot, types
 from aiogram.types import FSInputFile
 
-from file_security import ALLOWED_EXTENSIONS, MAX_UPLOAD_BYTES, upload_path
+from .file_security import ALLOWED_EXTENSIONS, MAX_UPLOAD_BYTES, upload_path
 
 UPLOAD_DIR = Path("/root/openclaw/storage/uploads")
 REPORT_DIR = Path("/root/openclaw/storage/reports")
@@ -23,7 +23,7 @@ def inspect_tabular_file(file_path: str, extension: str) -> str:
         if extension == ".csv":
             df = pd.read_csv(file_path, nrows=3)
             cols = ", ".join(map(str, df.columns[:8]))
-            return f"Строк-примеров: {len(df)}; колонки [{cols}]"
+            return f"Строк-примеров: {len(df)}; колонки [{html.escape(cols)}]"
 
         xl = pd.ExcelFile(file_path)
         summary = [f"Листов найдено: {len(xl.sheet_names)}"]
@@ -33,7 +33,6 @@ def inspect_tabular_file(file_path: str, extension: str) -> str:
             summary.append(f"• Лист '{html.escape(str(sheet))}': колонки [{html.escape(cols)}]")
         return "\n".join(summary)
     except Exception as exc:
-        # Do not expose local paths or a full traceback to the chat.
         return f"Не удалось прочитать структуру файла: {html.escape(str(exc))[:500]}"
 
 

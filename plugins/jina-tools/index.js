@@ -27,7 +27,7 @@ module.exports = definePluginEntry({
     api.registerTool({
       name: "jina_rag",
       description:
-        "Семантический поиск по файлам/папкам через Jina embeddings + rerank. По умолчанию ищет по памяти (MEMORY.md + memory/*.md). Можно указать пути (файлы или папки; поддерживаются .md/.txt/.json/.csv). Возвращает топ-N фрагментов с оценкой релевантности и источником.",
+        "Семантический поиск по файлам/папкам через Jina embeddings + rerank. Важно: выбранные фрагменты передаются внешнему API Jina; инструмент работает только при JINA_RAG_ALLOW_EXTERNAL=1. По умолчанию ищет по памяти (MEMORY.md + memory/*.md).",
       parameters: {
         type: "object",
         properties: {
@@ -37,7 +37,7 @@ module.exports = definePluginEntry({
             items: { type: "string" },
             description: "Файлы/папки (необязательно; по умолчанию память)",
           },
-          topN: { type: "number", description: "Сколько результатов (по умолчанию 5)" },
+          topN: { type: "number", description: "Сколько результатов (по умолчанию 5, максимум 10)" },
         },
         required: ["query"],
       },

@@ -12,7 +12,10 @@ const HTTP_TIMEOUT_MS = 30000;
 const MAX_FILES = 200;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const MAX_CHUNKS = 1500;
-const MAX_TOP_N = 10;
+const MAX_TOP_N = 5;
+const MAX_SEARCH_CHARS = 12000;
+const MAX_RAG_PAYLOAD_CHARS = 6000;
+const MAX_RAG_SNIPPET_CHARS = 400;
 
 function getKey() {
   return fs.readFileSync(KEY_FILE, "utf8").trim();
@@ -64,10 +67,10 @@ async function jinaPost(url, body, retries = 3) {
 }
 
 // ---- 2. Search: поиск + контент в одном ответе (markdown) ----
-async function search(query, maxChars = 15000) {
+async function search(query, maxChars = MAX_SEARCH_CHARS) {
   const res = await jinaGet(`https://s.jina.ai/?q=${encodeURIComponent(query)}`);
   const text = await res.text();
-  return text.slice(0, Math.max(1, Math.min(Number(maxChars) || 15000, 30000)));
+  return text.slice(0, Math.max(1, Math.min(Number(maxChars) || MAX_SEARCH_CHARS, MAX_SEARCH_CHARS)));
 }
 
 // ---- 3+4. RAG: embeddings -> кандидаты -> rerank -> топ ----
@@ -241,9 +244,16 @@ async function rag(query, inputPaths, topN = 5) {
     .map((result) => ({
       score: Number(Number(result.relevance_score || 0).toFixed(3)),
       source: scored[result.index].source,
-      snippet: scored[result.index].text.replace(/\s+/g, " ").slice(0, 400),
+      snippet: scored[result.index].text.replace(/\s+/g, " ").slice(0, MAX_RAG_SNIPPET_CHARS),
     }));
-  return { query: normalizedQuery, results };
+  let payloadChars = 0;
+  const boundedResults = results.filter((result) => {
+    const nextChars = JSON.stringify(result).length;
+    if (payloadChars + nextChars > MAX_RAG_PAYLOAD_CHARS) return false;
+    payloadChars += nextChars;
+    return true;
+  });
+  return { query: normalizedQuery, results: boundedResults };
 }
 
 module.exports = {

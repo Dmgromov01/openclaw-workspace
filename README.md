@@ -1,35 +1,47 @@
 # OpenClaw Workspace
 
-Личное рабочее пространство OpenClaw-агента (main). Содержит скрипты, заметки и интеграции.
-
-> 🔒 Это **приватный** репозиторий. Секреты (токены, сессии, 2FA) в него **не попадают** — исключены через `.gitignore`.
+Личное рабочее пространство OpenClaw-агента. Репозиторий приватный; секреты, сессии и runtime credentials хранятся вне git.
 
 ## Структура
 
-- **`calendar/`** — календарь и Telegram-логика (`gcal_reader.py`, `digest.py`, `bot_sender.py`)
-- **`services/`** — systemd-шаблоны и watchdog (хаб, gateway, диск)
-- **`docs/PROMPT-run6.md`** — промпт агенту main: gateway как system-юнит, без апрувов exec
-- **`memory/`** — дневники сессий, `MEMORY.md` — долгосрочная память
-- **`AGENTS.md`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `STATE.md`** — поведение агента
+`calendar/` содержит календарь, дайджест и Telegram-логику. `bot/` содержит безопасный приём документов и доставку отчётов. `services/` содержит systemd-шаблоны и watchdog-скрипты. `skills/` и `openclaw_modules/` содержат инструменты анализа данных. `plugins/` содержит интеграции OpenClaw, а `tests/` — автономные проверки утилит.
 
-## Календарь (GOOGLE, чтение)
+## Проверка перед отправкой изменений
+
+В окружении с зависимостями проекта выполните:
+
+```bash
+python3 -m compileall -q bot calendar services skills openclaw_modules
+python3 -m pytest -q
+node --check plugins/jina-tools/jina-core.js
+node --check plugins/jina-tools/index.js
+```
+
+Тесты, которым нужны необязательные runtime-зависимости (aiogram, Telethon, Google API или DuckDB), должны импортировать модуль лениво либо запускаться в полном production-окружении.
+
+## Календарь
+
+Актуальный календарь — Google Calendar API в часовом поясе Europe/Moscow:
 
 ```bash
 python3 calendar/gcal_reader.py today
 python3 calendar/gcal_reader.py week
 python3 calendar/gcal_reader.py list --days N
+python3 calendar/gcal_reader.py add "<summary>" "<YYYY-MM-DDTHH:MM>" ["<end>"] --location "..." --description "..."
 ```
 
-Подробнее — `STATE.md`.
+Команда `add` требует OAuth-права календаря на чтение и запись. Удаление событий через этот CLI не реализовано. Секреты Google должны оставаться в runtime-путях, перечисленных в `calendar/gcal_reader.py`, и не добавляться в git.
 
-## Секреты и модели
+## Telegram
 
-- Секреты вне репо (`.env`, `openclaw.json`).
-- Чат: DeepSeek V4 Flash. Фото: DeepSeek Vision. Генерация: OpenRouter Gemini Flash. Google не использовать как LLM/vision.
+`calendar/tg_sender.py` использует личную Telethon-сессию только для получателей из `TG_ALLOWED_RECIPIENTS` в `/root/tg_bot/.env`. Значения задаются через запятую, например `TG_ALLOWED_RECIPIENTS=trusted_user,1916536646`. Пустой список блокирует отправку. Проверка `me` не отправляет сообщения и allowlist не требует.
 
-## Сервисы (вне репо)
+`bot/file_handler.py` ограничивает документы расширениями `.xlsx`, `.xls`, `.csv`, `.pdf`, размером 25 МБ, безопасным именем и уникальным путём под storage directory. Динамический текст экранируется перед отправкой в Telegram HTML.
 
-- `openclaw-gateway` — после run6 **system**-юнит, 127.0.0.1:18789. Рестарт: `systemctl restart openclaw-gateway`.
-- `r2d2-hub` — хаб https://hub.gbkz.uk (:8091). Код в Dmgromov01/atlas-green-pearl-dawn, здесь не править.
-- `telegram-user-svc` — 127.0.0.1:8765.
-- Watchdog шлюза: `services/loop-watchdog-cron.sh` (алерты @HubAlertsbot).
+## Дайджест и внешние сервисы
+
+Дайджест использует RSS, публичные страницы Telegram и DeepSeek. Секреты читаются из runtime-конфигурации через `services/digest/secrets.py`; ключи не должны попадать в логи или исходный код. `plugins/jina-tools/jina_search` обращается к Jina Search. `jina_rag` передаёт выбранные фрагменты файлов во внешний Jina API и по умолчанию отключён; для явного разрешения нужен `JINA_RAG_ALLOW_EXTERNAL=1`. RAG ограничивает число файлов, размер файлов, число чанков и размер результата.
+
+## Сервисы
+
+Gateway, hub и Telegram service должны оставаться привязанными к loopback согласно `STATE.md`. Перед изменением systemd, cron или nginx сначала проверьте фактическую конфигурацию на сервере. Не коммитьте токены, OAuth-файлы, Telethon-сессии, базы данных или runtime-кэш.

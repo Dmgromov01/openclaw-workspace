@@ -53,6 +53,20 @@ async def handle_incoming_document(message: types.Message, bot: Bot):
     user_id = message.from_user.id if message.from_user else 0
     dest_path = upload_path(UPLOAD_DIR, user_id, message.message_id, original_name)
     await bot.download(doc, destination=dest_path)
+    # Telegram metadata is client-provided; enforce the limit on bytes actually
+    # written as well, otherwise a missing/forged ``file_size`` bypasses it.
+    try:
+        downloaded_size = dest_path.stat().st_size
+    except OSError:
+        await message.reply("Не удалось сохранить файл.")
+        return
+    if downloaded_size > MAX_UPLOAD_BYTES:
+        try:
+            dest_path.unlink()
+        except OSError:
+            pass
+        await message.reply("Файл слишком большой. Максимальный размер — 25 МБ.")
+        return
 
     safe_name = html.escape(Path(dest_path).name)
     if ext in {".xlsx", ".xls", ".csv"}:

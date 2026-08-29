@@ -1,0 +1,15 @@
+{
+  "name": "agent-effectiveness",
+  "version": "1.0.0",
+  "main": "index.js",
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ],
+    "contracts": {
+      "tools": [
+        "agent_task"
+      ]
+    }
+  }
+}

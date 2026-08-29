@@ -1,0 +1,19 @@
+{
+  "id": "agent-effectiveness",
+  "name": "Agent Effectiveness",
+  "description": "Explicit task plans, bounded retries, and acceptance checks.",
+  "version": "1.0.0",
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "contracts": {
+    "tools": [
+      "agent_task"
+    ]
+  }
+}

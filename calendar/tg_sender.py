@@ -18,7 +18,13 @@ import asyncio
 import os
 import sys
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    # The process can still use credentials already provided by its environment.
+    def load_dotenv(*_args, **_kwargs):
+        return False
+
 
 load_dotenv("/root/tg_bot/.env")
 
@@ -152,5 +158,4 @@ def main():
     return 0
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+if __name__ == "__main__":n    sys.exit(main())

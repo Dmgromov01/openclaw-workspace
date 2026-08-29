@@ -1,20 +1,37 @@
 // jina-core: чистые функции Jina AI (search / embeddings+rerank RAG)
-// Отдельный модуль, чтобы тестировать без OpenClaw.
+// RAG передаёт выбранные фрагменты на внешние API Jina. Он намеренно выключен,
+// пока владелец явно не подтвердит это через JINA_RAG_ALLOW_EXTERNAL=1.
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
 const KEY_FILE = "/root/.openclaw/credentials/jina.key";
 const CACHE_FILE = "/root/.openclaw/cache/jina_rag.json";
-
 const DEFAULT_PATHS = ["/root/openclaw/MEMORY.md", "/root/openclaw/memory"];
+const HTTP_TIMEOUT_MS = 30000;
+const MAX_FILES = 200;
+const MAX_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_CHUNKS = 1500;
+const MAX_TOP_N = 10;
 
 function getKey() {
   return fs.readFileSync(KEY_FILE, "utf8").trim();
 }
 
-// Единый таймаут для всех HTTP-вызовов Jina (защита от зависших соединений)
-const HTTP_TIMEOUT_MS = 30000;
+function externalRagAllowed() {
+  return ["1", "true", "yes"].includes(
+    String(process.env.JINA_RAG_ALLOW_EXTERNAL || "").trim().toLowerCase(),
+  );
+}
+
+function requireExternalRagConsent() {
+  if (!externalRagAllowed()) {
+    throw new Error(
+      "Jina RAG отключён: он передаёт фрагменты файлов внешнему API. " +
+      "Для явного разрешения установите JINA_RAG_ALLOW_EXTERNAL=1.",
+    );
+  }
+}
 
 async function jinaGet(url) {
   const res = await fetch(url, {
@@ -27,10 +44,10 @@ async function jinaGet(url) {
   return res;
 }
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function jinaPost(url, body, retries = 3) {
-  for (let attempt = 0; ; attempt++) {
+  for (let attempt = 0; ; attempt += 1) {
     const res = await fetch(url, {
       method: "POST",
       headers: { Authorization: `Bearer ${getKey()}`, "Content-Type": "application/json" },
@@ -39,8 +56,7 @@ async function jinaPost(url, body, retries = 3) {
     });
     if (res.ok) return res.json();
     if (res.status === 429 && attempt < retries) {
-      const wait = 20000 * (attempt + 1); // 20s, 40s, 60s
-      await sleep(wait);
+      await sleep(20000 * (attempt + 1));
       continue;
     }
     throw new Error(`Jina ${res.status}: ${(await res.text()).slice(0, 200)}`);
@@ -51,102 +67,191 @@ async function jinaPost(url, body, retries = 3) {
 async function search(query, maxChars = 15000) {
   const res = await jinaGet(`https://s.jina.ai/?q=${encodeURIComponent(query)}`);
   const text = await res.text();
-  return text.slice(0, maxChars);
+  return text.slice(0, Math.max(1, Math.min(Number(maxChars) || 15000, 30000)));
 }
 
 // ---- 3+4. RAG: embeddings -> кандидаты -> rerank -> топ ----
 function collectFiles(inputPaths) {
-  const paths = inputPaths && inputPaths.length ? inputPaths : DEFAULT_PATHS;
+  const roots = inputPaths && inputPaths.length ? inputPaths : DEFAULT_PATHS;
   const files = [];
-  const walk = (p) => {
-    const st = fs.statSync(p);
-    if (st.isDirectory()) {
-      for (const f of fs.readdirSync(p)) walk(path.join(p, f));
-    } else if (/\.(md|txt|json|csv)$/i.test(p)) {
-      files.push(p);
+  const seen = new Set();
+
+  const walk = (entry) => {
+    if (files.length >= MAX_FILES) return;
+    let stat;
+    try {
+      stat = fs.statSync(entry);
+    } catch (_) {
+      return;
+    }
+    if (stat.isDirectory()) {
+      let names;
+      try {
+        names = fs.readdirSync(entry);
+      } catch (_) {
+        return;
+      }
+      for (const name of names) {
+        walk(path.join(entry, name));
+        if (files.length >= MAX_FILES) break;
+      }
+      return;
+    }
+    if (
+      stat.isFile() &&
+      stat.size <= MAX_FILE_BYTES &&
+      /\.(md|txt|json|csv)$/i.test(entry) &&
+      !seen.has(entry)
+    ) {
+      seen.add(entry);
+      files.push(entry);
     }
   };
-  for (const p of paths) walk(p);
+
+  for (const root of roots) {
+    walk(root);
+    if (files.length >= MAX_FILES) break;
+  }
   return files.sort();
 }
 
 function chunkText(text, size = 800, overlap = 100) {
   const chunks = [];
-  for (let i = 0; i < text.length; i += size - overlap) {
-    chunks.push(text.slice(i, i + size));
+  const actualSize = Math.max(100, Math.min(Number(size) || 800, 4000));
+  const actualOverlap = Math.max(0, Math.min(Number(overlap) || 0, actualSize - 1));
+  const step = actualSize - actualOverlap;
+  for (let offset = 0; offset < text.length && chunks.length < MAX_CHUNKS; offset += step) {
+    chunks.push(text.slice(offset, offset + actualSize));
   }
   return chunks;
 }
 
 function fileState(files) {
-  return files.map((f) => `${f}:${fs.statSync(f).mtimeMs}`).join("|");
+  return files.map((file) => {
+    const stat = fs.statSync(file);
+    return `${file}:${stat.mtimeMs}:${stat.size}`;
+  }).join("|");
 }
 
 function cosine(a, b) {
-  let dot = 0, na = 0, nb = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    na += a[i] * a[i];
-    nb += b[i] * b[i];
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let index = 0; index < a.length; index += 1) {
+    dot += a[index] * b[index];
+    normA += a[index] * a[index];
+    normB += b[index] * b[index];
   }
-  return dot / (Math.sqrt(na) * Math.sqrt(nb) + 1e-9);
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB) + 1e-9);
+}
+
+function readUsableCache(state) {
+  try {
+    const cache = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
+    if (
+      cache.state === state &&
+      Array.isArray(cache.chunks) &&
+      Array.isArray(cache.vectors) &&
+      cache.chunks.length === cache.vectors.length
+    ) {
+      return cache;
+    }
+  } catch (_) {
+    // A stale or partial cache is safe to rebuild.
+  }
+  return null;
+}
+
+function writeCache(index) {
+  fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
+  const temporary = `${CACHE_FILE}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  fs.writeFileSync(temporary, JSON.stringify(index), { mode: 0o600 });
+  fs.renameSync(temporary, CACHE_FILE);
 }
 
 async function getIndex(inputPaths) {
+  requireExternalRagConsent();
   const files = collectFiles(inputPaths);
+  if (!files.length) throw new Error("Не найдено доступных текстовых файлов для RAG.");
   const state = fileState(files);
-  if (fs.existsSync(CACHE_FILE)) {
-    try {
-      const cache = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
-      if (cache.state === state) return cache;
-    } catch (_) { /* пересоберём */ }
-  }
+  const cached = readUsableCache(state);
+  if (cached) return cached;
+
   const chunks = [];
-  for (const f of files) {
-    const text = fs.readFileSync(f, "utf8");
-    chunkText(text).forEach((c, i) => chunks.push({ text: c, source: `${f}#${i}` }));
+  for (const file of files) {
+    let text;
+    try {
+      text = fs.readFileSync(file, "utf8");
+    } catch (_) {
+      continue;
+    }
+    for (const [index, chunk] of chunkText(text).entries()) {
+      chunks.push({ text: chunk, source: `${file}#${index}` });
+      if (chunks.length >= MAX_CHUNKS) break;
+    }
+    if (chunks.length >= MAX_CHUNKS) break;
   }
+  if (!chunks.length) throw new Error("В доступных файлах нет текста для RAG.");
+
   const vectors = [];
-  const BATCH = 20; // 100K токенов/мин лимит; память ~60K => дробим и ждём
-  for (let i = 0; i < chunks.length; i += BATCH) {
-    const batch = chunks.slice(i, i + BATCH).map((c) => c.text);
-    const r = await jinaPost("https://api.jina.ai/v1/embeddings", {
+  const batchSize = 20;
+  for (let offset = 0; offset < chunks.length; offset += batchSize) {
+    const batch = chunks.slice(offset, offset + batchSize).map((chunk) => chunk.text);
+    const response = await jinaPost("https://api.jina.ai/v1/embeddings", {
       model: "jina-embeddings-v3",
       input: batch,
       task: "text-matching",
     });
-    vectors.push(...r.data.map((d) => d.embedding));
-    if (i + BATCH < chunks.length) await sleep(2500);
+    if (!Array.isArray(response.data) || response.data.length !== batch.length) {
+      throw new Error("Jina вернула неполный ответ embeddings.");
+    }
+    vectors.push(...response.data.map((item) => item.embedding));
+    if (offset + batchSize < chunks.length) await sleep(2500);
   }
-  const idx = { state, chunks, vectors };
-  fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
-  fs.writeFileSync(CACHE_FILE, JSON.stringify(idx));
-  return idx;
+  const index = { state, chunks, vectors };
+  writeCache(index);
+  return index;
 }
 
 async function rag(query, inputPaths, topN = 5) {
-  const idx = await getIndex(inputPaths);
-  const qr = await jinaPost("https://api.jina.ai/v1/embeddings", {
+  requireExternalRagConsent();
+  const normalizedQuery = String(query || "").trim();
+  if (!normalizedQuery) throw new Error("Нужен непустой запрос для RAG.");
+  const index = await getIndex(inputPaths);
+  const queryResponse = await jinaPost("https://api.jina.ai/v1/embeddings", {
     model: "jina-embeddings-v3",
-    input: [query],
+    input: [normalizedQuery],
     task: "text-matching",
   });
-  const qv = qr.data[0].embedding;
-  const scored = idx.chunks
-    .map((c, i) => ({ ...c, sim: cosine(qv, idx.vectors[i]) }))
-    .sort((a, b) => b.sim - a.sim)
+  const queryVector = queryResponse.data?.[0]?.embedding;
+  if (!Array.isArray(queryVector)) throw new Error("Jina не вернула embedding для запроса.");
+
+  const scored = index.chunks
+    .map((chunk, indexPosition) => ({ ...chunk, sim: cosine(queryVector, index.vectors[indexPosition]) }))
+    .sort((left, right) => right.sim - left.sim)
     .slice(0, 20);
-  const rr = await jinaPost("https://api.jina.ai/v1/rerank", {
+  const reranked = await jinaPost("https://api.jina.ai/v1/rerank", {
     model: "jina-reranker-v2-base-multilingual",
-    query,
-    documents: scored.map((c) => c.text),
+    query: normalizedQuery,
+    documents: scored.map((chunk) => chunk.text),
   });
-  const results = rr.results.slice(0, topN).map((r) => ({
-    score: Number(r.relevance_score.toFixed(3)),
-    source: scored[r.index].source,
-    snippet: scored[r.index].text.replace(/\s+/g, " ").slice(0, 400),
-  }));
-  return { query, results };
+  const requested = Math.max(1, Math.min(Number(topN) || 5, MAX_TOP_N));
+  const results = (reranked.results || []).slice(0, requested)
+    .filter((result) => Number.isInteger(result.index) && scored[result.index])
+    .map((result) => ({
+      score: Number(Number(result.relevance_score || 0).toFixed(3)),
+      source: scored[result.index].source,
+      snippet: scored[result.index].text.replace(/\s+/g, " ").slice(0, 400),
+    }));
+  return { query: normalizedQuery, results };
 }
 
-module.exports = { search, rag, collectFiles, chunkText, getIndex };
+module.exports = {
+  search,
+  rag,
+  collectFiles,
+  chunkText,
+  getIndex,
+  externalRagAllowed,
+  requireExternalRagConsent,
+};

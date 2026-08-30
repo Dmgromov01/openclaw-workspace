@@ -1,34 +1,21 @@
-# Architecture — пути, порты, guardrails
+# Architecture — runtime topology and guardrails
 
-## Ключевые пути
-- Конфиг OpenClaw: `~/.openclaw/openclaw.json` (protected — править только через config/CLI или напрямую для protected-полей + restart)
-- Secrets: `/etc/openclaw/secrets.json` (file-provider; ключи deepseek_key, openrouter_key, google_key, proxyapi_key)
-- Workspace агента: `/root/.openclaw/workspace` (AGENTS.md, SOUL.md, MEMORY.md, дневники `memory/YYYY-MM-DD.md`)
-- Календарь: `/root/.openclaw/workspace/calendar/` (gcal_reader.py — read+add Google; digest.py — дайджест RSS+TG+курс)
-- Личный TG: `/root/telegram-user-svc/server.py` (systemd `telegram-user-svc.service`, HTTP 127.0.0.1:8765)
-- Плагины: `/root/.openclaw/plugins/` (menu-buttons, tg-user-tools, qwen-image-provider)
-- Промпт архитектора: `/root/.openclaw/prompts/architect.md` = `/root/telegram-user-svc/AGENTS.md`
+> Текущие факты инфраструктуры ведутся в [`STATE.md`](../STATE.md). Этот файл описывает устойчивую топологию, а не исторические хосты, токены или временные обходы.
 
-## Порты
-- 18789: OpenClaw gateway (loopback only; наружу через nginx)
-- 80/443: nginx (TLS Let's Encrypt, gbkz.uk → 127.0.0.1:18789)
-- 7877: miniapp backend (через nginx /miniapp/)
-- 8765: telegram-user-svc HTTP API
-- 4001: Cloudflare WARP (обход блокировок, не помечается как дата-центр)
+## Topology
+- OpenClaw gateway: systemd `openclaw-gateway`, `/root/openclaw`, `127.0.0.1:18789`; внешний WSS проходит через nginx `gbkz.uk`.
+- Hub: systemd `r2d2-hub`, Nitro `/root/atlas-green-pearl-dawn/.output/server/index.mjs`, `127.0.0.1:8091`; внешний доступ только через nginx `hub.gbkz.uk`.
+- Telegram user service: systemd `telegram-user-svc`, `127.0.0.1:8765`.
+- Mini App отключён; `:8080` не является активным сервисом.
 
-## Сеть/безопасность
-- Tailscale: hiplet-109548 = 100.113.115.17 (tail6a4baa); vps-amnezia 100.79.152.33 — НЕ наш
-- ufw: SSH 22, tailnet 100.64.0.0/10, 18789 только из tailnet. Default deny incoming
-- Модель: deepseek/deepseek-chat (primary). DeepSeek НЕ принимает картинки
+## Data and integrations
+- Calendar: Google Calendar user OAuth. Agent CLI supports read and `add`; hub has отдельный Google flow. iCloud в hub — legacy-код до отдельной миграции, не рабочий канон.
+- Memory: builtin memory search uses Jina `jina-embeddings-v3` via OpenAI-compatible adapter, only `memory` source, no sessionMemory.
+- Secrets live outside git under protected runtime paths. Git remotes must never embed credentials.
 
-## Scraping Standard (Two-Tier, обязательный для кодинга/скрапинга)
-- Level 1 (Fast): всегда сначала HTTP/cURL/urllib → вырезать чистый Markdown/текст. Быстро, экономно по RAM и токенам.
-- Level 2 (Fallback): браузер (Puppeteer/plugin browser) ТОЛЬКО если HTTP дал 403/429 или требуется рендеринг JS.
-- Основание: Web Scraping Standard, зафиксировано 13.08.
-
-## Guardrails (жёсткие)
-- В бот — ТОЛЬКО чистый результат (без логов/мыслей)
-- Релиз в прод — только после явного «можно» (тест → отчёт → вопрос)
-- protected-поля конфига (compaction, imageGenerationModel, tools.agentToAgent и др.) — править напрямую в openclaw.json + рестарт
-- Не ставить зависимости в node_modules гейтвея OpenClaw (ломает runtime)
-- WhatsApp закрыт, iCloud-календарь устарел (актуален Google)
+## Guardrails
+- Config is changed only through `openclaw config set`, then validated; never edit `openclaw.json` or credentials manually.
+- Production release requires an explicit approval after branch review, tests, and backup.
+- Do not run a second gateway on this host or recreate a user gateway service.
+- Use HTTP/cURL/urllib first; browser automation only for JS-required or blocked pages.
+- Do not re-enable Google for LLM/vision/fallback. DeepSeek handles chat/vision; Google remains calendar only.

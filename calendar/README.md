@@ -1,27 +1,19 @@
-# Интеграция с календарём (OpenClaw)
+# Интеграция с календарём
 
-> Актуальный календарь — Google Calendar API (переезд с iCloud выполнен 10–11.08). `icloud_calendar.py` — устаревший legacy; актуальный скрипт — `gcal_reader.py`.
+> Канон runtime-состояния: [`../STATE.md`](../STATE.md). Актуальный календарь агента — Google Calendar API; iCloud-скрипты являются legacy.
 
-## Google Calendar
+## Google Calendar user OAuth
 
-`/root/.openclaw/workspace/calendar/gcal_reader.py` работает с календарём `dmgromov03@gmail.com` в часовом поясе Europe/Moscow.
+`gcal_reader.py` работает с календарём `dmgromov03@gmail.com` в часовом поясе Europe/Moscow.
 
-Команды просмотра: `python3 gcal_reader.py today`, `python3 gcal_reader.py week` и `python3 gcal_reader.py list --days N`.
+- OAuth client: `/root/.openclaw/credentials/gcal/oauth-client.json`
+- Refresh token: `/root/.openclaw/credentials/gcal/tokens.json`
+- Команды просмотра: `python3 gcal_reader.py today`, `python3 gcal_reader.py week`, `python3 gcal_reader.py list --days N`.
+- Создание: `python3 gcal_reader.py add "<summary>" "<YYYY-MM-DDTHH:MM>" ["<end>"] --location "..." --description "..."`.
+- Удаление через этот CLI не реализовано.
 
-Команда `add` создаёт событие: `python3 gcal_reader.py add "<summary>" "<YYYY-MM-DDTHH:MM>" ["<end>"] --location "..." --description "..."`. Для неё используются OAuth-права календаря на чтение и запись. Удаление событий через этот CLI не реализовано.
+OAuth consent screen должен быть опубликован владельцем в Google Cloud Console. Пока приложение находится в Testing, refresh tokens могут истекать примерно через 7 дней.
 
-## Устаревший iCloud
+## Legacy iCloud
 
-Старые команды iCloud сохранены только как справочная legacy-документация:
-
-```text
-python3 icloud_calendar.py add "<summary>" "<DD.MM.YYYY HH:MM>" [minutes]
-python3 icloud_calendar.py today|week|month
-python3 icloud_calendar.py delete --search "<часть названия>"
-```
-
-Старый бот `bot.py` отключён.
-
-## Автоматизации (cron)
-
-`daily-digest` запускается ежедневно в 09:00 MSK, а `server-check` — ежедневно в 10:00 MSK. Новые автоматизации создавать через `openclaw cron add` с явно указанным часовым поясом `Europe/Moscow` и адресатом владельца.
+`icloud_calendar.py` и iCloud-код hub не использовать для новых работ. Их удаление — отдельная миграция после проверки, что Google flow покрывает все нужные сценарии.

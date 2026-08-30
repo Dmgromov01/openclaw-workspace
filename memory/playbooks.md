@@ -10,11 +10,10 @@
 - Перед предложением кода: проверка синтаксиса (node --check / python3 -m py_compile / bash -n) + локальный прогон.
 
 ## Экстренный протокол (сбой сервиса)
-1. Зафиксировать ошибку: `journalctl -u <unit> -n 30 --no-pager` (после run6 gateway без --user).
+1. Зафиксировать ошибку: `journalctl -u <unit> -n 30 --no-pager`.
 2. Определить статус: `systemctl is-active openclaw-gateway r2d2-hub telegram-user-svc`.
-3. Дать точные команды восстановления, НЕ «починить вслепую».
-4. Рестарт шлюза: `systemctl restart openclaw-gateway` (без --user, без SIGUSR1).
-5. Если system-юнит ещё не переведён: `export XDG_RUNTIME_DIR=/run/user/0; systemctl --user restart openclaw-gateway`.
+3. Дать точные команды восстановления, НЕ «чинить вслепую».
+4. Gateway — только system unit: `systemctl restart openclaw-gateway` с SSH и только по явному разрешению. User-unit не существует и не должен возвращаться.
 
 ## Частые операции
 - Дайджест: `python3 /root/openclaw/calendar/digest.py` (--no-send для вывода без отправки).

@@ -4,6 +4,8 @@
 новым участникам, которые не знают бота.
 
 Требует TG_API_ID / TG_API_HASH в /root/tg_bot/.env + рабочую сессию anon_session.session.
+Перед отправкой получатель должен быть явно внесён в TG_ALLOWED_RECIPIENTS
+(список username или numeric ID через запятую) в том же .env.
 
 Использование:
   python3 tg_sender.py send <username> "<текст>"
@@ -12,15 +14,42 @@
   python3 tg_sender.py me    — проверить авторизацию
 """
 
+import asyncio
 import os
 import sys
-import asyncio
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    # The process can still use credentials already provided by its environment.
+    def load_dotenv(*_args, **_kwargs):
+        return False
+
 
 load_dotenv("/root/tg_bot/.env")
 
 TG_API_ID = os.getenv("TG_API_ID", "").strip()
 TG_API_HASH = os.getenv("TG_API_HASH", "").strip()
+TG_ALLOWED_RECIPIENTS = frozenset(
+    item.strip().lstrip("@").lower()
+    for item in os.getenv("TG_ALLOWED_RECIPIENTS", "").split(",")
+    if item.strip()
+)
+
+
+def _recipient_key(value: str) -> str:
+    return str(value).strip().lstrip("@").lower()
+
+
+def _ensure_allowed(recipient: str) -> None:
+    """Fail closed unless the recipient is explicitly configured as trusted."""
+    key = _recipient_key(recipient)
+    if not TG_ALLOWED_RECIPIENTS:
+        raise RuntimeError(
+            "TG_ALLOWED_RECIPIENTS не задан: сначала явно настрой список разрешённых получателей."
+        )
+    if key not in TG_ALLOWED_RECIPIENTS:
+        raise RuntimeError(f"Получатель не входит в TG_ALLOWED_RECIPIENTS: {recipient}")
 
 
 def _make_client():
@@ -52,10 +81,9 @@ async def _resolve_entity(client, username: str):
     if u.startswith("@"):
         u = u[1:]
     try:
-        entity = await client.get_entity(u)
-        return entity
-    except Exception as e:
-        raise RuntimeError(f"Не удалось найти пользователя @{u}: {e}")
+        return await client.get_entity(u)
+    except Exception as exc:
+        raise RuntimeError(f"Не удалось найти пользователя @{u}: {exc}") from exc
 
 
 async def _send_text(client, entity, text: str):
@@ -69,6 +97,7 @@ async def _send_file(client, entity, path: str, caption: str = ""):
 
 
 async def send_text(username: str, text: str) -> str:
+    _ensure_allowed(username)
     client = _make_client()
     await client.connect()
     try:
@@ -81,6 +110,7 @@ async def send_text(username: str, text: str) -> str:
 
 
 async def send_file(username: str, path: str, caption: str = "") -> str:
+    _ensure_allowed(username)
     client = _make_client()
     await client.connect()
     try:
@@ -105,7 +135,7 @@ async def check_me() -> str:
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
-        sys.exit(2)
+        return 2
     cmd = sys.argv[1]
 
     try:
@@ -116,17 +146,17 @@ def main():
         elif cmd == "send_file" and len(sys.argv) >= 4:
             caption = sys.argv[4] if len(sys.argv) > 4 else ""
             print(asyncio.run(send_file(sys.argv[2], sys.argv[3], caption)))
-        elif cmd == "send_photo":
-            # аналог send_file (Telethon сам определит тип по расширению)
+        elif cmd == "send_photo" and len(sys.argv) >= 4:
             caption = sys.argv[4] if len(sys.argv) > 4 else ""
             print(asyncio.run(send_file(sys.argv[2], sys.argv[3], caption)))
         else:
             print(__doc__)
-            sys.exit(2)
-    except Exception as e:
-        print(f"Ошибка: {e}", file=sys.stderr)
-        sys.exit(1)
+            return 2
+    except Exception as exc:
+        print(f"Ошибка: {exc}", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

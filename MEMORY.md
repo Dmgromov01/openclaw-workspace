@@ -33,9 +33,10 @@
 - **dmkz.org** — заброшен (Timeweb), не использовать.
 - Креды R2/Cloudflare: `/root/.openclaw/credentials/cloudflare/r2.json` (chmod 600, вне git).
 
-## Календарь = Google, не iCloud
-- `calendar/gcal_reader.py` + SA `/root/.openclaw/credentials/gcal/`. Команды: today / week / list --days N. Europe/Moscow.
-- Google API пока только читает. iCloud-скрипты удалены.
+## Календарь = Google OAuth
+- `calendar/gcal_reader.py` использует user OAuth: `/root/.openclaw/credentials/gcal/oauth-client.json` + `tokens.json`; команды `today`, `week`, `list`, `add`. Europe/Moscow.
+- Hub имеет отдельный Google OAuth flow; iCloud-код в hub — legacy и не является каноном.
+- OAuth consent screen должен быть Production, иначе refresh-token в Testing может истекать примерно через 7 дней.
 - Кнопки расписания → gcal_reader, в чат только `• ДД.ММ.ГГГГ ЧЧ:ММ — summary`.
 
 ## Дайджест
@@ -51,7 +52,7 @@
 
 ## Уроки
 - Два gateway (user + system) на :18789 = мёртвый бот. User снесён 27.08.
-- `openclaw config set` посреди сессии → reload → шлюз падает. Не крутить конфиг самому.
+- Конфиг OpenClaw меняется только по прямому ТЗ через `openclaw config set` с последующей `openclaw config validate`; не редактировать JSON и не делать это из Telegram-агента.
 - Не добавлять модель в primary до каталога провайдера.
 - DeepSeek id: `deepseek-chat` и `deepseek-reasoner` оба → v4-flash.
 - Компакция: `keepRecentTokens` держать выше пика диалога, иначе overflow → already_compacted → бот «мёртв».

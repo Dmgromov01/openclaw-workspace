@@ -7,7 +7,7 @@
 - Агентский CLI: `calendar/gcal_reader.py` (`today`, `week`, `list --days N`, `add`).
 - Авторизация: **user OAuth** — `/root/.openclaw/credentials/gcal/oauth-client.json` + `tokens.json`; это не service account.
 - OAuth consent screen должен быть переведён владельцем из Testing в Production, иначе refresh-токены могут истекать через 7 дней.
-- Hub пока содержит legacy iCloud-код; не считать его рабочим каноном и не удалять без отдельной миграции/проверки.
+- Хаб: живой календарь — Google. iCloud UI и автосинк отключены; CalDAV-код и таблица `hub_icloud` dormant, не дропать без отдельной миграции.
 
 ## Модели и память
 - Обычный чат: `deepseek/deepseek-v4-flash`; глубокие задачи: `deepseek/deepseek-v4-pro`; фото: `deepseek/deepseek-v4-flash-vision-exp`.

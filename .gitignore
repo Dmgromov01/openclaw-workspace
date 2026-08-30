@@ -44,4 +44,5 @@ session*
 # Runtime data and private generated artifacts
 /memory/MEMORY-fat-*.md
 /memory/.dreams/
+/memory/dreaming/
 /reports/*.xlsx

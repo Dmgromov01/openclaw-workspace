@@ -6,7 +6,9 @@ session.session
 anon_session.session
 qr_token.txt
 pending_code_hash.txt
-*config*.json
+# OpenClaw runtime configuration (never commit)
+openclaw.json
+openclaw.json.*
 openclaw-workspace-state.json
 
 # Папки, не для репозитория
@@ -39,4 +41,7 @@ credentials
 *.key
 *.token
 session*
+# Runtime data and private generated artifacts
 /memory/MEMORY-fat-*.md
+/memory/.dreams/
+/reports/*.xlsx

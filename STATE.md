@@ -27,3 +27,6 @@
 ## Guardrails
 - `openclaw.json` и credentials не править руками; только `openclaw config set` + validate по прямому ТЗ.
 - Не менять ufw, zram, bind gateway или `tools.allow=[]` hub без прямого ТЗ.
+
+## TZ-CLOSEOUT 2026-08-31
+В работе. Канон не менять сверх S1–S7. Закрытие = docs/TZ-CLOSEOUT-2026-08-31.md на origin.

@@ -34,6 +34,9 @@ class ExcelSkillsHandler:
         try:
             safe_query = validate_read_only_query(query)
             conn = duckdb.connect(database=":memory:")
+            # Lock file/network access at the engine level; regex validation above
+            # is only the first layer and must not be the only boundary.
+            conn.execute("SET enable_external_access=false")
             try:
                 for table_name, df in _read_tables(file_path):
                     df.columns = [re.sub(r"[^a-zA-Z0-9_]+", "_", str(c).strip().lower()).strip("_") or "column" for c in df.columns]

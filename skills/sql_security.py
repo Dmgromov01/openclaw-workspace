@@ -2,10 +2,8 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
-# DuckDB exposes files through table functions and shorthand string paths.  A
-# read-only SELECT is not safe if it can make the database read arbitrary local
-# files or load extensions, so reject those forms before execution.
 _FORBIDDEN = re.compile(
     r"(?:"
     r"\b(?:attach|copy|create|delete|drop|export|import|insert|install|load|pragma|replace|update|vacuum)\b"
@@ -20,7 +18,9 @@ _FORBIDDEN = re.compile(
 
 def validate_read_only_query(query: str) -> str:
     """Allow one read-only query and reject file access or mutating statements."""
-    value = query.strip().rstrip(";").strip()
+    value = unicodedata.normalize("NFKC", query)
+    value = re.sub(r"\s+", " ", value).strip().rstrip(";").strip()
+    value = re.sub(r"\bread\s+(csv|json|parquet)\b", r"read_\1", value, flags=re.IGNORECASE)
     if not value or ";" in value:
         raise ValueError("разрешён только один SQL-запрос")
     if not re.match(r"^(?:select|with)\b", value, re.IGNORECASE):

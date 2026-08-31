@@ -30,10 +30,10 @@ __pycache__/
 
 # Python venv
 venv/
+.venv/
 .clawpatch/
 
 # Runtime data (не для git)
-.venv/
 *.db
 *.sqlite
 travel/am_captcha*.jpg
@@ -41,7 +41,7 @@ credentials
 *.key
 *.token
 session*
-# Runtime data and private generated artifacts
 /memory/MEMORY-fat-*.md
 /memory/.dreams/
+/memory/dreaming/
 /reports/*.xlsx

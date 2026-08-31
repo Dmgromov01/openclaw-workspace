@@ -1,19 +1,17 @@
 # Интеграция с календарём
 
-> Канон runtime-состояния: [`../STATE.md`](../STATE.md). Актуальный календарь агента — Google Calendar API; iCloud-скрипты являются legacy.
+> Канон: [`../STATE.md`](../STATE.md). Агент ходит в Google Calendar API через user OAuth; iCloud у агента нет.
 
 ## Google Calendar user OAuth
 
-`gcal_reader.py` работает с календарём `dmgromov03@gmail.com` в часовом поясе Europe/Moscow.
+`gcal_reader.py` — календарь `dmgromov03@gmail.com`, Europe/Moscow.
 
 - OAuth client: `/root/.openclaw/credentials/gcal/oauth-client.json`
 - Refresh token: `/root/.openclaw/credentials/gcal/tokens.json`
-- Команды просмотра: `python3 gcal_reader.py today`, `python3 gcal_reader.py week`, `python3 gcal_reader.py list --days N`.
-- Создание: `python3 gcal_reader.py add "<summary>" "<YYYY-MM-DDTHH:MM>" ["<end>"] --location "..." --description "..."`.
+- Просмотр: `python3 gcal_reader.py today`, `week`, `list --days N`
+- Создание: `python3 gcal_reader.py add "<summary>" "<YYYY-MM-DDTHH:MM>" ["<end>"] --location "..." --description "..."`
 - Удаление через этот CLI не реализовано.
 
-OAuth consent screen должен быть опубликован владельцем в Google Cloud Console. Пока приложение находится в Testing, refresh tokens могут истекать примерно через 7 дней.
+Consent screen в Google Cloud должен быть **Production**. В Testing refresh-токен живёт примерно 7 дней.
 
-## Legacy iCloud
-
-`icloud_calendar.py` и iCloud-код hub не использовать для новых работ. Их удаление — отдельная миграция после проверки, что Google flow покрывает все нужные сценарии.
+Хаб (`atlas-green-pearl-dawn`) имеет отдельный Google OAuth в PGLite. iCloud UI/автосинк в hub отключены, но dormant CalDAV-код и таблица `hub_icloud` не удалять без отдельной миграции.

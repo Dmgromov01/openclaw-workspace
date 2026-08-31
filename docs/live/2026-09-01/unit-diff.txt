@@ -1,31 +1,6 @@
-=== git services/r2d2-hub.service ===
-[Unit]
-Description=R2D2 Personal AI Hub (Nitro node-server, :8091 loopback)
-After=network-online.target
-Wants=network-online.target
-StartLimitBurst=8
-StartLimitIntervalSec=120
-
-[Service]
-Type=simple
-WorkingDirectory=/root/atlas-green-pearl-dawn
-EnvironmentFile=/root/atlas-green-pearl-dawn/.env
-ExecStart=/usr/bin/node /root/atlas-green-pearl-dawn/.output/server/index.mjs
-Restart=always
-RestartSec=5
-TimeoutStopSec=30
-Environment=HOME=/root
-Environment=NODE_ENV=production
-Environment=NITRO_PORT=8091
-Environment=NITRO_HOST=127.0.0.1
-Environment=PORT=8091
-Environment=HOST=127.0.0.1
-
-[Install]
-WantedBy=multi-user.target
-=== live r2d2-hub ExecStart ===
-ExecStart={ path=/usr/bin/node ; argv[]=/usr/bin/node /root/atlas-green-pearl-dawn/.output/server/index.mjs ; ignore_errors=no ; start_time=[Mon 2026-08-31 21:19:24 UTC] ; stop_time=[n/a] ; pid=230642 ; code=(null) ; status=0/0 }
-Environment=HOME=/root NODE_ENV=production NITRO_PORT=8091 NITRO_HOST=127.0.0.1 PORT=8091 HOST=127.0.0.1
-WorkingDirectory=/root/atlas-green-pearl-dawn
-DIFF=YES
-DIFF_FIELDS=full unit text differs; live fields captured above
+DIFF=NO
+ExecStart git: /usr/bin/node /root/atlas-green-pearl-dawn/.output/server/index.mjs
+ExecStart live: /usr/bin/node /root/atlas-green-pearl-dawn/.output/server/index.mjs
+NITRO_HOST live: HOME=/root NODE_ENV=production NITRO_PORT=8091 NITRO_HOST=127.0.0.1 PORT=8091 HOST=127.0.0.1
+WorkingDirectory live: /root/atlas-green-pearl-dawn
+Причина прошлого DIFF=YES: сравнивался unit file с форматированным systemctl show. Содержимое ExecStart/NITRO_HOST/PORT совпадает с services/r2d2-hub.service. Live unit не менялся.

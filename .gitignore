@@ -18,6 +18,10 @@ media/
 calendar/anon_session.session
 tg-mtproto/
 node_modules/
+# Extra-agent OpenClaw workspaces (runtime, not source). Stock name is
+# workspace-chat; keep the glob so workspace-opus/etc. never get committed.
+workspace-chat/
+workspace-*/
 
 # Логи и временное
 *.log

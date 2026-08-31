@@ -1,0 +1,71 @@
+# /etc/systemd/system/r2d2-hub.service
+[Unit]
+Description=R2D2 Personal AI Hub (Nitro node-server, :8091 loopback)
+After=network-online.target
+Wants=network-online.target
+StartLimitBurst=8
+StartLimitIntervalSec=120
+
+[Service]
+Type=simple
+WorkingDirectory=/root/atlas-green-pearl-dawn
+EnvironmentFile=/root/atlas-green-pearl-dawn/.env
+ExecStart=/usr/bin/node /root/atlas-green-pearl-dawn/.output/server/index.mjs
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+Environment=HOME=/root
+Environment=NODE_ENV=production
+Environment=NITRO_PORT=8091
+Environment=NITRO_HOST=127.0.0.1
+Environment=PORT=8091
+Environment=HOST=127.0.0.1
+
+[Install]
+WantedBy=multi-user.target
+
+# /etc/systemd/system/openclaw-gateway.service
+[Unit]
+Description=OpenClaw Gateway (system, :18789 loopback)
+After=network-online.target
+Wants=network-online.target
+StartLimitBurst=5
+StartLimitIntervalSec=120
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/openclaw
+Environment=HOME=/root
+Environment=OPENCLAW_SERVICE_REPAIR_POLICY=external
+Environment=OPENCLAW_NO_RESPAWN=1
+Environment=NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache
+ExecStart=/usr/bin/openclaw gateway --port 18789
+Restart=always
+RestartSec=5
+RestartPreventExitStatus=78
+TimeoutStopSec=30
+TimeoutStartSec=30
+SuccessExitStatus=0 143
+OOMPolicy=continue
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target
+
+# /etc/systemd/system/telegram-user-svc.service
+[Unit]
+Description=Telegram user service (MTProto/Telethon) — HTTP API 127.0.0.1:8765
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/telegram-user-svc
+ExecStart=/root/telegram-user-svc/venv/bin/python /root/telegram-user-svc/server.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,7 @@
 # OpenClaw Workspace
 
 Личное рабочее пространство OpenClaw-агента. Репозиторий приватный; секреты, сессии и runtime credentials хранятся вне git.
+Канон живой инфры: STATE.md. Не читать docs/archive/ как конфиг.
 
 ## Структура
 
@@ -34,9 +35,17 @@ python3 calendar/gcal_reader.py add "<summary>" "<YYYY-MM-DDTHH:MM>" ["<end>"] -
 
 ## Telegram
 
-`calendar/tg_sender.py` использует личную Telethon-сессию только для получателей из `TG_ALLOWED_RECIPIENTS` в `/root/tg_bot/.env`. Значения задаются через запятую, например `TG_ALLOWED_RECIPIENTS=trusted_user,1916536646`. Пустой список блокирует отправку. Проверка `me` не отправляет сообщения и allowlist не требует.
+Операторский бот: @Dmbotmy_bot → агент main.
+Пейджер хаба: @HubAlertsbot (токен только в .env хаба, не здесь).
 
-`bot/file_handler.py` ограничивает документы расширениями `.xlsx`, `.xls`, `.csv`, `.pdf`, размером 25 МБ, безопасным именем и уникальным путём под storage directory. Динамический текст экранируется перед отправкой в Telegram HTML.
+Отправка из workspace CLI: calendar/bot_sender.py
+(токен через services.digest.secrets.read_secret_ref, TG_OWNER_CHAT_ID).
+calendar/tg_sender.py и calendar/ics_generator.py перенесены в
+archive/2026-08-31/calendar/ — не живой путь, не cron, не импортировать.
+
+bot/file_handler.py ограничивает документы расширениями .xlsx .xls .csv .pdf,
+размером 25 МБ, безопасным именем и уникальным путём. Динамический текст
+экранируется перед Telegram HTML.
 
 ## Дайджест и внешние сервисы
 

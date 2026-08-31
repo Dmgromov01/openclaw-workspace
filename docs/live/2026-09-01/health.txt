@@ -1,0 +1,9 @@
+utc 2026-08-31T22:48:41Z
+loopback_healthz 200
+{"status":"ok"}
+loopback_readyz 200
+{"status":"ready","checks":{"database":true,"gateway":true}}
+public_healthz 200
+{"status":"ok"}
+public_readyz 200
+{"status":"ready","checks":{"database":true,"gateway":true}}

@@ -8,6 +8,8 @@ const crypto = require("crypto");
 const KEY_FILE = "/root/.openclaw/credentials/jina.key";
 const CACHE_FILE = "/root/.openclaw/cache/jina_rag.json";
 const DEFAULT_PATHS = ["/root/openclaw/MEMORY.md", "/root/openclaw/memory"];
+// RAG читает только файлы внутри воркспейса; любые inputPaths вне этих корней отклоняются.
+const ALLOWED_ROOTS = [path.resolve("/root/openclaw")];
 const HTTP_TIMEOUT_MS = 30000;
 const MAX_FILES = 200;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
@@ -74,8 +76,23 @@ async function search(query, maxChars = MAX_SEARCH_CHARS) {
 }
 
 // ---- 3+4. RAG: embeddings -> кандидаты -> rerank -> топ ----
+function assertAllowedRoots(roots) {
+  for (const root of roots) {
+    const resolved = path.resolve(String(root));
+    const allowed = ALLOWED_ROOTS.some(
+      (allowedRoot) => resolved === allowedRoot || resolved.startsWith(allowedRoot + path.sep),
+    );
+    if (!allowed) {
+      throw new Error(
+        `Путь вне разрешённых корней RAG: ${root} (разрешено: ${ALLOWED_ROOTS.join(", ")})`,
+      );
+    }
+  }
+}
+
 function collectFiles(inputPaths) {
   const roots = inputPaths && inputPaths.length ? inputPaths : DEFAULT_PATHS;
+  assertAllowedRoots(roots);
   const files = [];
   const seen = new Set();
 
@@ -260,6 +277,7 @@ module.exports = {
   search,
   rag,
   collectFiles,
+  assertAllowedRoots,
   chunkText,
   getIndex,
   externalRagAllowed,

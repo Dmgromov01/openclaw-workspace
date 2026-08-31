@@ -3,24 +3,31 @@
 Отправка приглашений через бота @Dmbotmy_bot (Bot API) — схема "дублирование владельцу".
 
 Логика: когда пользователь создаёт встречу с @ником, бот шлёт ГОТОВОЕ приглашение
-(текст + .ics-файл) на chat_id владельца (1916536646). Владелец сам пересылает
-его контакту — это обходит ограничение Telegram "бот не может писать первым".
+(текст + .ics-файл) на chat_id владельца. Владелец сам пересылает его контакту —
+это обходит ограничение Telegram "бот не может писать первым".
 
 Использование:
   python3 bot_sender.py send <username> "<текст>" <файл.ics>
   python3 bot_sender.py test   — проверить токен/доставку
 """
 
+import json
 import os
 import sys
-import json
-import subprocess
+from pathlib import Path
 
-OWNER_CHAT_ID = "1916536646"  # @Dm_GRM
+# Запуск из calendar/ не должен ломать импорт общего модуля workspace.
+WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
+if str(WORKSPACE_ROOT) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_ROOT))
+
+from services.digest.secrets import read_secret_ref  # noqa: E402
+
+OWNER_CHAT_ID = os.getenv("TG_OWNER_CHAT_ID", "1916536646")  # @Dm_GRM
 
 
 def _get_token() -> str:
-    cfg_path = "/root/.openclaw/openclaw.json"
+    cfg_path = WORKSPACE_ROOT.parent / ".openclaw" / "openclaw.json"
     with open(cfg_path) as f:
         cfg = json.load(f)
     tg = cfg.get("channels", {}).get("telegram", {})
@@ -28,21 +35,15 @@ def _get_token() -> str:
     tok = (tg.get("accounts", {}).get("default", {}) or {}).get("botToken", "")
     if not tok:
         tok = tg.get("botToken", "")
-    # файловая ссылка — пытаемся прочитать файл
-    if isinstance(tok, dict):
-        fid = tok.get("id")
-        if fid and fid != "__OPENCLAW_REDACTED__":
-            try:
-                with open(fid) as f:
-                    tok = f.read().strip()
-            except Exception:
-                tok = ""
-    if not tok or not isinstance(tok, str):
+    # Единый резолвер секретов: строка или file-ссылка {source, id}.
+    resolved = read_secret_ref(tok)
+    if not resolved or resolved == "__OPENCLAW_REDACTED__":
         raise RuntimeError("botToken не найден в конфиге OpenClaw")
-    return tok
+    return resolved
 
 
 def _api(method: str, **params) -> dict:
+    import urllib.error
     import urllib.parse
     import urllib.request
 
@@ -50,15 +51,23 @@ def _api(method: str, **params) -> dict:
     url = f"https://api.telegram.org/bot{tok}/{method}"
     data = urllib.parse.urlencode(params).encode()
     req = urllib.request.Request(url, data=data)
-    with urllib.request.urlopen(req, timeout=25) as resp:
-        return json.loads(resp.read().decode())
+    try:
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            return json.loads(resp.read().decode())
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode(errors="replace")
+        raise RuntimeError(f"Telegram API {exc.code}: {body[:300]}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Telegram API недоступен: {exc.reason}") from exc
 
 
 def send_text_to_owner(text: str) -> str:
     # Сначала пробуем с HTML; при 400 (битый HTML в контенте) — повторяем без parse_mode
     try:
         r = _api("sendMessage", chat_id=OWNER_CHAT_ID, text=text, parse_mode="HTML")
-    except urllib.error.HTTPError:
+    except RuntimeError as exc:
+        if "Telegram API 400" not in str(exc):
+            raise
         r = _api("sendMessage", chat_id=OWNER_CHAT_ID, text=text)
     if not r.get("ok"):
         raise RuntimeError(f"sendMessage: {r.get('description')}")

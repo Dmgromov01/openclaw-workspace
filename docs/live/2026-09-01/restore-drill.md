@@ -1,0 +1,8 @@
+# Restore drill
+
+pglite archive: pglite-20260831.tar.gz size=26569756 gzip-t=pass
+openclaw-state archive: openclaw-state-20260831.tar.gz size=251199269 gzip-t=pass
+tar top paths: pglite/;pglite/pg_notify/;pglite/pg_serial/;pglite/base/;pglite/base/5/;pglite/base/5/16421;pglite/base/5/3164;pglite/base/5/6237;pglite/base/5/16565;pglite/base/5/6112;
+extracted dirs: /tmp/r2d2-restore-drill;/tmp/r2d2-restore-drill/pglite;/tmp/r2d2-restore-drill/pglite/pg_notify;/tmp/r2d2-restore-drill/pglite/pg_serial;/tmp/r2d2-restore-drill/pglite/base;/tmp/r2d2-restore-drill/pglite/base/5;/tmp/r2d2-restore-drill/pglite/base/4;/tmp/r2d2-restore-drill/pglite/base/1;/tmp/r2d2-restore-drill/pglite/pg_tblspc;/tmp/r2d2-restore-drill/pglite/pg_logical;/tmp/r2d2-restore-drill/pglite/pg_logical/snapshots;/tmp/r2d2-restore-drill/pglite/pg_logical/mappings;/tmp/r2d2-restore-drill/pglite/pg_replslot;/tmp/r2d2-restore-drill/pglite/pg_commit_ts;/tmp/r2d2-restore-drill/pglite/pg_snapshots;/tmp/r2d2-restore-drill/pglite/global;/tmp/r2d2-restore-drill/pglite/pg_xact;/tmp/r2d2-restore-drill/pglite/pg_wal;/tmp/r2d2-restore-drill/pglite/pg_wal/archive_status;/tmp/r2d2-restore-drill/pglite/pg_wal/summaries;/tmp/r2d2-restore-drill/pglite/pg_twophase;/tmp/r2d2-restore-drill/pglite/pg_subtrans;/tmp/r2d2-restore-drill/pglite/pg_stat_tmp;/tmp/r2d2-restore-drill/pglite/pg_dynshmem;/tmp/r2d2-restore-drill/pglite/pg_multixact;/tmp/r2d2-restore-drill/pglite/pg_multixact/members;/tmp/r2d2-restore-drill/pglite/pg_multixact/offsets;/tmp/r2d2-restore-drill/pglite/pg_stat;
+live PGLite not touched
+OFFSITE=no, backups live on same disk as data

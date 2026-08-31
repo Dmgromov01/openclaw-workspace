@@ -29,4 +29,8 @@
 - Не менять ufw, zram, bind gateway или `tools.allow=[]` hub без прямого ТЗ.
 
 ## TZ-CLOSEOUT 2026-08-31
-В работе. Канон не менять сверх S1–S7. Закрытие = docs/TZ-CLOSEOUT-2026-08-31.md на origin.
+TZ-CLOSEOUT 2026-08-31 закрыт, отчёт docs/TZ-CLOSEOUT-2026-08-31.md.
+
+## TZ-CANON 2026-09-01
+В работе. Канон документов. Не nginx, не systemd, не PGLite.
+Закрытие = docs/TZ-CANON-2026-09-01.md на origin.

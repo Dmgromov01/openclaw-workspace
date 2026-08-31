@@ -45,5 +45,4 @@ TZ-PROOF закрыт, отчёт docs/TZ-PROOF-2026-09-01.md.
 5. Снос .vercel/output только после подтверждённого релиз-цикла живого .output.
 
 ## TZ-PROOF-FIX 2026-09-01
-В работе. Добить inventory/health/unit-diff. Не nginx, не релиз.
-Закрытие = docs/TZ-PROOF-FIX-2026-09-01.md на origin.
+TZ-PROOF-FIX закрыт, отчёт docs/TZ-PROOF-FIX-2026-09-01.md.

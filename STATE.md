@@ -34,3 +34,10 @@ TZ-CLOSEOUT 2026-08-31 закрыт, отчёт docs/TZ-CLOSEOUT-2026-08-31.md.
 ## TZ-CANON 2026-09-01
 В работе. Канон документов. Не nginx, не systemd, не PGLite.
 Закрытие = docs/TZ-CANON-2026-09-01.md на origin.
+
+## Не сейчас (отдельное ТЗ, не делать самовольно)
+1. PGLite → PostgreSQL: только после isolated dump/restore/rollback.
+2. SecretRefs: только после inventory имён секретов и плана ротации.
+3. CalDAV/iCloud: не DROP hub_icloud, пока Google parity и backup не доказаны.
+4. Карта Better Auth / migrations/auth до любого удаления зависимости.
+5. Снос .vercel/output только после подтверждённого релиз-цикла живого .output.

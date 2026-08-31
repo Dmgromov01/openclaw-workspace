@@ -12,6 +12,5 @@
 - Gateway рестартовать только с SSH и явным разрешением; второй gateway не создавать.
 - Mini App мёртв; семейный сайт — `https://hub.gbkz.uk`.
 - Внешние действия требуют согласования; heartbeat не рестартует сервисы.
-- Не кормить себя `docs/PROMPT-run6.md` и `docs/run6*`.
-
-- Не кормить себя docs/PROMPT-run6.md и docs/run6*.
+- Не кормить себя docs/archive/run6* и docs/archive/PROMPT-run6.md.
+  Не запускать docs/archive/P0* / P1*.

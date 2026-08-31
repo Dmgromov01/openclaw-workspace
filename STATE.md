@@ -35,8 +35,7 @@ TZ-CLOSEOUT 2026-08-31 закрыт, отчёт docs/TZ-CLOSEOUT-2026-08-31.md.
 TZ-CANON закрыт, отчёт docs/TZ-CANON-2026-09-01.md.
 
 ## TZ-PROOF 2026-09-01
-В работе. Live snapshots + restore-drill + optional hub release.
-Закрытие = docs/TZ-PROOF-2026-09-01.md на origin.
+TZ-PROOF закрыт, отчёт docs/TZ-PROOF-2026-09-01.md.
 
 ## Не сейчас (отдельное ТЗ, не делать самовольно)
 1. PGLite → PostgreSQL: только после isolated dump/restore/rollback.

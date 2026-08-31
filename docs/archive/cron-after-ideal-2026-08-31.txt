@@ -1,0 +1,8 @@
+0 5 * * 1 /root/openclaw/services/clawpatch-weekly.sh
+30 6 * * * bash /root/openclaw/healthcheck.sh >> /root/openclaw/healthcheck.log 2>&1
+10 6,18 * * * /usr/bin/python3 /root/openclaw/travel/flight_api.py >> /root/openclaw/travel/flight_api.log 2>&1
+35 6 * * * /bin/sh /root/openclaw/services/disk-check.sh >> /var/log/disk-check.log 2>&1
+* * * * * /bin/sh /root/openclaw/services/loop-watchdog-cron.sh >/dev/null 2>&1
+* * * * * /bin/sh /root/atlas-green-pearl-dawn/scripts/hub-watchdog-cron.sh >/dev/null 2>&1
+15 3 * * * /root/atlas-green-pearl-dawn/scripts/hub-backup.sh
+*/5 * * * * /bin/sh /root/atlas-green-pearl-dawn/scripts/hub-tick-cron.sh >/dev/null 2>&1

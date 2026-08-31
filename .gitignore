@@ -50,3 +50,6 @@ session*
 /memory/.dreams/
 /memory/dreaming/
 /reports/*.xlsx
+
+/hub/
+travel/*_state.json

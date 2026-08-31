@@ -1,29 +1,10 @@
-# Сообщение, которое Дмитрий шлёт тебе в Telegram
+# Команда для работ с R2D2 Hub
 
-Скопируй блок «Фаза 1» или «Фаза 2» как есть.
-
----
-
-## Фаза 1 (старт сейчас)
-
-```
-Прочти skills/r2d2-hub/SKILL.md и skills/r2d2-hub/INSTALL.md.
-
-Сделай только фазу 1: патчи безопасности и OpenClaw-маршрут в текущем Python Mini App.
-Не меняй nginx. Не ставь Node. Не трогай календарь.
-
-После: краткий отчёт что сменил, перезапусти мини-апп, обнови STATE.md.
-Секреты из env не печатай.
-```
-
----
-
-## Фаза 2 (когда исходник хаба уже на GitHub)
-
-```
-Прочти skills/r2d2-hub/SKILL.md и INSTALL.md, фаза 2.
-
-Исходник нового хаба: репо Dmgromov01/r2d2-hub (приватный).
-Поставь рядом с Python, не вместо. nginx сначала на /miniapp-next/. Корень сайта не трогай — там gateway.
-Если сборка упирается по RAM — остановись и скажи, не убивай OpenClaw.
+```text
+Прочти skills/r2d2-hub/SKILL.md и INSTALL.md.
+Работай только с сайтом https://hub.gbkz.uk: systemd r2d2-hub,
+Nitro .output/server/index.mjs на 127.0.0.1:8091.
+Не возвращай Mini App, Python miniapp, :8080, Telegram HMAC/initData,
+vite preview, Vercel или второй gateway. Не включай tools агенту hub.
+Перед systemd/nginx/cron сделай inspection и backup. После build проверь /, /healthz, /readyz.
 ```

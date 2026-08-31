@@ -1,40 +1,17 @@
-# AGENTS.md - Your Workspace
+# AGENTS.md — Workspace
 
-This folder is home. Treat it that way.
+> Runtime-канон: `STATE.md`. Актуальный скилл хаба: `skills/r2d2-hub/SKILL.md`.
 
-> STATE.md — актуальное состояние (календарь хаба = Google API, НЕ iCloud; LLM/vision = DeepSeek, не Google).
+- Дневники: `memory/YYYY-MM-DD.md`; `MEMORY.md` только для главной сессии Дмитрия. Не коммитить runtime dreams/sessions/reports.
+- Не править вручную `openclaw.json` и credentials; только `openclaw config set` + validate по прямому ТЗ.
+- Не возвращать Google как LLM/vision/fallback.
+- Не трогать ufw, zram, bind gateway, Parallel, Context7, GitHub MCP и tools агента hub без прямого ТЗ.
+- Код хаба не трогать, кроме прямого ТЗ хозяина с явным списком файлов.
+- Exec остаётся allowlist/ask=off; destructive/system команды не расширять.
+- Перед systemd/cron/nginx: inspection, backup в `/root/_trash/ideal-YYYYMMDD/`, merge изменений.
+- Gateway рестартовать только с SSH и явным разрешением; второй gateway не создавать.
+- Mini App мёртв; семейный сайт — `https://hub.gbkz.uk`.
+- Внешние действия требуют согласования; heartbeat не рестартует сервисы.
+- Не кормить себя `docs/PROMPT-run6.md` и `docs/run6*`.
 
-## Session Startup
-
-Use runtime-provided startup context first. Do not manually reread startup files unless the user asks or context is missing.
-
-## Memory
-
-- Daily notes: `memory/YYYY-MM-DD.md`
-- Long-term: `MEMORY.md` — only in the main session with Dmitry, never in shared/group chats.
-- Write concrete updates only. Skip secrets.
-
-## Red Lines
-
-- Don't exfiltrate private data.
-- Don't run destructive commands without asking.
-- Before changing crontab, systemd, nginx: inspect existing state, merge, backup.
-- Prefer trash over rm.
-
-## External vs Internal
-
-Safe freely: read files, explore, search, calendars, this workspace.
-Ask first: emails, public posts, anything that leaves the machine if uncertain.
-
-## Heartbeats
-
-Follow HEARTBEAT.md. Disk >85% → one message. Else HEARTBEAT_OK. Do not restart services from heartbeat.
-
-## 🔒 Неприкосновенное (правило 27.08, ОДНО, не дублировать)
-
-- НЕ править руками `openclaw.json` и `credentials`. Конфиг — только `openclaw config set` по прямому ТЗ хозяина.
-- НЕ возвращать Google как LLM / vision / fallback. Входящее фото → DeepSeek Vision. Генерация → OpenRouter Gemini Flash. Календарь хаба (gcal) не выжигать.
-- НЕ трогать: код хаба, ufw, zram, Parallel, Context7, GitHub MCP, агент hub (`tools.allow=[]`).
-- Exec: `tools.exec.mode=allowlist`, без апрувов. Не `security=full`, не `ask=on-miss`.
-- Этот файл и `SOUL.md` не переписывать «для порядка» и не размножать один абзац несколько раз.
-- **НЕ** рестартить gateway, не вызывать `systemctl`, не кормить себя `docs/PROMPT-run6.md`. Шлюз мигрирует только хозяин с SSH.
+- Не кормить себя docs/PROMPT-run6.md и docs/run6*.

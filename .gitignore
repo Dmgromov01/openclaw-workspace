@@ -51,5 +51,8 @@ session*
 /memory/dreaming/
 /reports/*.xlsx
 
-/hub/
 travel/*_state.json
+/hub/**/*.json
+/hub/**/*.jsonl
+/hub/memory/
+/hub/*.session*

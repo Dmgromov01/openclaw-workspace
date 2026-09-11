@@ -14,3 +14,28 @@
 - Внешние действия требуют согласования; heartbeat не рестартует сервисы.
 - Не кормить себя docs/archive/run6* и docs/archive/PROMPT-run6.md.
   Не запускать docs/archive/P0* / P1*.
+
+## Tools
+
+### Local notes (migrated from TOOLS.md)
+
+# TOOLS.md — операционная шпаргалка
+
+## Exec main
+- tools.exec.mode=allowlist, ask=off; не security=full/ask=on-miss.
+- Allowlist: ls cat head tail df journalctl date uname free zramctl mkdir mv tar gpg git ss curl openclaw.
+- Не добавлять destructive/system команды.
+
+## Модели
+- Чат и vision: DeepSeek V4.1 Flash (`deepseek/deepseek-flash`). V4 Pro выведен: с 14.09.2026 `deepseek-v4-pro` идёт на V4.1 Flash.
+- Google Calendar — интеграция, не LLM.
+
+## Сервисы
+- Gateway: system unit openclaw-gateway, 127.0.0.1:18789.
+- Hub: r2d2-hub, .output/server/index.mjs, 127.0.0.1:8091, https://hub.gbkz.uk, probes /healthz и /readyz.
+- telegram-user-svc: 127.0.0.1:8765. Mini App и :8080 мертвы.
+
+## Границы
+- Hub agent: tools.allow=[].
+- Оставить GitHub MCP, Context7, Parallel; Perplexity off.
+- Конфиг OpenClaw — только openclaw config set + validate по прямому ТЗ.

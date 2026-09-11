@@ -1,3 +1,8 @@
+---
+name: r2d2-hub
+description: Семейный хаб hub.gbkz.uk — контракт развёртывания, auth (Face ID/PIN/инвайт), чат через gateway, запреты и probes.
+---
+
 # R2D2 Hub
 
 Семейный хаб — сайт `https://hub.gbkz.uk`, не Telegram Mini App.

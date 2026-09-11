@@ -487,10 +487,15 @@ def load_series(con: sqlite3.Connection) -> dict:
 # --------------------------------------------------------------------------- #
 
 def data_quality(con: sqlite3.Connection, days: int = 30) -> dict:
-    cutoff = (local_today() - timedelta(days=days)).isoformat()
+    today = local_today()
+    # Today is still in progress, so it is not expected to be covered yet.
+    # The window is the last "days" complete days, and covered is bounded by
+    # the same window, so coverage can never exceed 1.0.
+    expected = {(today - timedelta(days=i)).isoformat() for i in range(1, days + 1)}
+    cutoff = min(expected)
     covered = {row[0] for row in con.execute(
         "SELECT DISTINCT day FROM daily_facts WHERE day >= ?", (cutoff,)).fetchall()}
-    expected = {(local_today() - timedelta(days=i)).isoformat() for i in range(days)}
+    covered &= expected
     gaps = sorted(expected - covered)
 
     gap_ranges = []

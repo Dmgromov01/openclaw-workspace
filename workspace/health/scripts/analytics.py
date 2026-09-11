@@ -1,41 +1,3 @@
-# analytics.py v2.1 — на ревью
-
-**Статус: НЕ применён, ни разу не запускался.** На диске по-прежнему v1.
-
-## Ответ на твой вопрос: biphasic sleep
-
-Ни «суммировать всё», ни «взять первый период». Поля Oura делятся по семантике:
-
-| Поле | Правило | Почему |
-|---|---|---|
-| total/deep/rem/light_sleep_duration, awake_time, time_in_bed | **сумма** по основным периодам | это тоталы за период |
-| average_hrv, average_heart_rate, average_breath | **средневзвешенное по длительности** | усреднять усреднения нельзя |
-| lowest_heart_rate | **минимум** | минимум двух минимумов — минимум |
-| efficiency, latency, score, прочее | **из основного периода** | характеристика одного цикла |
-
-Суммировать HRV/efficiency — категориальная ошибка: получится число, которого не существует. Взять только первый период — потеряешь корректную общую длительность.
-
-Практическая цена: за 30 дней `sleep = 34` записи при `daily_sleep = 31` → больше одного периода было лишь в ~3 днях. Выбор почти не двигает цифры, но там, где двигает, должен быть верным.
-
-## Что вошло в v2.1
-
-- **1–3 (синтаксис):** `__future__`, `__name__`, никаких склеек.
-- **4:** `save()` → `archive/{дата}_{отчёт}.json` + симлинк `latest_{отчёт}.json` + чистка старее 90 дней. Отчёты больше не затирают друг друга.
-- **5:** `detect_patterns(min_days=21)` + `patterns_meta` с честным `insufficient_history`, окно через `min` (в прошлой версии `max` делал окно пустышкой — я это поймал при свёртке).
-- **6:** `PRAGMA quick_check` — результат теперь проверяется, а не отбрасывается.
-- **7:** biphasic по таблице выше.
-- **8:** `MIN_OVERLAP_LAGGED = 25` + комментарий, что до ~40 дней лагированные корреляции будут пустыми.
-- **9:** `config/canonical_metrics.yaml` (опционально) с хардкод-fallback; PyYAML 6.0.1 на хосте есть.
-- **10:** `daily_context` (tags/comment), `data_quality()`, `DEBUG` через `OURA_DEBUG`, `main()` не падает сырым трейсбеком.
-
-## Два уточнения к твоему плану
-
-1. **Месячный отчёт потерялся.** В твоём списке cron только morning / evening / weekly. Изначально их было три + monthly. Либо «evening» — это он, либо надо добавить `0 7 1 * *` (1-го числа, 10:00 МСК).
-2. **`signals/` вместо `reports/`** — ни того, ни другого каталога сейчас нет; отчёты лежат прямо в `analysis/` рядом с `archive/`. Переименование сделаю, если скажешь, но менять молча не буду.
-
-## Код
-
-```python
 #!/usr/bin/env python3
 """Analytics core v2.1 for the Oura data set - production ready.
 
@@ -712,8 +674,6 @@ def detect_patterns(series: dict, resolved: dict,
             if len(eligible) < 3 or len(control) < 5:
                 continue
             confounded = len(cases) - len(eligible)
-            # v1-compatible aliases consumed by weekly_report.py/morning_report.py
-            _ = confounded
             if len(eligible) < 3:
                 continue
             deltas = [c["delta_next"] for c in eligible if c["delta_next"] is not None]
@@ -884,4 +844,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-```

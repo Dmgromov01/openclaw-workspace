@@ -527,7 +527,7 @@ Namespace корректен по замыслу: `QUEUE_PREFIX="nova"` + name �
 | 12.09 | 2026.9.4 | Composio установлен, hub scripts fixed |
 | 14.09 | 2026.9.4 | Текущая сессия, модель relaymodels/kimi-k2.7-code |
 | 17–18.09 | 2026.9.4 | NOVA развёрнут: `nova.gbkz.uk`, personal-hub.service :8093, 20 таблиц; Docker-сеть `internal: true` + закреплённые IP; BullMQ-проба (воркер не запущен) |
-| 18.09 | 2026.9.4 | Git sync: коммит `f843ad3d`, 116 файлов в `origin/main`; `ARCHITECTURE.md` дополнен NOVA/BullMQ/Docker |
+| 18.09 | 2026.9.4 | Git sync (после rewrite 18.09: `ae45163e`), 116 файлов в `origin/main`; `ARCHITECTURE.md` дополнен NOVA/BullMQ/Docker |
 
 ---
 

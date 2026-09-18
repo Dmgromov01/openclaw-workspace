@@ -468,7 +468,7 @@ AES-256-GCM. **Воркер очередей не запущен** (см. §2.3)
 | 12.09 | Composio установлен |
 | 14.09 | Память вынесена в `/root/openclaw-state/memory` (симлинк) |
 | **17–18.09** | **NOVA развёрнут: nova.gbkz.uk, `personal-hub.service` :8093, 20 таблиц** |
-| **18.09** | **Git sync: `f843ad3d`, `0861bffa`, `27f8bbc6`; ARCHITECTURE.md дополнен** |
+| **18.09** | **Git sync; ARCHITECTURE.md дополнен. После rewrite 18.09 хэши: `ae45163e`, `959ae10f`, `321c3e1e`** |
 | **18.09** | **Ops: диск 90→81%, fail2ban, resource-check + cron, logrotate, swappiness=10, OOM drop-ins, offsite-backup + age** |
 
 ---

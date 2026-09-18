@@ -24,7 +24,7 @@ Principal-level review. Все выводы помечены статусом д
 
 | ID | Finding | Status | Evidence | Component | Severity |
 |---|---|---|---|---|---|
-| E1 | Активный bot token в git-истории | CONFIRMED | `git log --all -p` → `REDACTED-TELEGRAM-TOKEN` (совпадает с openclaw.json) + старый `7963335559:AAFA...` | Git history / Telegram | CRITICAL |
+| E1 | Активный bot token в git-истории | CONFIRMED | `git log --all -p` → `***REDACTED-TELEGRAM-TOKEN***` (совпадает с openclaw.json) + старый `7963335559:AAFA...` | Git history / Telegram | CRITICAL |
 | E2 | miniapp.db, ai-memory.db, data/app.db в git | CONFIRMED | `git ls-files | grep .db`; miniapp.db: users(password_hash), sessions(25), audit_log(27) | Git / Storage | CRITICAL |
 | E3 | .venv (5615 файлов, 343MB) в git | CONFIRMED | `git ls-files | grep -c '^.venv/'` = 5615; duckdb.so 60MB | Git / Dependencies | HIGH |
 | E4 | ufw INACTIVE | CONFIRMED | `/usr/sbin/ufw status` → `Status: inactive` | Firewall | CRITICAL |
@@ -68,7 +68,7 @@ Principal-level review. Все выводы помечены статусом д
 
 ### D1. Активный Telegram bot token в git-истории (E1)
 
-- **Finding**: `REDACTED-TELEGRAM-TOKEN` — текущий токен бота @Dmbotmy_bot — присутствует в истории git (коммиты 2e2e689, 32d6717 и др.). Репо приватное, но история нестираема.
+- **Finding**: `***REDACTED-TELEGRAM-TOKEN***` — текущий токен бота @Dmbotmy_bot — присутствует в истории git (коммиты 2e2e689, 32d6717 и др.). Репо приватное, но история нестираема.
 - **Immediate containment (1–4 часа)**:
   1. **Ротация токена**: @BotFather → /revoke → новый токен → обновить в `/root/.openclaw/openclaw.json` + `/root/.openclaw/.env` (TELEGRAM_BOT_TOKEN) → `systemctl --user restart openclaw-gateway.service`. Старый токен умирает мгновенно.
   2. Верифицировать: `curl api.telegram.org/bot<OLD>/getMe` → 401 после ротации.

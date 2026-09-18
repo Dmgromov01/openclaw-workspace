@@ -69,6 +69,12 @@
 <!-- openclaw-memory-promotion:memory:memory/2026-08-27.md:33:36 -->
 - 11:38–12:00 — Хардненинг (ТЗ Дмитрия: безопасность+безотказность, без Docker/новых сервисов): **ufw**: уже был ок — снаружи только 22/80/443 + tailnet (100.64.0.0/10), default deny. 8091/8080/18789/8765 с WAN закрыты (8091 слушает 0.0.0.0, но ufw режет; loopback/tailnet достаточно).; **r2d2-hub**: переведён из user-юнита в СИСТЕМНЫЙ (/etc/systemd/system/r2d2-hub.service): Restart=on-failure, RestartSec=5, StartLimitBurst=5, StartLimitIntervalSec=120 (не always — битый билд не уйдёт в цикл).... [score=0.825 recalls=0 avg=0.620 source=memory/2026-08-27.md:33-36]
 
+## Секреты: env-substitution (18.09)
+- 8 credential-путей в `~/.openclaw/openclaw.json` переведены с плейнтекста на `${VAR}`: `gateway.auth.token`, `models.providers.{deepseek,openrouter,jina,openai,relaymodels}.apiKey`, `channels.telegram.botToken`, `mcp.servers.github.env.GITHUB_PERSONAL_ACCESS_TOKEN`. `relaymodels` был в таком виде уже раньше — это и есть рабочий паттерн хоста. <!-- project: github.com/Dmgromov01/openclaw-workspace -->
+- Значения — `/root/.openclaw/secrets.env` (600), подключается systemd drop-in `20-secrets-env.conf` (`EnvironmentFile=-`, как `relaymodels.env`), НЕ система `config set --ref-provider`. Бэкап: `~/.openclaw/openclaw.json.pre-secretref.*`. Проверено: systemd отдаёт все 8 переменных дочернему процессу, `openclaw config validate` чист с загруженным env. <!-- project: github.com/Dmgromov01/openclaw-workspace -->
+- Не применять ref-билдер (`--ref-provider default --ref-source env`) для этих путей: `--dry-run` показывает, что он резолвит ref против окружения CLI, и заодно ломает уже рабочий `${RELAYMODELS_API_KEY}`. <!-- project: github.com/Dmgromov01/openclaw-workspace -->
+- Активация требует рестарта gateway (SSH, правило AGENTS.md). <!-- project: github.com/Dmgromov01/openclaw-workspace -->
+
 ## Инструменты: ключевые факты (14.09)
 
 ### Composio

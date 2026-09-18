@@ -378,7 +378,7 @@ _trash/ _trash_/ venv/ logs/
 | **SSH (эффективно)** | ✅ `permitrootlogin without-password`, `passwordauthentication no`, `pubkeyauthentication yes` |
 | **`sshd_config.d/`** | ⚠️ конфликтующие файлы (`50-cloud-init` разрешает пароли, `99/00-openclaw-hardening` запрещают). Эффективно побеждает hardening (`sshd -T`), но мусор стоит убрать |
 | **fail2ban** | ✅ active, jail sshd (18.09) |
-| **Секреты** | ⚠️ плейнтекст (gateway auth token, apiKey провайдеров, telegram botToken); `secrets.env` отсутствует — миграция на SecretRef НЕ выполнена (проверено 18.09) |
+| **Секреты** | ✅ 8/8 путей → `${VAR}` (env-substitution); значения в `/root/.openclaw/secrets.env` (600) + systemd drop-in `20-secrets-env.conf`; плейнтекста в конфиге нет (18.09). Активация — рестарт gateway |
 | **Exec-политика** | allowlist, `ask=on-miss`, `askFallback=deny`; вне allowlist — deny |
 | **Hub agent** | `tools.allow=[]` |
 | **Gateway bind** | 127.0.0.1 (loopback) |
@@ -412,7 +412,6 @@ _trash/ _trash_/ venv/ logs/
 1. **BullMQ-воркер NOVA нельзя запустить** — `loadTranscriptWindow` = fail-closed заглушка (таблица транскрипта неизвестна) и **реализации `Embedder` нет**. Задачи копятся в `wait` молча (см. §2.3)
 
 ### 🟡 Средние
-2. **Секреты в плейнтексте** — `secrets.env` отсутствует, миграция на SecretRef не выполнена
 3. **`skill-collection-review` у агента `chat`** — статус `error`
 4. **Offsite-бэкап без `REMOTE`** — локальные age-копии есть, выгрузки наружу нет
 5. **Хвосты `telegram-user-svc`** (404 на `/`) и **`8092`** (400) — вероятно ожидаемо; проверка = `ss -ltn` + `journalctl --since -1h`
@@ -425,6 +424,8 @@ _trash/ _trash_/ venv/ logs/
 - **fail2ban** включён (jail sshd)
 - Мониторинг ресурсов + logrotate + инвентарь skills
 - `miniapp.service`, `.bak` — убраны
+- **Секреты**: 8/8 credential-путей → `${VAR}`, env-файл + systemd drop-in, плейнтекста нет
+- **Offsite-backup**: скрипт + age + cron 03:40 (локальные шифр-копии работают; нужен `REMOTE_BACKUP`)
 
 ---
 
@@ -475,7 +476,7 @@ AES-256-GCM. **Воркер очередей не запущен** (см. §2.3)
 ## 16. Рекомендации (по приоритету)
 
 1. **Воркер BullMQ NOVA** — реализовать `loadTranscriptWindow` под реальную таблицу транскрипта и `Embedder` (1536-dim); без них воркер не поднимается
-2. **SecretRef-миграция** — вынести ключи из `openclaw.json` (бэкап + рестарт gateway с SSH)
+2. **Активировать секрет-миграцию** — рестарт gateway по SSH (`~/.openclaw/secrets.env` + drop-in уже готовы)
 3. **Задать `REMOTE_BACKUP`** — включить реальную выгрузку offsite (rclone настроен)
 4. **Разобрать `skill-collection-review` error** у агента `chat`
 5. **Проверить живость `telegram-user-svc`** (8765) и Oura callback (8092)

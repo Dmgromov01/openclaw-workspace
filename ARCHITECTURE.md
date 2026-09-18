@@ -1,6 +1,6 @@
 # Архитектура сервера OpenClaw — hiplet-112102
 
-> **Дата актуализации:** 2026-09-14  
+> **Дата актуализации:** 2026-09-18  
 > **Версия OpenClaw:** 2026.9.4 (3a9d69d)  
 > **Хост:** hiplet-112102 (VPS Франкфурт DE, IP 138.124.180.178)  
 > **Tailscale:** tail6a4baa.ts.net (exposure off)
@@ -36,6 +36,9 @@
 | `r2d2-hub.service` | system | 127.0.0.1:8091 | ✅ running | Семейный хаб hub.gbkz.uk |
 | `telegram-user-svc.service` | system | 127.0.0.1:8765 | ⚠️ молчит с 27.08 | Пейджер Telegram (инбаунд-аудио) |
 | `oura-callback.service` | system | 127.0.0.1:8092 | ✅ running | Oura OAuth2 callback + sync |
+| `personal-hub.service` | system | 127.0.0.1:8093 | ✅ running (enabled) | NOVA (`nova.gbkz.uk`) — Next.js 16.2.6 |
+| `personal-hub-postgres-1` | docker | 172.19.0.2:5432 | ✅ healthy | PostgreSQL 16 + pgvector (NOVA) |
+| `personal-hub-redis-1` | docker | 172.19.0.3:6379 | ✅ healthy | Redis (BullMQ-брокер NOVA) |
 | `miniapp.service` | system | — | ❌ мёртвый | Mini App (заброшен, сайт = hub.gbkz.uk) |
 | `openclaw-health-check.service/.timer` | user | — | ⚠️ не включены | Health-таймеры Oura (morning/weekly/monthly) |
 
@@ -45,6 +48,7 @@
 |---|---|---|
 | `hub.gbkz.uk` | 127.0.0.1:8091 | Cloudflare proxy → nginx → r2d2-hub |
 | `ui.gbkz.uk` | 127.0.0.1:18789 | Cloudflare proxy → nginx → OpenClaw Gateway (Control UI) |
+| `nova.gbkz.uk` | 127.0.0.1:8093 | Cloudflare proxy → nginx → personal-hub (NOVA). Let's Encrypt до 2026-12-17 |
 
 Cloudflare proxy IPs: `172.67.223.229`, `104.21.32.152`.
 
@@ -368,7 +372,8 @@ ls cat head tail df journalctl date uname free zramctl mkdir mv tar gpg git ss c
 | **.env хаба** | `OPENCLAW_AGENT_ID=hub` (агент hub удалён, должен быть `chat`) | ⚪ Ждёт решения владельца |
 | **Legacy Browser Relay auth** | Включён legacy auth | ⚪ |
 | **Jina/Brave ключ не в env** | Поиск public-only | ⚪ |
-| **Неотслеживаемые git файлы** | bin/, calendar/, plugins/, skills/*, workspace/health/deploy/, first_analysis.py | ⚪ Разложить по коммитам |
+| **Неотслеживаемые git файлы** | Разложены по коммиту `f843ad3d` (2026-09-18): 116 файлов, +49726/−624 | ✅ Закрыто |
+| **BullMQ: воркер не запущен** | `createMemoryWorker` не вызывается, юнита нет, задачи лягут в `wait` молча | 🟡 Нужен `personal-hub-worker.service` |
 
 ---
 
@@ -413,12 +418,79 @@ ls cat head tail df journalctl date uname free zramctl mkdir mv tar gpg git ss c
 
 ---
 
+## 13.5 NOVA (personal-hub) — развёрнут 2026-09-17/18
+
+Второй пользовательский сайт рядом с хабом. Репо-источник: `Dmgromov01/atlas-green-pearl-dawn`
+(Next.js 16.2.6, App Router, Drizzle ORM, PostgreSQL 16 + pgvector).
+
+### Развёртывание
+
+```
+/srv/personal-hub/app            приложение
+/srv/personal-hub/infra          docker-compose (postgres + redis, только инфра)
+/srv/personal-hub/secrets        0700, device identity/token (0600)
+/srv/personal-hub/backups        pg_dump
+personal-hub.service             system, active + enabled, Node на 127.0.0.1:8093
+nginx nova.gbkz.uk → 8093        HTTPS 200, http→https 301, cert до 2026-12-17
+DNS                              nova → 138.124.180.178, proxied (Cloudflare)
+БД personal_hub                  20 таблиц, миграции применены
+```
+
+Проверка: HTTPS 200 (Cloudflare `104.21.32.152`), title `NOVA — Your day, in flow`,
+`/api/health` → `{"ok":true}`.
+
+### Миграции — важный урок
+
+Применять только штатным путём: `drizzle-kit generate` из `src/db/schema.ts` →
+`drizzle-kit migrate --config drizzle.config.prod.json`.
+
+Рукописный `db/migrations/20260917000000_memory_knowledge_graph.sql` **не зарегистрирован
+в drizzle-журнале** (`meta/_journal.json` → `entries: []`), поэтому `migrate`
+рапортовал `migrations applied successfully`, ничего не применив. Файл не удалять —
+он остаётся как reviewed-артефакт.
+
+### Docker-сеть: почему loopback-порты не работают
+
+`personal_hub_backend` объявлена `internal: true`. Docker **не публикует порты**
+для контейнеров во внутренней сети: `HostConfig.PortBindings` заполнен, но
+`NetworkSettings.Ports = null`, `ss -tln` пусто. Контраст: `searxng_default`
+(`internal=false`) → `127.0.0.1:8080` опубликован.
+
+Принятое решение (вариант B): не ослаблять изоляцию, а закрепить адреса.
+
+```
+ports:             отсутствуют (публикация невозможна при internal: true)
+IP:                postgres 172.19.0.2, redis 172.19.0.3 (ipv4_address в compose)
+сеть:              internal=true сохранён, подсеть 172.19.0.0/16 зафиксирована в ipam
+```
+
+`.env` приложения указывает на эти IP; пересоздание контейнеров их не меняет.
+Альтернатива A (снять `internal: true` ради портов) отклонена — ослабляет изоляцию.
+
+### BullMQ — библиотека работает, воркер НЕ запущен
+
+Live-проба подтвердила: `PONG`, namespace `nova:<queue>`, job проходит end-to-end
+(`waiting=1` → worker → `completed=1`).
+
+Но `createMemoryWorker` (`src/lib/memory/worker.ts`) **не вызывается нигде**, а
+отдельного systemd-юнита воркера нет. В Redis 0 задач `nova:*`.
+
+Следствие: любая задача в `nova:memory` / `digest` / `calendar` / `notify` /
+`maintenance` ляжет в `wait` и останется там — без ошибки, без шума. Классическая
+ловушка BullMQ: фабрика определена, воркер не стартует, симптомов ноль.
+
+Namespace корректен по замыслу: `QUEUE_PREFIX="nova"` + name → `nova:memory`
+(BullMQ 6 запрещает `:` внутри *имени* очереди, поэтому namespace живёт в prefix).
+
+---
+
 ## 14. Рекомендации (приоритетный список)
 
 ### 🔴 Срочно (блокирует функциональность)
 
 1. **Починить Telegram бота** — `/codex stop` + `/codex resume` или рестарт gateway
 2. **Разобрать dead-letter queue** — 3 входящих telegram сообщения потеряны
+3. **Поднять воркер BullMQ** — без него задачи NOVA лягут в `wait` молча (см. §13.5)
 
 ### 🟡 Важно (улучшает надёжность)
 
@@ -454,6 +526,8 @@ ls cat head tail df journalctl date uname free zramctl mkdir mv tar gpg git ss c
 | 11.09 | 2026.9.4 | Обновление, Oura sync 18 коллекций, аудит сервера |
 | 12.09 | 2026.9.4 | Composio установлен, hub scripts fixed |
 | 14.09 | 2026.9.4 | Текущая сессия, модель relaymodels/kimi-k2.7-code |
+| 17–18.09 | 2026.9.4 | NOVA развёрнут: `nova.gbkz.uk`, personal-hub.service :8093, 20 таблиц; Docker-сеть `internal: true` + закреплённые IP; BullMQ-проба (воркер не запущен) |
+| 18.09 | 2026.9.4 | Git sync: коммит `f843ad3d`, 116 файлов в `origin/main`; `ARCHITECTURE.md` дополнен NOVA/BullMQ/Docker |
 
 ---
 

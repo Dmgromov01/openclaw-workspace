@@ -378,7 +378,7 @@ _trash/ _trash_/ venv/ logs/
 | **SSH (эффективно)** | ✅ `permitrootlogin without-password`, `passwordauthentication no`, `pubkeyauthentication yes` |
 | **`sshd_config.d/`** | ⚠️ конфликтующие файлы (`50-cloud-init` разрешает пароли, `99/00-openclaw-hardening` запрещают). Эффективно побеждает hardening (`sshd -T`), но мусор стоит убрать |
 | **fail2ban** | ✅ active, jail sshd (18.09) |
-| **Секреты** | ✅ 8/8 путей → `${VAR}` (env-substitution); значения в `/root/.openclaw/secrets.env` (600) + systemd drop-in `20-secrets-env.conf`; плейнтекста в конфиге нет (18.09). Активация — рестарт gateway |
+| **Секреты** | ✅ 8/8 путей → `${VAR}` (env-substitution); значения в `~/.openclaw/.env` (CLI+gateway) + `/root/.openclaw/secrets.env` (600, drop-in); плейнтекста в конфиге нет (18.09). Активация — рестарт gateway |
 | **Exec-политика** | allowlist, `ask=on-miss`, `askFallback=deny`; вне allowlist — deny |
 | **Hub agent** | `tools.allow=[]` |
 | **Gateway bind** | 127.0.0.1 (loopback) |

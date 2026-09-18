@@ -1,0 +1,8 @@
+{
+  "id": "bot-access-command",
+  "name": "Bot Access Command",
+  "description": "Owner-only fixed Telegram access control command",
+  "activation": { "onStartup": true, "onCommands": ["access"] },
+  "commandAliases": ["access"],
+  "configSchema": { "type": "object", "additionalProperties": false }
+}

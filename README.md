@@ -1,3 +1,4 @@
+<!-- project: github.com/Dmgromov01/openclaw-workspace -->
 # OpenClaw Workspace
 
 Личное рабочее пространство OpenClaw-агента. Репозиторий приватный; секреты, сессии и runtime credentials хранятся вне git.

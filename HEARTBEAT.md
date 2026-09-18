@@ -1,3 +1,4 @@
+<!-- project: github.com/Dmgromov01/openclaw-workspace -->
 # Heartbeat checklist
 
 - Если диск / > 85% — одно сообщение хозяину (не рестартить сервисы).

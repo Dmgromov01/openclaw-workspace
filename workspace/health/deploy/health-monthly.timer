@@ -1,0 +1,10 @@
+[Unit]
+Description=Oura monthly report timer
+
+[Timer]
+OnCalendar=*-*-01 10:30:00 Europe/Moscow
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

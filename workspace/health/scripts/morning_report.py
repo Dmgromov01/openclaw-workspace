@@ -15,7 +15,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import analytics  # noqa: E402
 
 BASE = Path(__file__).resolve().parents[1]
-BASELINE_PATH = BASE / "analysis" / "baseline.json"
 
 WATCH = (
     ("sleep_score", "Сон, балл"),
@@ -24,7 +23,7 @@ WATCH = (
     ("readiness", "Готовность"),
     ("temp_dev", "Температура, отклонение"),
     ("spo2", "SpO2, %"),
-    ("breathing", "Дыхание, индекс"),
+    ("breathing", "Нарушения дыхания (BDI)"),
 )
 
 
@@ -44,21 +43,32 @@ def z_band(z: float) -> str:
     return "в норме"
 
 
+def z_band_for(metric: str, z: float) -> str:
+    """Metric-aware band label. For BDI, low values are good, not alarming."""
+    if metric == "breathing":
+        if z <= -1.5:
+            return "лучше обычного"
+        if z >= 1.5:
+            return "хуже обычного"
+        return "в норме"
+    return z_band(z)
+
+
 def main() -> int:
     pack = analytics.analyze(days_window=14)
     analytics.save(pack, "current.json")
     pack = pack.get("signals", pack)  # v2.1 nests the signal block
     metrics = pack["metrics"]
 
-    yesterday = (date.today() - timedelta(days=1)).isoformat()
-    lines = ["Отчёт за " + date.today().isoformat(), ""]
+    yesterday = (analytics.local_today() - timedelta(days=1)).isoformat()
+    lines = ["Отчёт за " + analytics.local_today().isoformat(), ""]
     flags = []
     for name, label in WATCH:
         m = metrics.get(name)
         if not m or m.get("n", 0) < analytics.MIN_DAYS_BASELINE:
             continue
         z = m.get("z_last", 0.0)
-        lines.append("- " + label + ": " + fmt(m["last"]) + " (" + z_band(z) +
+        lines.append("- " + label + ": " + fmt(m["last"]) + " (" + z_band_for(name, z) +
                      ", z " + fmt(z, 2) + "; медиана " + fmt(m["median"]) + ")")
         if abs(z) >= 2.0:
             flags.append(label + " " + fmt(m["last"]) + " — z " + fmt(z, 2))

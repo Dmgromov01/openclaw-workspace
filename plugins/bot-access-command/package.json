@@ -1,0 +1,7 @@
+{
+  "name": "bot-access-command",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "private": true,
+  "openclaw": { "extensions": ["./index.js"] }
+}

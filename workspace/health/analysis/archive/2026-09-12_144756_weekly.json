@@ -1,0 +1,1100 @@
+{
+  "scope": "weekly",
+  "generated_at": "2026-09-12T14:47:56+03:00",
+  "window": [
+    "2026-09-06",
+    "2026-09-12"
+  ],
+  "previous_window": [
+    "2026-08-30",
+    "2026-09-05"
+  ],
+  "current": {
+    "hrv": {
+      "mean": 15.0,
+      "n": 7,
+      "min": 11.0,
+      "max": 19.0,
+      "sd": 2.5634797778466227
+    },
+    "rhr": {
+      "mean": 69.0,
+      "n": 7,
+      "min": 62.0,
+      "max": 75.0,
+      "sd": 4.0
+    },
+    "sleep_score": {
+      "mean": 65.28571428571429,
+      "n": 7,
+      "min": 54.0,
+      "max": 81.0,
+      "sd": 8.41281820819169
+    },
+    "readiness": {
+      "mean": 78.14285714285714,
+      "n": 7,
+      "min": 70.0,
+      "max": 84.0,
+      "sd": 4.852939357560865
+    },
+    "activity_score": {
+      "mean": 88.16666666666667,
+      "n": 6,
+      "min": 81.0,
+      "max": 97.0,
+      "sd": 5.2094998693625945
+    },
+    "steps": {
+      "mean": 8469.333333333334,
+      "n": 6,
+      "min": 6260.0,
+      "max": 11780.0,
+      "sd": 2302.509765934169
+    },
+    "calories": {
+      "mean": 2931.6666666666665,
+      "n": 6,
+      "min": 2658.0,
+      "max": 3296.0,
+      "sd": 220.04746962618975
+    },
+    "temp_dev": {
+      "mean": 0.14285714285714285,
+      "n": 7,
+      "min": -0.31,
+      "max": 0.62,
+      "sd": 0.31868992030831855
+    },
+    "spo2": {
+      "mean": 94.59566666666666,
+      "n": 6,
+      "min": 93.568,
+      "max": 96.118,
+      "sd": 0.9151463756628702
+    },
+    "breathing": {
+      "mean": 0.2857142857142857,
+      "n": 7,
+      "min": 0.0,
+      "max": 2.0,
+      "sd": 0.6998542122237652
+    },
+    "stress_high": {
+      "mean": 0.17857142857142858,
+      "n": 7,
+      "min": 0.0,
+      "max": 0.75,
+      "sd": 0.2901442287369986
+    },
+    "recovery_high": {
+      "mean": 1.3571428571428572,
+      "n": 7,
+      "min": 0.0,
+      "max": 3.25,
+      "sd": 1.124858267715973
+    },
+    "resilience": {
+      "mean": 51.25714285714286,
+      "n": 7,
+      "min": 50.1,
+      "max": 52.5,
+      "sd": 0.9810448407651082
+    },
+    "sleep_duration": {
+      "mean": 64.28571428571429,
+      "n": 7,
+      "min": 44.0,
+      "max": 97.0,
+      "sd": 17.886261972445187
+    },
+    "deep_sleep": {
+      "mean": 3651.4285714285716,
+      "n": 7,
+      "min": 2370.0,
+      "max": 5010.0,
+      "sd": 803.6599951192682
+    },
+    "rem_sleep": {
+      "mean": 4251.428571428572,
+      "n": 7,
+      "min": 1710.0,
+      "max": 7860.0,
+      "sd": 1814.1383517206382
+    },
+    "sleep_periods": {
+      "mean": 1.0,
+      "n": 7,
+      "min": 1.0,
+      "max": 1.0,
+      "sd": 0.0
+    },
+    "nap_duration": {
+      "mean": 0.0,
+      "n": 7,
+      "min": 0.0,
+      "max": 0.0,
+      "sd": 0.0
+    },
+    "biphasic": {
+      "mean": 0.0,
+      "n": 7,
+      "min": 0.0,
+      "max": 0.0,
+      "sd": 0.0
+    },
+    "hr_avg": {
+      "mean": 93.8382657984863,
+      "n": 6,
+      "min": 82.5072463768116,
+      "max": 109.52003847386983,
+      "sd": 8.595382385680205
+    },
+    "hr_max": {
+      "mean": 150.66666666666666,
+      "n": 6,
+      "min": 122.0,
+      "max": 208.0,
+      "sd": 27.028791233711424
+    },
+    "hr_min": {
+      "mean": 67.5,
+      "n": 6,
+      "min": 62.0,
+      "max": 71.0,
+      "sd": 3.2015621187164243
+    },
+    "vascular_age": {
+      "mean": 40.0,
+      "n": 7,
+      "min": 36.0,
+      "max": 47.0,
+      "sd": 3.5456210417116734
+    },
+    "workouts": {
+      "mean": 5.166666666666667,
+      "n": 6,
+      "min": 3.0,
+      "max": 7.0,
+      "sd": 1.2133516482134197
+    }
+  },
+  "previous": {
+    "hrv": {
+      "mean": 14.857142857142858,
+      "n": 7,
+      "min": 11.0,
+      "max": 20.0,
+      "sd": 2.899683304312063
+    },
+    "rhr": {
+      "mean": 69.28571428571429,
+      "n": 7,
+      "min": 65.0,
+      "max": 75.0,
+      "sd": 3.282607226593159
+    },
+    "sleep_score": {
+      "mean": 72.14285714285714,
+      "n": 7,
+      "min": 64.0,
+      "max": 84.0,
+      "sd": 6.791351042288407
+    },
+    "readiness": {
+      "mean": 78.42857142857143,
+      "n": 7,
+      "min": 71.0,
+      "max": 85.0,
+      "sd": 4.435478484645721
+    },
+    "activity_score": {
+      "mean": 97.0,
+      "n": 7,
+      "min": 89.0,
+      "max": 100.0,
+      "sd": 3.3380918415851206
+    },
+    "steps": {
+      "mean": 18263.571428571428,
+      "n": 7,
+      "min": 6532.0,
+      "max": 29444.0,
+      "sd": 7231.035765704521
+    },
+    "calories": {
+      "mean": 3864.1428571428573,
+      "n": 7,
+      "min": 2835.0,
+      "max": 4953.0,
+      "sd": 762.7520526865536
+    },
+    "temp_dev": {
+      "mean": 0.048571428571428585,
+      "n": 7,
+      "min": -0.57,
+      "max": 0.3,
+      "sd": 0.2641119119631228
+    },
+    "spo2": {
+      "mean": 94.70083333333332,
+      "n": 6,
+      "min": 92.813,
+      "max": 96.094,
+      "sd": 1.1772195230948004
+    },
+    "breathing": {
+      "mean": 1.0,
+      "n": 7,
+      "min": 0.0,
+      "max": 3.0,
+      "sd": 1.0690449676496976
+    },
+    "stress_high": {
+      "mean": 0.42857142857142855,
+      "n": 7,
+      "min": 0.0,
+      "max": 1.0,
+      "sd": 0.2901442287369986
+    },
+    "recovery_high": {
+      "mean": 0.8928571428571429,
+      "n": 7,
+      "min": 0.0,
+      "max": 2.75,
+      "sd": 1.0164463907684076
+    },
+    "resilience": {
+      "mean": 53.67142857142857,
+      "n": 7,
+      "min": 51.3,
+      "max": 55.6,
+      "sd": 1.4694160994998624
+    },
+    "sleep_duration": {
+      "mean": 72.28571428571429,
+      "n": 7,
+      "min": 54.0,
+      "max": 97.0,
+      "sd": 15.228866252841634
+    },
+    "deep_sleep": {
+      "mean": 3784.285714285714,
+      "n": 7,
+      "min": 1920.0,
+      "max": 6630.0,
+      "sd": 1380.505674876908
+    },
+    "rem_sleep": {
+      "mean": 5747.142857142857,
+      "n": 7,
+      "min": 4410.0,
+      "max": 7950.0,
+      "sd": 1112.8177143207788
+    },
+    "sleep_periods": {
+      "mean": 1.2857142857142858,
+      "n": 7,
+      "min": 1.0,
+      "max": 2.0,
+      "sd": 0.45175395145262565
+    },
+    "nap_duration": {
+      "mean": 1032.857142857143,
+      "n": 7,
+      "min": 0.0,
+      "max": 7020.0,
+      "sd": 2445.314553448313
+    },
+    "biphasic": {
+      "mean": 0.0,
+      "n": 7,
+      "min": 0.0,
+      "max": 0.0,
+      "sd": 0.0
+    },
+    "hr_avg": {
+      "mean": 101.91657385140218,
+      "n": 7,
+      "min": 90.05821474773609,
+      "max": 108.82973582474227,
+      "sd": 7.114986240789198
+    },
+    "hr_max": {
+      "mean": 157.0,
+      "n": 7,
+      "min": 141.0,
+      "max": 173.0,
+      "sd": 9.710083124552245
+    },
+    "hr_min": {
+      "mean": 68.42857142857143,
+      "n": 7,
+      "min": 65.0,
+      "max": 74.0,
+      "sd": 3.1102201510110343
+    },
+    "vascular_age": {
+      "mean": 40.857142857142854,
+      "n": 7,
+      "min": 38.0,
+      "max": 43.0,
+      "sd": 1.5518257844571737
+    },
+    "workouts": {
+      "mean": 7.0,
+      "n": 7,
+      "min": 4.0,
+      "max": 11.0,
+      "sd": 2.5071326821120348
+    }
+  },
+  "trends": [
+    {
+      "metric": "sleep.time_in_bed",
+      "slope_30d": 1870.64093,
+      "n": 36,
+      "mean": 28335.6111,
+      "sd": 4657.7921,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "sleep.total_sleep_duration",
+      "slope_30d": 1081.04247,
+      "n": 36,
+      "mean": 22472.5,
+      "sd": 3561.2945,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "rem_sleep",
+      "slope_30d": -544.05405,
+      "n": 36,
+      "mean": 5125.8333,
+      "sd": 1733.7409,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "sleep.rem_sleep_duration",
+      "slope_30d": -544.05405,
+      "n": 36,
+      "mean": 5125.8333,
+      "sd": 1733.7409,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "deep_sleep",
+      "slope_30d": 447.10425,
+      "n": 36,
+      "mean": 3735.0,
+      "sd": 991.224,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "nap_duration",
+      "slope_30d": 134.36293,
+      "n": 36,
+      "mean": 471.6667,
+      "sd": 1601.1498,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "sleep__nap_duration",
+      "slope_30d": 134.36293,
+      "n": 36,
+      "mean": 471.6667,
+      "sd": 1601.1498,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "calories",
+      "slope_30d": 62.86486,
+      "n": 36,
+      "mean": 3378.5,
+      "sd": 619.9695,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "steps",
+      "slope_30d": 44.82625,
+      "n": 36,
+      "mean": 13212.0556,
+      "sd": 6117.3473,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "sleep.restless_periods",
+      "slope_30d": -41.6834,
+      "n": 36,
+      "mean": 227.6667,
+      "sd": 81.4893,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "hr_max",
+      "slope_30d": 22.35135,
+      "n": 36,
+      "mean": 146.3056,
+      "sd": 18.8706,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "sleep.readiness.contributors.recovery_index",
+      "slope_30d": 11.11969,
+      "n": 36,
+      "mean": 66.2778,
+      "sd": 33.7389,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "sleep.readiness.contributors.previous_day_activity",
+      "slope_30d": 8.16216,
+      "n": 36,
+      "mean": 82.7778,
+      "sd": 18.2332,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "sleep.readiness.contributors.body_temperature",
+      "slope_30d": -6.50193,
+      "n": 36,
+      "mean": 90.5556,
+      "sd": 10.3049,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "readiness",
+      "slope_30d": 6.37838,
+      "n": 36,
+      "mean": 76.3889,
+      "sd": 6.0566,
+      "reliability": "moderate"
+    }
+  ],
+  "patterns": [
+    {
+      "driver": "workouts",
+      "target": "nap_duration",
+      "driver_threshold": 6.0,
+      "cases_considered": 10,
+      "cases_eligible": 10,
+      "confounded_excluded": 0,
+      "of_opportunities": 22,
+      "share": 0.45,
+      "target_median": 0.0,
+      "target_today_mean": 21.0,
+      "target_next_day_mean": 1041.0,
+      "mean_delta_next_day": 1020.0,
+      "mean_delta_control": -1382.5,
+      "effect_size": 2402.5,
+      "mean_delta_day_after": -21.0,
+      "direction": "up",
+      "consistency": 0.9,
+      "n": 10,
+      "occurrences": 10,
+      "effect_holds_next_day": false,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-08",
+      "examples": [
+        "2026-09-02",
+        "2026-09-04",
+        "2026-09-05",
+        "2026-09-07",
+        "2026-09-08"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "workouts",
+      "target": "sleep_periods",
+      "driver_threshold": 6.0,
+      "cases_considered": 10,
+      "cases_eligible": 10,
+      "confounded_excluded": 0,
+      "of_opportunities": 22,
+      "share": 0.45,
+      "target_median": 1.0,
+      "target_today_mean": 1.1,
+      "target_next_day_mean": 1.3,
+      "mean_delta_next_day": 0.2,
+      "mean_delta_control": -0.25,
+      "effect_size": 0.45,
+      "mean_delta_day_after": -0.1,
+      "direction": "up",
+      "consistency": 0.9,
+      "n": 10,
+      "occurrences": 10,
+      "effect_holds_next_day": false,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-08",
+      "examples": [
+        "2026-09-02",
+        "2026-09-04",
+        "2026-09-05",
+        "2026-09-07",
+        "2026-09-08"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "workouts",
+      "target": "biphasic",
+      "driver_threshold": 6.0,
+      "cases_considered": 10,
+      "cases_eligible": 10,
+      "confounded_excluded": 0,
+      "of_opportunities": 22,
+      "share": 0.45,
+      "target_median": 0.0,
+      "target_today_mean": 0.0,
+      "target_next_day_mean": 0.0,
+      "mean_delta_next_day": 0.0,
+      "mean_delta_control": 0.0,
+      "effect_size": 0.0,
+      "mean_delta_day_after": 0.0,
+      "direction": "up",
+      "consistency": 1.0,
+      "n": 10,
+      "occurrences": 10,
+      "effect_holds_next_day": true,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-08",
+      "examples": [
+        "2026-09-02",
+        "2026-09-04",
+        "2026-09-05",
+        "2026-09-07",
+        "2026-09-08"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "breathing",
+      "target": "nap_duration",
+      "driver_threshold": 1.0,
+      "cases_considered": 9,
+      "cases_eligible": 9,
+      "confounded_excluded": 0,
+      "of_opportunities": 23,
+      "share": 0.39,
+      "target_median": 0.0,
+      "target_today_mean": 23.333,
+      "target_next_day_mean": 1133.333,
+      "mean_delta_next_day": 1110.0,
+      "mean_delta_control": -1260.0,
+      "effect_size": 2370.0,
+      "mean_delta_day_after": -330.0,
+      "direction": "up",
+      "consistency": 0.89,
+      "n": 9,
+      "occurrences": 9,
+      "effect_holds_next_day": false,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-06",
+      "examples": [
+        "2026-08-30",
+        "2026-09-02",
+        "2026-09-03",
+        "2026-09-05",
+        "2026-09-06"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "breathing",
+      "target": "sleep_periods",
+      "driver_threshold": 1.0,
+      "cases_considered": 9,
+      "cases_eligible": 9,
+      "confounded_excluded": 0,
+      "of_opportunities": 23,
+      "share": 0.39,
+      "target_median": 1.0,
+      "target_today_mean": 1.111,
+      "target_next_day_mean": 1.222,
+      "mean_delta_next_day": 0.111,
+      "mean_delta_control": -0.154,
+      "effect_size": 0.265,
+      "mean_delta_day_after": 0.0,
+      "direction": "up",
+      "consistency": 0.89,
+      "n": 9,
+      "occurrences": 9,
+      "effect_holds_next_day": true,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-06",
+      "examples": [
+        "2026-08-30",
+        "2026-09-02",
+        "2026-09-03",
+        "2026-09-05",
+        "2026-09-06"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "breathing",
+      "target": "biphasic",
+      "driver_threshold": 1.0,
+      "cases_considered": 9,
+      "cases_eligible": 9,
+      "confounded_excluded": 0,
+      "of_opportunities": 23,
+      "share": 0.39,
+      "target_median": 0.0,
+      "target_today_mean": 0.0,
+      "target_next_day_mean": 0.0,
+      "mean_delta_next_day": 0.0,
+      "mean_delta_control": 0.0,
+      "effect_size": 0.0,
+      "mean_delta_day_after": 0.0,
+      "direction": "up",
+      "consistency": 1.0,
+      "n": 9,
+      "occurrences": 9,
+      "effect_holds_next_day": true,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-06",
+      "examples": [
+        "2026-08-30",
+        "2026-09-02",
+        "2026-09-03",
+        "2026-09-05",
+        "2026-09-06"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "hrv",
+      "target": "nap_duration",
+      "driver_threshold": 16.0,
+      "cases_considered": 8,
+      "cases_eligible": 8,
+      "confounded_excluded": 0,
+      "of_opportunities": 23,
+      "share": 0.35,
+      "target_median": 0.0,
+      "target_today_mean": 397.5,
+      "target_next_day_mean": 1301.25,
+      "mean_delta_next_day": 903.75,
+      "mean_delta_control": -972.857,
+      "effect_size": 1876.607,
+      "mean_delta_day_after": -1301.25,
+      "direction": "up",
+      "consistency": 0.88,
+      "n": 8,
+      "occurrences": 8,
+      "effect_holds_next_day": false,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-08",
+      "examples": [
+        "2026-08-30",
+        "2026-09-02",
+        "2026-09-04",
+        "2026-09-07",
+        "2026-09-08"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "hrv",
+      "target": "sleep_periods",
+      "driver_threshold": 16.0,
+      "cases_considered": 8,
+      "cases_eligible": 8,
+      "confounded_excluded": 0,
+      "of_opportunities": 23,
+      "share": 0.35,
+      "target_median": 1.0,
+      "target_today_mean": 1.125,
+      "target_next_day_mean": 1.375,
+      "mean_delta_next_day": 0.25,
+      "mean_delta_control": -0.214,
+      "effect_size": 0.464,
+      "mean_delta_day_after": -0.375,
+      "direction": "up",
+      "consistency": 0.88,
+      "n": 8,
+      "occurrences": 8,
+      "effect_holds_next_day": false,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-08",
+      "examples": [
+        "2026-08-30",
+        "2026-09-02",
+        "2026-09-04",
+        "2026-09-07",
+        "2026-09-08"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "activity_score",
+      "target": "biphasic",
+      "driver_threshold": 98.0,
+      "cases_considered": 8,
+      "cases_eligible": 8,
+      "confounded_excluded": 0,
+      "of_opportunities": 22,
+      "share": 0.36,
+      "target_median": 0.0,
+      "target_today_mean": 0.0,
+      "target_next_day_mean": 0.0,
+      "mean_delta_next_day": 0.0,
+      "mean_delta_control": 0.0,
+      "effect_size": 0.0,
+      "mean_delta_day_after": 0.0,
+      "direction": "up",
+      "consistency": 1.0,
+      "n": 8,
+      "occurrences": 8,
+      "effect_holds_next_day": true,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-05",
+      "examples": [
+        "2026-08-31",
+        "2026-09-01",
+        "2026-09-02",
+        "2026-09-04",
+        "2026-09-05"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "hrv",
+      "target": "biphasic",
+      "driver_threshold": 16.0,
+      "cases_considered": 8,
+      "cases_eligible": 8,
+      "confounded_excluded": 0,
+      "of_opportunities": 23,
+      "share": 0.35,
+      "target_median": 0.0,
+      "target_today_mean": 0.0,
+      "target_next_day_mean": 0.0,
+      "mean_delta_next_day": 0.0,
+      "mean_delta_control": 0.0,
+      "effect_size": 0.0,
+      "mean_delta_day_after": 0.0,
+      "direction": "up",
+      "consistency": 1.0,
+      "n": 8,
+      "occurrences": 8,
+      "effect_holds_next_day": true,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-08",
+      "examples": [
+        "2026-08-30",
+        "2026-09-02",
+        "2026-09-04",
+        "2026-09-07",
+        "2026-09-08"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "activity_score",
+      "target": "rem_sleep",
+      "driver_threshold": 98.0,
+      "cases_considered": 8,
+      "cases_eligible": 7,
+      "confounded_excluded": 1,
+      "of_opportunities": 22,
+      "share": 0.32,
+      "target_median": 4575.0,
+      "target_today_mean": 6368.571,
+      "target_next_day_mean": 6617.143,
+      "mean_delta_next_day": 248.571,
+      "mean_delta_control": -2208.0,
+      "effect_size": 2456.571,
+      "mean_delta_day_after": -240.0,
+      "direction": "up",
+      "consistency": 0.43,
+      "n": 7,
+      "occurrences": 7,
+      "effect_holds_next_day": false,
+      "reliability": "insufficient",
+      "confidence": "low",
+      "last_seen": "2026-09-05",
+      "examples": [
+        "2026-08-30",
+        "2026-08-31",
+        "2026-09-02",
+        "2026-09-04",
+        "2026-09-05"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "sleep_duration",
+      "target": "nap_duration",
+      "driver_threshold": 82.0,
+      "cases_considered": 7,
+      "cases_eligible": 7,
+      "confounded_excluded": 0,
+      "of_opportunities": 23,
+      "share": 0.3,
+      "target_median": 0.0,
+      "target_today_mean": 1945.714,
+      "target_next_day_mean": 0.0,
+      "mean_delta_next_day": -1945.714,
+      "mean_delta_control": 482.0,
+      "effect_size": -2427.714,
+      "mean_delta_day_after": 0.0,
+      "direction": "down",
+      "consistency": 0.43,
+      "n": 7,
+      "occurrences": 7,
+      "effect_holds_next_day": false,
+      "reliability": "insufficient",
+      "confidence": "low",
+      "last_seen": "2026-09-08",
+      "examples": [
+        "2026-08-24",
+        "2026-08-31",
+        "2026-09-05",
+        "2026-09-06",
+        "2026-09-08"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "sleep_duration",
+      "target": "sleep_score",
+      "driver_threshold": 82.0,
+      "cases_considered": 7,
+      "cases_eligible": 7,
+      "confounded_excluded": 0,
+      "of_opportunities": 23,
+      "share": 0.3,
+      "target_median": 68.5,
+      "target_today_mean": 78.571,
+      "target_next_day_mean": 67.857,
+      "mean_delta_next_day": -10.714,
+      "mean_delta_control": 0.5,
+      "effect_size": -11.214,
+      "mean_delta_day_after": 5.286,
+      "direction": "down",
+      "consistency": 0.86,
+      "n": 7,
+      "occurrences": 7,
+      "effect_holds_next_day": false,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-08",
+      "examples": [
+        "2026-08-24",
+        "2026-08-31",
+        "2026-09-05",
+        "2026-09-06",
+        "2026-09-08"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "breathing",
+      "target": "vascular_age",
+      "driver_threshold": 1.0,
+      "cases_considered": 9,
+      "cases_eligible": 7,
+      "confounded_excluded": 2,
+      "of_opportunities": 23,
+      "share": 0.3,
+      "target_median": 40.0,
+      "target_today_mean": 41.429,
+      "target_next_day_mean": 40.429,
+      "mean_delta_next_day": -1.0,
+      "mean_delta_control": -2.167,
+      "effect_size": 1.167,
+      "mean_delta_day_after": -0.714,
+      "direction": "down",
+      "consistency": 0.86,
+      "n": 7,
+      "occurrences": 7,
+      "effect_holds_next_day": true,
+      "reliability": "insufficient",
+      "confidence": "medium",
+      "last_seen": "2026-09-03",
+      "examples": [
+        "2026-08-27",
+        "2026-08-29",
+        "2026-08-30",
+        "2026-09-02",
+        "2026-09-03"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    },
+    {
+      "driver": "sleep_duration",
+      "target": "sleep_periods",
+      "driver_threshold": 82.0,
+      "cases_considered": 7,
+      "cases_eligible": 7,
+      "confounded_excluded": 0,
+      "of_opportunities": 23,
+      "share": 0.3,
+      "target_median": 1.0,
+      "target_today_mean": 1.429,
+      "target_next_day_mean": 1.0,
+      "mean_delta_next_day": -0.429,
+      "mean_delta_control": 0.133,
+      "effect_size": -0.562,
+      "mean_delta_day_after": 0.0,
+      "direction": "down",
+      "consistency": 0.43,
+      "n": 7,
+      "occurrences": 7,
+      "effect_holds_next_day": false,
+      "reliability": "insufficient",
+      "confidence": "low",
+      "last_seen": "2026-09-08",
+      "examples": [
+        "2026-08-24",
+        "2026-08-31",
+        "2026-09-05",
+        "2026-09-06",
+        "2026-09-08"
+      ],
+      "reading": "group effect, never a rule for a single day"
+    }
+  ],
+  "anomalies": [
+    {
+      "day": "2026-09-10",
+      "metric": "activity_score",
+      "value": 81.0,
+      "median": 95.0,
+      "robust_z": -3.15,
+      "share": 0.028
+    },
+    {
+      "day": "2026-09-07",
+      "metric": "recovery_high",
+      "value": 2.75,
+      "median": 0.5,
+      "robust_z": 3.04,
+      "share": 0.081
+    },
+    {
+      "day": "2026-09-06",
+      "metric": "recovery_high",
+      "value": 3.25,
+      "median": 0.5,
+      "robust_z": 3.71,
+      "share": 0.081
+    }
+  ],
+  "correlations_lagged_1d": [
+    {
+      "a": "activity_score",
+      "b": "sleep_duration",
+      "r": 0.514,
+      "n": 36,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "activity_score",
+      "b": "sleep_score",
+      "r": 0.456,
+      "n": 36,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "nap_duration",
+      "b": "deep_sleep",
+      "r": 0.446,
+      "n": 35,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "breathing",
+      "b": "spo2",
+      "r": 0.441,
+      "n": 33,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "stress_high",
+      "b": "rhr",
+      "r": 0.43,
+      "n": 36,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "stress_high",
+      "b": "hr_min",
+      "r": 0.425,
+      "n": 35,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "recovery_high",
+      "b": "vascular_age",
+      "r": 0.411,
+      "n": 36,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "vascular_age",
+      "b": "rhr",
+      "r": -0.41,
+      "n": 35,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "spo2",
+      "b": "sleep_periods",
+      "r": 0.406,
+      "n": 33,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    }
+  ],
+  "observations_added": [
+    "pattern: workouts -> nap_duration | случаи: 10/22 | последний: 2026-09-08",
+    "pattern: workouts -> sleep_periods | случаи: 10/22 | последний: 2026-09-08",
+    "pattern: workouts -> biphasic | случаи: 10/22 | последний: 2026-09-08",
+    "pattern: breathing -> nap_duration | случаи: 9/23 | последний: 2026-09-06",
+    "pattern: breathing -> sleep_periods | случаи: 9/23 | последний: 2026-09-06",
+    "pattern: breathing -> biphasic | случаи: 9/23 | последний: 2026-09-06",
+    "pattern: hrv -> nap_duration | случаи: 8/23 | последний: 2026-09-08",
+    "pattern: hrv -> sleep_periods | случаи: 8/23 | последний: 2026-09-08"
+  ],
+  "briefing": "# Weekly trend and pattern report\nDate: 2026-09-12\nWindow: 2026-09-06 .. 2026-09-12 vs 2026-08-30 .. 2026-09-05\n\n## Changed vs previous window\n  - sleep_score: 65.29 против 72.14 (ниже на 6.86 / -9.5%)\n  - hrv: 15.00 против 14.86 (выше на 0.14 / 1.0%)\n  - rhr: 69.00 против 69.29 (ниже на 0.29 / -0.4%)\n  - readiness: 78.14 против 78.43 (ниже на 0.29 / -0.4%)\n  - temp_dev: 0.14 против 0.05 (выше на 0.09 / —)\n  - spo2: 94.60 против 94.70 (ниже на 0.11 / -0.1%)\n  - steps: 8469.33 против 18263.57 (ниже на 9794.24 / -53.6%)\n  - activity_score: 88.17 против 97.00 (ниже на 8.83 / -9.1%)\n  - sleep_duration: 64.29 против 72.29 (ниже на 8.00 / -11.1%)\n  - stress_high: 0.18 против 0.43 (ниже на 0.25 / —)\n  - deep_sleep: 3651.43 против 3784.29 (ниже на 132.86 / -3.5%)\n  - rem_sleep: 4251.43 против 5747.14 (ниже на 1495.71 / -26.0%)\n  - resilience: 51.26 против 53.67 (ниже на 2.41 / -4.5%)\n  - workouts: 5.17 против 7.00 (ниже на 1.83 / -26.2%)\n\n## Trends (per 30 days, whole history)\n  - sleep.time_in_bed: 1870.641 per 30d (n=36, mean 28335.61)\n  - sleep.total_sleep_duration: 1081.042 per 30d (n=36, mean 22472.50)\n  - rem_sleep: -544.054 per 30d (n=36, mean 5125.83)\n  - sleep.rem_sleep_duration: -544.054 per 30d (n=36, mean 5125.83)\n  - deep_sleep: 447.104 per 30d (n=36, mean 3735.00)\n  - nap_duration: 134.363 per 30d (n=36, mean 471.67)\n  - sleep__nap_duration: 134.363 per 30d (n=36, mean 471.67)\n  - calories: 62.865 per 30d (n=36, mean 3378.50)\n\n## Patterns\n  - workouts >= 6.00 -> nap_duration ниже медианы: 10/22 (45%), средний эффект 1020.00, через день -21.00, confidence medium, последний 2026-09-08\n  - workouts >= 6.00 -> sleep_periods ниже медианы: 10/22 (45%), средний эффект 0.20, через день -0.10, confidence medium, последний 2026-09-08\n  - workouts >= 6.00 -> biphasic ниже медианы: 10/22 (45%), средний эффект 0.00, через день 0.00, confidence medium, последний 2026-09-08\n  - breathing >= 1.00 -> nap_duration ниже медианы: 9/23 (39%), средний эффект 1110.00, через день -330.00, confidence medium, последний 2026-09-06\n  - breathing >= 1.00 -> sleep_periods ниже медианы: 9/23 (39%), средний эффект 0.11, через день 0.00, confidence medium, последний 2026-09-06\n  - breathing >= 1.00 -> biphasic ниже медианы: 9/23 (39%), средний эффект 0.00, через день 0.00, confidence medium, последний 2026-09-06\n  - hrv >= 16.00 -> nap_duration ниже медианы: 8/23 (35%), средний эффект 903.75, через день -1301.25, confidence medium, последний 2026-09-08\n  - hrv >= 16.00 -> sleep_periods ниже медианы: 8/23 (35%), средний эффект 0.25, через день -0.38, confidence medium, последний 2026-09-08\n\n## Anomalies, last 7 days\n  - 2026-09-10 activity_score = 81.00 (rz -3.15, median 95.00)\n  - 2026-09-07 recovery_high = 2.75 (rz 3.04, median 0.50)\n  - 2026-09-06 recovery_high = 3.25 (rz 3.71, median 0.50)\n\n## Lagged correlations (day d vs d+1)\n  - activity_score -> sleep_duration: r=0.514 (n=36)\n  - activity_score -> sleep_score: r=0.456 (n=36)\n  - nap_duration -> deep_sleep: r=0.446 (n=35)\n  - breathing -> spo2: r=0.441 (n=33)\n  - stress_high -> rhr: r=0.430 (n=36)\n  - stress_high -> hr_min: r=0.425 (n=35)\n  - recovery_high -> vascular_age: r=0.411 (n=36)\n  - vascular_age -> rhr: r=-0.410 (n=35)\n\nNew regularities saved to observations.md: 8"
+}

@@ -1,0 +1,185 @@
+{
+  "schema": "health-evidence-input.v1",
+  "generated_at": "2026-09-17T04:31:02+00:00",
+  "source": "oura",
+  "source_mode": "local_aggregate",
+  "period": {
+    "first": "2026-08-07",
+    "last": "2026-09-17",
+    "count": 42
+  },
+  "data_quality": {
+    "coverage": 1.0,
+    "days_with_data": 30,
+    "expected_days": 30,
+    "gaps": [],
+    "longest_gap_days": 0
+  },
+  "metrics": {
+    "activity_score": {
+      "n": 41,
+      "median": 95.0,
+      "last": 92.0,
+      "z_last": -0.372,
+      "robust_z_last": -0.674,
+      "slope_30d": -3.83101,
+      "reliability": "moderate"
+    },
+    "breathing": {
+      "n": 40,
+      "median": 1.0,
+      "last": 0.0,
+      "z_last": -0.863,
+      "robust_z_last": -0.674,
+      "slope_30d": -0.4334,
+      "reliability": "moderate"
+    },
+    "readiness": {
+      "n": 40,
+      "median": 77.5,
+      "last": 82.0,
+      "z_last": 0.924,
+      "robust_z_last": 0.867,
+      "slope_30d": 5.45122,
+      "reliability": "moderate"
+    },
+    "steps": {
+      "n": 41,
+      "median": 12326.0,
+      "last": 5410.0,
+      "z_last": -1.27,
+      "robust_z_last": -1.32,
+      "slope_30d": -1240.69861,
+      "reliability": "moderate"
+    },
+    "spo2": {
+      "n": 37,
+      "median": 94.324,
+      "last": 94.495,
+      "z_last": 0.057,
+      "robust_z_last": 0.147,
+      "slope_30d": 0.04556,
+      "reliability": "moderate"
+    },
+    "nap_duration": {
+      "n": 40,
+      "median": 0.0,
+      "last": 570.0,
+      "z_last": 0.086,
+      "robust_z_last": 0.374,
+      "slope_30d": -30.64728,
+      "reliability": "moderate"
+    },
+    "temp_dev": {
+      "n": 40,
+      "median": 0.055,
+      "last": 0.06,
+      "z_last": 0.18,
+      "robust_z_last": 0.018,
+      "slope_30d": 0.22579,
+      "reliability": "moderate"
+    },
+    "deep_sleep": {
+      "n": 40,
+      "median": 3735.0,
+      "last": 2940.0,
+      "z_last": -0.827,
+      "robust_z_last": -0.872,
+      "slope_30d": 382.45779,
+      "reliability": "moderate"
+    },
+    "sleep_score": {
+      "n": 40,
+      "median": 69.0,
+      "last": 64.0,
+      "z_last": -0.562,
+      "robust_z_last": -0.674,
+      "slope_30d": 2.5469,
+      "reliability": "moderate"
+    },
+    "rhr": {
+      "n": 40,
+      "median": 70.0,
+      "last": 70.0,
+      "z_last": -0.089,
+      "robust_z_last": 0.0,
+      "slope_30d": -1.30582,
+      "reliability": "moderate"
+    },
+    "rem_sleep": {
+      "n": 40,
+      "median": 4770.0,
+      "last": 6480.0,
+      "z_last": 0.782,
+      "robust_z_last": 1.053,
+      "slope_30d": -182.53283,
+      "reliability": "moderate"
+    },
+    "hrv": {
+      "n": 40,
+      "median": 14.0,
+      "last": 11.0,
+      "z_last": -0.966,
+      "robust_z_last": -0.809,
+      "slope_30d": 0.38555,
+      "reliability": "moderate"
+    },
+    "sleep_duration": {
+      "n": 40,
+      "median": 68.0,
+      "last": 54.0,
+      "z_last": -0.93,
+      "robust_z_last": -0.858,
+      "slope_30d": 4.96154,
+      "reliability": "moderate"
+    },
+    "workouts": {
+      "n": 40,
+      "median": 6.0,
+      "last": 2.0,
+      "z_last": -1.781,
+      "robust_z_last": -1.799,
+      "slope_30d": -1.64353,
+      "reliability": "moderate"
+    }
+  },
+  "anomalies": [
+    {
+      "metric": "activity_score"
+    },
+    {
+      "metric": "recovery_high"
+    },
+    {
+      "metric": "recovery_high"
+    },
+    {
+      "metric": "steps"
+    },
+    {
+      "metric": "deep_sleep"
+    },
+    {
+      "metric": "recovery_high"
+    },
+    {
+      "metric": "temp_dev"
+    },
+    {
+      "metric": "stress_high"
+    }
+  ],
+  "patterns": [],
+  "medical_context_request": {
+    "query": "wearable sleep quality duration HRV resting heart rate recovery evidence",
+    "mode": "read_only",
+    "patient_specific": false
+  },
+  "safety": {
+    "raw_data_included": false,
+    "personal_identifiers_included": false,
+    "medical_advice": false,
+    "diagnosis_allowed": false,
+    "causality_allowed": false
+  }
+}

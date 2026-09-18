@@ -6,16 +6,16 @@ stored in .env by oura_oauth_exchange.py. Never prints secrets.
 """
 import argparse
 import json
-import os
 import sqlite3
 import sys
 import time
-from datetime import date, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import requests
 
 import oura_auth
+from analytics import local_today
 
 # Compatibility: the project documents the self-check as `oura_sync.py --oauth-check`.
 if __name__ == "__main__" and "--oauth-check" in sys.argv:
@@ -24,9 +24,7 @@ if __name__ == "__main__" and "--oauth-check" in sys.argv:
 
 WORKSPACE = Path(__file__).resolve().parents[1]
 DB_PATH = WORKSPACE / "data" / "oura.db"
-ENV_PATH = WORKSPACE / ".env"
 API_BASE = "https://api.ouraring.com/v2/usercollection"
-TOKEN_URL = "https://api.ouraring.com/oauth/token"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS daily_sleep (
@@ -84,24 +82,6 @@ CREATE TABLE IF NOT EXISTS tags (
 """
 
 
-def read_env() -> dict[str, str]:
-    values: dict[str, str] = {}
-    if ENV_PATH.exists():
-        for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, _, value = line.partition("=")
-            values[key.strip()] = value.strip().strip('"')
-    return values
-
-
-def write_env(values: dict[str, str]) -> None:
-    lines = [f'{k}="{v}"' for k, v in values.items()]
-    ENV_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    os.chmod(ENV_PATH, 0o600)
-
-
 def refresh_access_token(env: dict[str, str]) -> dict[str, str]:
     client_id = env.get("OURA_CLIENT_ID", "")
     client_secret = env.get("OURA_CLIENT_SECRET", "")
@@ -120,12 +100,12 @@ def refresh_access_token(env: dict[str, str]) -> dict[str, str]:
     env["OURA_ACCESS_TOKEN"] = payload["access_token"]
     env["OURA_REFRESH_TOKEN"] = payload.get("refresh_token", refresh_token)
     env["OURA_TOKEN_EXPIRES_AT"] = str(int(time.time()) + int(payload.get("expires_in", 86400)))
-    write_env(env)
+    oura_auth.write_env(env)
     return env
 
 
 def get_access_token() -> str:
-    env = read_env()
+    env = oura_auth.read_env()
     expires_at = int(env.get("OURA_TOKEN_EXPIRES_AT", "0") or "0")
     if not env.get("OURA_ACCESS_TOKEN") or time.time() >= expires_at - 60:
         env = refresh_access_token(env)
@@ -137,14 +117,6 @@ def get_db() -> sqlite3.Connection:
     con = sqlite3.connect(DB_PATH)
     con.executescript(SCHEMA)
     return con
-
-
-def fetch(endpoint: str, token: str, start: str, end: str) -> list[dict]:
-    headers = {"Authorization": f"Bearer {token}"}
-    params = {"start_date": start, "end_date": end}
-    resp = requests.get(f"{API_BASE}/{endpoint}", headers=headers, params=params, timeout=30)
-    resp.raise_for_status()
-    return resp.json().get("data", [])
 
 
 # --- Full coverage: every Oura v2 collection, stored as raw payloads ---------
@@ -194,6 +166,7 @@ def fetch_any(endpoint: str, token: str, kind: str, start: str, end: str) -> lis
         # Oura rejects datetime collections spanning more than 30 days
         # (heartrate: "the time between start and endtime has to be less than or
         # equal to 30 days"), so walk the range in <=30-day windows.
+        from datetime import date
         first, last = date.fromisoformat(start), date.fromisoformat(end)
         items: list = []
         cur = first
@@ -233,7 +206,7 @@ def _fetch_window(endpoint: str, headers: dict, params: dict) -> list:
 
 
 def upsert_raw(con: sqlite3.Connection, endpoint: str, items: list) -> int:
-    now = date.today().isoformat()
+    now = local_today().isoformat()
     rows = []
     for i, item in enumerate(items):
         if isinstance(item, dict):
@@ -255,8 +228,8 @@ def sync_all(days: int) -> dict:
     get_access_token()
     con = get_db()
     ensure_raw_table(con)
-    start_s = (date.today() - timedelta(days=days)).isoformat()
-    end_s = date.today().isoformat()
+    start_s = (local_today() - timedelta(days=days)).isoformat()
+    end_s = local_today().isoformat()
     counts: dict = {}
     errors: dict = {}
     try:
@@ -294,133 +267,13 @@ def raw_stats() -> dict:
             "total": sum(per.values())}
 
 
-def upsert_sleep(con: sqlite3.Connection, items: list[dict]) -> int:
-    now = date.today().isoformat()
-    n = 0
-    for item in items:
-        contrib = item.get("contributors", {}) or {}
-        con.execute(
-            """INSERT INTO daily_sleep
-               (id, day, score, total_sleep_seconds, deep_sleep_seconds,
-                rem_sleep_seconds, efficiency, latency_seconds,
-                resting_heart_rate, hrv_average, respiratory_rate, raw_json, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-               ON CONFLICT(id) DO UPDATE SET
-                 score=excluded.score, total_sleep_seconds=excluded.total_sleep_seconds,
-                 deep_sleep_seconds=excluded.deep_sleep_seconds,
-                 rem_sleep_seconds=excluded.rem_sleep_seconds,
-                 efficiency=excluded.efficiency, latency_seconds=excluded.latency_seconds,
-                 resting_heart_rate=excluded.resting_heart_rate,
-                 hrv_average=excluded.hrv_average, respiratory_rate=excluded.respiratory_rate,
-                 raw_json=excluded.raw_json, updated_at=excluded.updated_at""",
-            (
-                item.get("id"), item.get("day"), item.get("score"),
-                item.get("total_sleep_duration"), item.get("deep_sleep_duration"),
-                item.get("rem_sleep_duration"), contrib.get("efficiency"),
-                item.get("latency"), item.get("average_heart_rate"),
-                item.get("average_hrv"), item.get("average_breath"),
-                json.dumps(item, ensure_ascii=False), now,
-            ),
-        )
-        n += 1
-    return n
-
-
-def upsert_readiness(con: sqlite3.Connection, items: list[dict]) -> int:
-    now = date.today().isoformat()
-    n = 0
-    for item in items:
-        contrib = item.get("contributors", {}) or {}
-        con.execute(
-            """INSERT INTO daily_readiness
-               (id, day, score, hrv_balance, resting_heart_rate,
-                temperature_deviation, raw_json, updated_at)
-               VALUES (?,?,?,?,?,?,?,?)
-               ON CONFLICT(id) DO UPDATE SET
-                 score=excluded.score, hrv_balance=excluded.hrv_balance,
-                 resting_heart_rate=excluded.resting_heart_rate,
-                 temperature_deviation=excluded.temperature_deviation,
-                 raw_json=excluded.raw_json, updated_at=excluded.updated_at""",
-            (
-                item.get("id"), item.get("day"), item.get("score"),
-                contrib.get("hrv_balance"), contrib.get("resting_heart_rate"),
-                item.get("temperature_deviation"),
-                json.dumps(item, ensure_ascii=False), now,
-            ),
-        )
-        n += 1
-    return n
-
-
-def upsert_activity(con: sqlite3.Connection, items: list[dict]) -> int:
-    now = date.today().isoformat()
-    n = 0
-    for item in items:
-        con.execute(
-            """INSERT INTO daily_activity
-               (id, day, score, steps, calories, active_calories, sedentary_time, raw_json, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?)
-               ON CONFLICT(id) DO UPDATE SET
-                 score=excluded.score, steps=excluded.steps, calories=excluded.calories,
-                 active_calories=excluded.active_calories, sedentary_time=excluded.sedentary_time,
-                 raw_json=excluded.raw_json, updated_at=excluded.updated_at""",
-            (
-                item.get("id"), item.get("day"), item.get("score"),
-                item.get("steps"), item.get("total_calories"),
-                item.get("active_calories"), item.get("sedentary_time"),
-                json.dumps(item, ensure_ascii=False), now,
-            ),
-        )
-        n += 1
-    return n
-
-
-def upsert_workouts(con: sqlite3.Connection, items: list[dict]) -> int:
-    n = 0
-    for item in items:
-        con.execute(
-            """INSERT INTO workouts (id, day, activity, duration_seconds, calories, intensity, raw_json)
-               VALUES (?,?,?,?,?,?,?)
-               ON CONFLICT(id) DO UPDATE SET
-                 activity=excluded.activity, duration_seconds=excluded.duration_seconds,
-                 calories=excluded.calories, intensity=excluded.intensity, raw_json=excluded.raw_json""",
-            (
-                item.get("id"), item.get("day"), item.get("activity"),
-                None, item.get("calories"), item.get("intensity"),
-                json.dumps(item, ensure_ascii=False),
-            ),
-        )
-        n += 1
-    return n
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Sync Oura data into SQLite")
     parser.add_argument("--days", type=int, default=7, help="How many days back to sync")
     args = parser.parse_args()
 
-    token = get_access_token()
-    end = date.today()
-    start = end - timedelta(days=args.days)
-    start_s, end_s = start.isoformat(), end.isoformat()
-
-    con = get_db()
-    counts = {}
-    try:
-        counts["sleep"] = upsert_sleep(con, fetch("daily_sleep", token, start_s, end_s))
-        counts["readiness"] = upsert_readiness(con, fetch("daily_readiness", token, start_s, end_s))
-        counts["activity"] = upsert_activity(con, fetch("daily_activity", token, start_s, end_s))
-        counts["workouts"] = upsert_workouts(con, fetch("workout", token, start_s, end_s))
-        con.commit()
-    finally:
-        con.close()
-
-    # Full coverage: every v2 collection goes into oura_raw as well, so the CLI
-    # and the callback service /sync endpoint produce the same complete data set.
-    raw = sync_all(args.days)
-    counts["raw_total"] = raw["total"]
-    print(json.dumps({"ok": raw["ok"], "range": [start_s, end_s], "synced": counts,
-                      "raw": raw["counts"], "raw_errors": raw["errors"]}, ensure_ascii=False))
+    result = sync_all(args.days)
+    print(json.dumps(result, ensure_ascii=False))
 
 
 if __name__ == "__main__":

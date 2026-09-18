@@ -1,0 +1,14 @@
+#!/bin/sh
+# Safe launcher: loads the trusted secret file without printing it, then runs
+# only the fixed Aviasales/Travelpayouts skill script.
+set -eu
+umask 077
+cd /root/openclaw/skills/aviasales-flights
+if [ ! -r /root/.openclaw/.env ]; then
+  printf '%s\n' 'Travelpayouts configuration is unavailable.' >&2
+  exit 1
+fi
+set -a
+. /root/.openclaw/.env
+set +a
+exec /usr/bin/python3 /root/openclaw/skills/aviasales-flights/scripts/search_flights.py "$@"

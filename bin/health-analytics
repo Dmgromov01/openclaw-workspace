@@ -1,0 +1,4 @@
+#!/bin/sh
+# Fixed launcher: runs only the analytics script with the health-agent Python.
+set -eu
+exec /usr/bin/python3 /root/openclaw/workspace/health/scripts/analytics.py "$@"

@@ -1,0 +1,4 @@
+#!/bin/sh
+# Fixed launcher: runs the bootstrap 90-day sync + monthly analytics.
+set -eu
+exec /usr/bin/python3 /root/openclaw/workspace/health/scripts/first_month_analysis.py "$@"

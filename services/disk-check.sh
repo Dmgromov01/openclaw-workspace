@@ -3,12 +3,16 @@
 # Сервисы НЕ рестартит. Токен берётся из .env хаба (не светится в crontab).
 set -eu
 THRESHOLD="${DISK_THRESHOLD_PCT:-85}"
+ENV_FILE=/root/atlas-green-pearl-dawn/.env
+if [ -f "$ENV_FILE" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$ENV_FILE"
+  set +a
+fi
 PCT=$(df / | awk 'NR==2 {gsub("%","",$5); print $5}')
 PCT=${PCT:-0}
 if [ "$PCT" -gt "$THRESHOLD" ]; then
-  set -a
-  . /root/atlas-green-pearl-dawn/.env
-  set +a
   token="${TELEGRAM_BOT_TOKEN:-}"
   chat="${TELEGRAM_OWNER_ID:-}"
   if [ -n "$token" ] && [ -n "$chat" ]; then

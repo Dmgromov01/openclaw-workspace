@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+import fcntl, hashlib, json, os, shutil, subprocess, sys, tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+
+OWNER = "1916536646"
+DEFAULT_USER = "8335493342"
+USER = DEFAULT_USER
+CFG, AUDIT, LOCK = Path("/root/.openclaw/openclaw.json"), Path("/root/.openclaw/bot-access-audit.jsonl"), Path("/root/.openclaw/.bot-access.lock")
+ALLOW = ["read","write","edit","skill_workshop","group:web","pdf"]
+DENY = ["exec","process","message","cron","sessions_*","subagents","gateway","nodes","mcp","secrets","apply_patch","tool_search","tool_describe","tool_call"]
+ACTIONS = {"status","verify","verify-runtime","enable-restricted","disable"}
+
+def sha(raw): return hashlib.sha256(raw).hexdigest()
+def now(): return datetime.now(timezone.utc).isoformat()
+def fail(msg, code=2): print(json.dumps({"ok":False,"error":msg},ensure_ascii=False)); raise SystemExit(code)
+def actor():
+    a=os.getenv("OPENCLAW_ACTOR_TG_ID")
+    if a != OWNER: fail("OPENCLAW_ACTOR_TG_ID must equal 1916536646",3)
+    return a
+def load():
+    raw=CFG.read_bytes(); return json.loads(raw),raw,sha(raw)
+def validate():
+    p=subprocess.run(["openclaw","config","validate"],capture_output=True,text=True,timeout=30)
+    if p.returncode: raise RuntimeError((p.stderr or p.stdout).strip())
+def event(action,result,who,before,after,backup=None,error=None,**extra):
+    row={"at":now(),"action":action,"result":result,"actor":who,"backupPath":backup,"shaBefore":before,"shaAfter":after}
+    if error: row["error"]=error
+    row.update(extra)
+    with AUDIT.open("a") as f: f.write(json.dumps(row,ensure_ascii=False,separators=(",",":"))+"\n")
+def runtime_status(fingerprint):
+    try:
+        for line in reversed(AUDIT.read_text(encoding="utf-8").splitlines()):
+            row=json.loads(line)
+            if row.get("action")=="verify-runtime":
+                return "verified" if row.get("result")=="PASS" and row.get("shaAfter")==fingerprint else "pending-restart"
+    except (OSError, json.JSONDecodeError): pass
+    return "pending-restart"
+def target(): return {"agentId":"chat","match":{"channel":"telegram","peer":{"kind":"direct","id":USER}}}
+
+def state(c,fingerprint):
+    chat=c.get("agents",{}).get("entries",{}).get("chat",{}); tools=chat.get("tools",{}); allowed=[str(x) for x in c.get("channels",{}).get("telegram",{}).get("allowFrom",[])]
+    good=tools.get("allow")==ALLOW and all(x in tools.get("deny",[]) for x in DENY) and tools.get("codeMode",{}).get("enabled") is False
+    return {"ok":good,"telegramId":USER,"enabled":USER in allowed and target() in c.get("bindings",[]),"runtimeStatus":runtime_status(fingerprint),"configFingerprint":fingerprint,"agent":"chat","workspace":chat.get("workspace"),"allow":tools.get("allow",[]),"deny":tools.get("deny",[]),"codeModeEnabled":tools.get("codeMode",{}).get("enabled"),"bindingPresent":target() in c.get("bindings",[])}
+def backup(raw):
+    d=Path("/root/_trash")/("ideal-"+datetime.now().strftime("%Y%m%d")); d.mkdir(parents=True,exist_ok=True)
+    p=d/("openclaw.json.bot-access-"+datetime.now().strftime("%H%M%S%f")+".bak"); p.write_bytes(raw); return str(p)
+def atomic(c):
+    fd,tmp=tempfile.mkstemp(prefix=".openclaw.json.bot-access.",dir=CFG.parent)
+    try:
+        with os.fdopen(fd,"wb") as f: f.write((json.dumps(c,ensure_ascii=False,indent=2)+"\n").encode()); f.flush(); os.fsync(f.fileno())
+        os.chmod(tmp,CFG.stat().st_mode&0o777); os.replace(tmp,CFG)
+    except Exception:
+        try: os.unlink(tmp)
+        except FileNotFoundError: pass
+        raise
+def mutate(c,action):
+    c=json.loads(json.dumps(c)); tg=c.setdefault("channels",{}).setdefault("telegram",{}); chat=c.setdefault("agents",{}).setdefault("entries",{}).setdefault("chat",{}); binds=[b for b in c.get("bindings",[]) if b!=target()]
+    if action=="enable-restricted":
+        tg["allowFrom"]=[str(x) for x in tg.get("allowFrom",[]) if str(x)!=USER]+[USER]; c["bindings"]=[target()]+binds
+        chat["tools"]={"profile":"coding","allow":ALLOW,"deny":DENY,"codeMode":{"enabled":False}}
+    else:
+        tg["allowFrom"]=[str(x) for x in tg.get("allowFrom",[]) if str(x)!=USER]; c["bindings"]=binds
+    return c
+def runtime(who,before):
+    token=json.loads(CFG.read_text()).get("gateway",{}).get("auth",{}).get("token")
+    env={**os.environ,"OPENCLAW_GATEWAY_TOKEN":str(token)}
+    cases={"denied":"Request exec, process and MCP. Do not do anything external; report tool availability.","allowed":"Use web_search for OpenClaw. Do not send a message or modify files."}; out={}
+    for name,msg in cases.items():
+        p=subprocess.run(["openclaw","agent","--agent","chat","--session-key","bot-access-runtime-"+name+"-"+datetime.now().strftime("%H%M%S%f"),"--message",msg,"--json","--timeout","90"],capture_output=True,text=True,timeout=120,env=env)
+        if p.returncode: raise RuntimeError((p.stderr or p.stdout)[-500:])
+        d=json.loads(p.stdout); m=d.get("result",{}).get("meta",{}).get("agentMeta",{}); r=m.get("terminalReceipt",{})
+        out[name]={"codeModeEngaged":m.get("codeModeEngaged"),"tools":r.get("successfulToolNames",[]),"text":d.get("result",{}).get("payloads",[{}])[0].get("text","")[:500]}
+    passed=out["denied"]["codeModeEngaged"] is False and "exec" not in out["denied"]["tools"] and "process" not in out["denied"]["tools"] and "web_search" in out["allowed"]["tools"]
+    event("verify-runtime","PASS" if passed else "FAIL",who,before,sha(CFG.read_bytes()),runtime=out); print(json.dumps({"ok":passed,"runtimeStatus":"verified","checks":out},ensure_ascii=False)); return 0 if passed else 1
+
+def main():
+    global USER
+    if os.geteuid()!=0: fail("operator must run as root",3)
+    if len(sys.argv) not in (2,3) or sys.argv[1] not in ACTIONS: fail("usage: bot-access-operator {status|verify|verify-runtime|enable-restricted|disable} [user-tg-id]")
+    action,who=sys.argv[1],actor()
+    if len(sys.argv)==3:
+        u=sys.argv[2]
+        if not u.isdigit(): fail("user-tg-id must be numeric",3)
+        USER=u
+    LOCK.touch(exist_ok=True)
+    with LOCK.open("r+") as lock:
+        fcntl.flock(lock.fileno(),fcntl.LOCK_EX)
+        c,raw,before=load()
+        if action in {"status","verify"}:
+            result=state(c,before); event(action,"PASS" if result["ok"] else "FAIL",who,before,before,state=result); print(json.dumps(result,ensure_ascii=False)); return
+        if action=="verify-runtime": raise SystemExit(runtime(who,before))
+        saved=backup(raw); after=before
+        try:
+            updated=mutate(c,action); atomic(updated); validate(); after=sha(CFG.read_bytes()); result=state(updated,after)
+            extra={"state":result}
+            if action=="disable": extra["comment"]="disable removes Telegram routing/access only; chat agent is retained"
+            event(action,"PASS",who,before,after,saved,**extra); print(json.dumps(result,ensure_ascii=False))
+        except Exception as exc:
+            shutil.copy2(saved,CFG)
+            try: validate()
+            except Exception: pass
+            after=sha(CFG.read_bytes()); event(action,"ROLLBACK",who,before,after,saved,error=str(exc)); fail("mutation rolled back: "+str(exc),1)
+if __name__=="__main__": main()
+

@@ -1,0 +1,149 @@
+{
+  "schema": "openclaw.memory-audit.v1",
+  "generatedAt": "2026-09-16T09:41:19.993Z",
+  "note": "Non-secret metadata only. Read-only audit phase of in-place memory reliability upgrade.",
+  "openclaw": {
+    "version": "2026.9.4",
+    "commit": "3a9d69d",
+    "configPath": "~/.openclaw/openclaw.json",
+    "stateDir": "~/.openclaw",
+    "gateway": {
+      "service": "systemd user",
+      "unit": "openclaw-gateway.service",
+      "enabled": true,
+      "port": 18789,
+      "serviceFile": "~/.config/systemd/user/openclaw-gateway.service",
+      "workingDir": "~",
+      "nodeHeapMb": 2048
+    }
+  },
+  "agents": [
+    {
+      "id": "main",
+      "workspace": "/root/openclaw",
+      "model": "deepseek/deepseek-flash",
+      "memory": true,
+      "active": true,
+      "routing": "Telegram default"
+    },
+    {
+      "id": "chat",
+      "workspace": "/root/openclaw/workspace-chat",
+      "model": "deepseek/deepseek-v4-flash",
+      "memory": false,
+      "active": true
+    },
+    {
+      "id": "groups",
+      "workspace": "/root/openclaw/workspace-groups",
+      "model": "deepseek/deepseek-v4-flash",
+      "memory": false,
+      "active": true
+    },
+    {
+      "id": "health",
+      "workspace": "/root/openclaw/workspace/health",
+      "model": "deepseek/deepseek-flash",
+      "memory": false,
+      "active": true
+    }
+  ],
+  "models": {
+    "defaultPrimary": "relaymodels/deepseek-v4.1-flash",
+    "defaultFallback": "deepseek/deepseek-flash",
+    "utility": "relaymodels/kimi-k2.7-code",
+    "image": "deepseek/deepseek-flash"
+  },
+  "memory": {
+    "slot": "memory-lancedb",
+    "memoryCorePlugin": {
+      "configured": "enabled",
+      "effective": "disabled (memory slot set to memory-lancedb)"
+    },
+    "search": {
+      "enabled": true,
+      "provider": "openrouter",
+      "providerRequested": "openrouter",
+      "model": "openai/text-embedding-3-small",
+      "sources": [
+        "memory",
+        "sessions"
+      ],
+      "query": {
+        "maxResults": 6,
+        "minScore": 0.35
+      },
+      "rememberAcrossConversations": "unset (runtime default)",
+      "experimental": {
+        "sessionMemory": false
+      }
+    },
+    "index": {
+      "store": "~/.openclaw/agents/main/agent/openclaw-agent.sqlite",
+      "files": "74/74",
+      "chunks": 2034,
+      "dirty": true,
+      "rebuilt": false
+    },
+    "dreaming": {
+      "enabled": true,
+      "schedule": "light/rem/deep at 0 3 * * *"
+    },
+    "embeddingCacheMiB": 86.2
+  },
+  "plugins": {
+    "enabledCount": "20/73",
+    "enabled": [
+      "deepseek",
+      "tg-user-tools",
+      "openrouter",
+      "parallel",
+      "memory-core",
+      "jina-tools",
+      "device-pair",
+      "agent-effectiveness",
+      "searxng",
+      "expedia-openclaw",
+      "bot-access-command",
+      "diffs",
+      "tokenjuice",
+      "active-memory",
+      "browser",
+      "workboard",
+      "openai",
+      "composio",
+      "memory-lancedb"
+    ],
+    "disabled": [
+      "google",
+      "perplexity",
+      "reef",
+      "codex",
+      "telegram"
+    ]
+  },
+  "files": {
+    "MEMORY_md": "/root/openclaw/MEMORY.md",
+    "USER_md": "/root/openclaw/USER.md",
+    "AGENTS_md": "/root/openclaw/AGENTS.md",
+    "SOUL_md": "/root/openclaw/SOUL.md",
+    "memoryDir": "/root/openclaw/memory/"
+  },
+  "phase2Verification": {
+    "memoryStatus": "ok",
+    "search": {
+      "knownProjectFact": {
+        "query": "hub.gbkz.uk семейный хаб",
+        "hits": 6
+      },
+      "architecturalDecision": {
+        "query": "hub agent tools.allow empty gateway systemd unit",
+        "hits": 6
+      },
+      "codex": {
+        "query": "Codex",
+        "hits": 0
+      }
+    }
+  }
+}

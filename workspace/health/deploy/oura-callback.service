@@ -1,0 +1,19 @@
+[Unit]
+Description=Oura OAuth2 callback receiver (loopback :8092, for hub.gbkz.uk redirect)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/openclaw/workspace/health/scripts
+ExecStart=/usr/bin/python3 /root/openclaw/workspace/health/scripts/oura_callback_service.py
+Environment=OURA_CALLBACK_HOST=127.0.0.1
+Environment=OURA_CALLBACK_PORT=8092
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

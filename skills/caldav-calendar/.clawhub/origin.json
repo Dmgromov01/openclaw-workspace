@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "registry": "https://clawhub.ai",
+  "slug": "caldav-calendar",
+  "ownerHandle": "asleep123",
+  "installedAt": 1788535299680,
+  "artifact": {
+    "kind": "archive",
+    "sha256": "8d0d4a7a5b66fe69f5232957fe1f7a51e85ed7c34f6835dbdbf0244f55fb53a1",
+    "integrity": "sha256-jQ1Keltm/mn1IylX/h96Uehe18NPaDXb2/AkT1X7U6E="
+  },
+  "skillFile": {
+    "path": "SKILL.md",
+    "sha256": "63b956dec3a22bc0207fccf258beae90c6648339b568798fe42ac3b797c4ed27"
+  },
+  "fileTreeSha256": "sha256:9ab62fcf1163e662064397e4593be69bdf9f5d865abe71984f57be1b21ac5a2a",
+  "installedVersion": "1.0.1"
+}

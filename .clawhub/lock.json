@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "skills": {
+    "caldav-calendar": {
+      "version": "1.0.1",
+      "registry": "https://clawhub.ai",
+      "ownerHandle": "asleep123",
+      "installedAt": 1788535299680,
+      "artifact": {
+        "kind": "archive",
+        "sha256": "8d0d4a7a5b66fe69f5232957fe1f7a51e85ed7c34f6835dbdbf0244f55fb53a1",
+        "integrity": "sha256-jQ1Keltm/mn1IylX/h96Uehe18NPaDXb2/AkT1X7U6E="
+      },
+      "skillFile": {
+        "path": "SKILL.md",
+        "sha256": "63b956dec3a22bc0207fccf258beae90c6648339b568798fe42ac3b797c4ed27"
+      },
+      "fileTreeSha256": "sha256:9ab62fcf1163e662064397e4593be69bdf9f5d865abe71984f57be1b21ac5a2a",
+      "verification": {
+        "schema": "clawhub.skill.verify.v1",
+        "ok": true,
+        "decision": "pass",
+        "reasons": [],
+        "card": {
+          "available": true,
+          "path": "skill-card.md",
+          "url": "https://wry-manatee-359.convex.site/api/v1/skills/caldav-calendar/card?ownerHandle=asleep123&version=1.0.1",
+          "sha256": "a11a567608595ec844717a0d7a760720cb488343d8b153b4aa9680ed86681f9e",
+          "size": 2048,
+          "contentType": "text/markdown; charset=utf-8"
+        },
+        "artifact": {
+          "sourceFingerprint": null,
+          "bundleFingerprints": [
+            "a30f937285d5136400bf0c5b6d19c2e8b724cb1410b08765c74fb562bbacc947",
+            "d0bd73ad71424483f84b39715305dfaa2026b99147bfdd89e5fae96424e56a3d"
+          ],
+          "files": [
+            {
+              "path": "SKILL.md",
+              "size": 3478,
+              "sha256": "63b956dec3a22bc0207fccf258beae90c6648339b568798fe42ac3b797c4ed27",
+              "contentType": "text/markdown"
+            }
+          ]
+        },
+        "provenance": {
+          "source": "unavailable",
+          "reason": "No server-resolved GitHub import provenance is stored for this version."
+        },
+        "security": {
+          "status": "clean",
+          "passed": true,
+          "rawStatus": "clean",
+          "verdict": "benign",
+          "confidence": "high",
+          "summary": "This skill provides disclosed CalDAV calendar syncing and management through standard Linux tools, with expected access to calendar credentials and event data.",
+          "model": "gpt-5.5",
+          "checkedAt": 1783651443775,
+          "signals": {
+            "staticScan": {
+              "status": "clean",
+              "rawStatus": "clean",
+              "reasonCodes": [],
+              "summary": "No suspicious patterns detected.",
+              "engineVersion": "v2.4.5",
+              "checkedAt": 1777524883974
+            },
+            "virusTotal": {
+              "status": "clean",
+              "rawStatus": "clean",
+              "verdict": "benign",
+              "analysis": "Type: OpenClaw Skill\nName: caldav-calendar\nVersion: 1.0.1\n\nThe skill bundle is designed for CalDAV calendar synchronization and management using `vdirsyncer` and `khal`. All commands and instructions in `SKILL.md` are directly related to the stated purpose, such as syncing, listing, creating, editing, and deleting calendar events, as well as managing local cache files. The configuration examples, including the use of `cat` to fetch a password for `vdirsyncer`, describe standard functionality of the tools and do not indicate an attempt at data exfiltration or malicious execution by the skill itself. There is no evidence of prompt injection, obfuscation, or other harmful behaviors.",
+              "source": "palm",
+              "scanner": "code_insight",
+              "engineStats": {
+                "harmless": 0,
+                "malicious": 0,
+                "suspicious": 0,
+                "undetected": 64
+              },
+              "checkedAt": 1779159630136
+            },
+            "skillSpector": {
+              "status": "clean",
+              "rawStatus": "clean",
+              "score": 0,
+              "severity": "LOW",
+              "recommendation": "SAFE",
+              "issueCount": 0,
+              "scannerVersion": "2.3.5",
+              "summary": null,
+              "error": null,
+              "checkedAt": 1783651423701
+            },
+            "dependencyRegistry": null
+          }
+        },
+        "signature": {
+          "status": "unsigned"
+        }
+      }
+    },
+    "aviasales-flights": {
+      "version": "1.0.0",
+      "registry": "https://clawhub.ai",
+      "ownerHandle": "aspalagin",
+      "installedAt": 1788724084476,
+      "artifact": {
+        "kind": "archive",
+        "sha256": "e36b884da9ee56bf514d285317954df5a56a85e7ab31b272b6d6fda6b0ee17af",
+        "integrity": "sha256-42uITanuVr9RTShTF5VN9aVqheerMbJyttb9prDuF68="
+      },
+      "skillFile": {
+        "path": "SKILL.md",
+        "sha256": "4edeca99c7601ad119e79264784ab127e1f3e2bdad1806f550ef3ea40a23bd88"
+      },
+      "fileTreeSha256": "sha256:7b7c94e9141b8c5baffc7ae4dee76da65dd5baf6ca6fa27b3ecd153b32a9c0a1",
+      "verification": {
+        "schema": "clawhub.skill.verify.v1",
+        "ok": true,
+        "decision": "pass",
+        "reasons": [],
+        "card": {
+          "available": true,
+          "path": "skill-card.md",
+          "url": "https://wry-manatee-359.convex.site/api/v1/skills/aviasales-flights/card?ownerHandle=aspalagin&version=1.0.0",
+          "sha256": "1a42d3fb4b9e6d3c7797b81097519a68002cc985ac3cad587283949dbe775067",
+          "size": 2801,
+          "contentType": "text/markdown; charset=utf-8"
+        },
+        "artifact": {
+          "sourceFingerprint": "701cc81d52af3a394208254422ae26aafc49c89c40fd779e08de6b643dd48a91",
+          "bundleFingerprints": [
+            "523db0a1724d3eabe09259001207d5b2efc366106801d495d46e117e10792b3e"
+          ],
+          "files": [
+            {
+              "path": "SKILL.md",
+              "size": 4187,
+              "sha256": "4edeca99c7601ad119e79264784ab127e1f3e2bdad1806f550ef3ea40a23bd88",
+              "contentType": "text/markdown"
+            },
+            {
+              "path": "references/airlines.md",
+              "size": 1535,
+              "sha256": "57ae4abdac077ee198a5b318d1955148f914b0011066a454177560279b663a6c",
+              "contentType": "text/markdown"
+            },
+            {
+              "path": "scripts/search_flights.py",
+              "size": 14915,
+              "sha256": "6e4ed807ca38e914c5471e1d296fd93ee06a146a8ae531b871e3ef9ff6ffc82e",
+              "contentType": "text/plain"
+            }
+          ]
+        },
+        "provenance": {
+          "source": "unavailable",
+          "reason": "No server-resolved GitHub import provenance is stored for this version."
+        },
+        "security": {
+          "status": "clean",
+          "passed": true,
+          "rawStatus": "clean",
+          "verdict": "benign",
+          "confidence": "high",
+          "summary": "This flight-search skill matches its stated purpose, but users should know it sends search details to Travelpayouts/Aviasales and uses an API token.",
+          "model": "gpt-5.5",
+          "checkedAt": 1779978339793,
+          "signals": {
+            "staticScan": {
+              "status": "clean",
+              "rawStatus": "clean",
+              "reasonCodes": [],
+              "summary": "No suspicious patterns detected.",
+              "engineVersion": "v2.4.5",
+              "checkedAt": 1777527372049
+            },
+            "virusTotal": {
+              "status": "clean",
+              "rawStatus": "clean",
+              "verdict": null,
+              "analysis": null,
+              "source": "engines",
+              "scanner": null,
+              "engineStats": {
+                "harmless": 0,
+                "malicious": 0,
+                "suspicious": 0,
+                "undetected": 67
+              },
+              "checkedAt": 1780087041910
+            },
+            "skillSpector": {
+              "status": "suspicious",
+              "rawStatus": "suspicious",
+              "score": 91,
+              "severity": "CRITICAL",
+              "recommendation": "DO_NOT_INSTALL",
+              "issueCount": 7,
+              "scannerVersion": "2.0.0",
+              "summary": null,
+              "error": null,
+              "checkedAt": 1779978303035
+            },
+            "dependencyRegistry": null
+          }
+        },
+        "signature": {
+          "status": "unsigned"
+        }
+      }
+    }
+  }
+}

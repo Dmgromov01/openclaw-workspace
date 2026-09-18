@@ -1,0 +1,478 @@
+{
+  "scope": "weekly",
+  "generated_at": "2026-09-17T07:31:04+03:00",
+  "window": [
+    "2026-09-11",
+    "2026-09-17"
+  ],
+  "previous_window": [
+    "2026-09-04",
+    "2026-09-10"
+  ],
+  "current": {
+    "hrv": {
+      "mean": 12.166666666666666,
+      "n": 6,
+      "min": 11.0,
+      "max": 14.0,
+      "sd": 1.2133516482134197
+    },
+    "rhr": {
+      "mean": 72.16666666666667,
+      "n": 6,
+      "min": 69.0,
+      "max": 77.0,
+      "sd": 2.852873794770615
+    },
+    "sleep_score": {
+      "mean": 68.83333333333333,
+      "n": 6,
+      "min": 62.0,
+      "max": 76.0,
+      "sd": 4.94694069321861
+    },
+    "readiness": {
+      "mean": 77.66666666666667,
+      "n": 6,
+      "min": 72.0,
+      "max": 82.0,
+      "sd": 3.9015666369065416
+    },
+    "activity_score": {
+      "mean": 91.0,
+      "n": 6,
+      "min": 85.0,
+      "max": 97.0,
+      "sd": 3.9157800414902435
+    },
+    "steps": {
+      "mean": 10813.5,
+      "n": 6,
+      "min": 5410.0,
+      "max": 14862.0,
+      "sd": 2906.555277873334
+    },
+    "calories": {
+      "mean": 3049.8333333333335,
+      "n": 6,
+      "min": 2569.0,
+      "max": 3262.0,
+      "sd": 223.3333955223794
+    },
+    "temp_dev": {
+      "mean": 0.18833333333333332,
+      "n": 6,
+      "min": -0.04,
+      "max": 0.48,
+      "sd": 0.1854199437912641
+    },
+    "spo2": {
+      "mean": 93.93379999999999,
+      "n": 5,
+      "min": 92.328,
+      "max": 95.182,
+      "sd": 0.9603812576263662
+    },
+    "breathing": {
+      "mean": 0.5,
+      "n": 6,
+      "min": 0.0,
+      "max": 1.0,
+      "sd": 0.5
+    },
+    "stress_high": {
+      "mean": 0.42857142857142855,
+      "n": 7,
+      "min": 0.0,
+      "max": 0.75,
+      "sd": 0.31943828249996997
+    },
+    "recovery_high": {
+      "mean": 0.4642857142857143,
+      "n": 7,
+      "min": 0.0,
+      "max": 0.75,
+      "sd": 0.28121456692899327
+    },
+    "resilience": {
+      "mean": 49.300000000000004,
+      "n": 6,
+      "min": 46.6,
+      "max": 52.4,
+      "sd": 2.086464313937177
+    },
+    "sleep_duration": {
+      "mean": 67.83333333333333,
+      "n": 6,
+      "min": 54.0,
+      "max": 84.0,
+      "sd": 11.081766806586193
+    },
+    "deep_sleep": {
+      "mean": 4035.0,
+      "n": 6,
+      "min": 2940.0,
+      "max": 5280.0,
+      "sd": 878.5357135597847
+    },
+    "rem_sleep": {
+      "mean": 5035.0,
+      "n": 6,
+      "min": 3570.0,
+      "max": 6480.0,
+      "sd": 1023.2912586355851
+    },
+    "sleep_periods": {
+      "mean": 1.1666666666666667,
+      "n": 6,
+      "min": 1.0,
+      "max": 2.0,
+      "sd": 0.37267799624996495
+    },
+    "nap_duration": {
+      "mean": 95.0,
+      "n": 6,
+      "min": 0.0,
+      "max": 570.0,
+      "sd": 212.42645786248002
+    },
+    "biphasic": {
+      "mean": 0.0,
+      "n": 6,
+      "min": 0.0,
+      "max": 0.0,
+      "sd": 0.0
+    },
+    "vascular_age": {
+      "mean": 38.833333333333336,
+      "n": 6,
+      "min": 37.0,
+      "max": 41.0,
+      "sd": 1.3437096247164249
+    },
+    "workouts": {
+      "mean": 5.5,
+      "n": 6,
+      "min": 2.0,
+      "max": 9.0,
+      "sd": 2.217355782608345
+    }
+  },
+  "previous": {
+    "hrv": {
+      "mean": 15.428571428571429,
+      "n": 7,
+      "min": 11.0,
+      "max": 19.0,
+      "sd": 2.4411439272335804
+    },
+    "rhr": {
+      "mean": 68.71428571428571,
+      "n": 7,
+      "min": 62.0,
+      "max": 75.0,
+      "sd": 3.9175169145148825
+    },
+    "sleep_score": {
+      "mean": 68.0,
+      "n": 7,
+      "min": 54.0,
+      "max": 81.0,
+      "sd": 9.501879513323367
+    },
+    "readiness": {
+      "mean": 79.0,
+      "n": 7,
+      "min": 70.0,
+      "max": 85.0,
+      "sd": 5.0426750270636544
+    },
+    "activity_score": {
+      "mean": 91.0,
+      "n": 7,
+      "min": 81.0,
+      "max": 98.0,
+      "sd": 6.546536707079771
+    },
+    "steps": {
+      "mean": 10413.0,
+      "n": 7,
+      "min": 6260.0,
+      "max": 17796.0,
+      "sd": 4428.650584546042
+    },
+    "calories": {
+      "mean": 3183.1428571428573,
+      "n": 7,
+      "min": 2658.0,
+      "max": 3954.0,
+      "sd": 501.20381613284076
+    },
+    "temp_dev": {
+      "mean": 0.11285714285714286,
+      "n": 7,
+      "min": -0.31,
+      "max": 0.62,
+      "sd": 0.2836352932761308
+    },
+    "spo2": {
+      "mean": 94.49333333333334,
+      "n": 6,
+      "min": 92.813,
+      "max": 96.118,
+      "sd": 1.0772574230682062
+    },
+    "breathing": {
+      "mean": 0.42857142857142855,
+      "n": 7,
+      "min": 0.0,
+      "max": 2.0,
+      "sd": 0.7284313590846835
+    },
+    "stress_high": {
+      "mean": 0.21428571428571427,
+      "n": 7,
+      "min": 0.0,
+      "max": 0.75,
+      "sd": 0.2812145669289932
+    },
+    "recovery_high": {
+      "mean": 1.25,
+      "n": 7,
+      "min": 0.0,
+      "max": 3.25,
+      "sd": 1.2100767390069582
+    },
+    "resilience": {
+      "mean": 51.885714285714286,
+      "n": 7,
+      "min": 50.1,
+      "max": 54.1,
+      "sd": 1.465243589138067
+    },
+    "sleep_duration": {
+      "mean": 69.57142857142857,
+      "n": 7,
+      "min": 44.0,
+      "max": 97.0,
+      "sd": 19.24174882798296
+    },
+    "deep_sleep": {
+      "mean": 3492.8571428571427,
+      "n": 7,
+      "min": 2370.0,
+      "max": 4410.0,
+      "sd": 667.9117624723939
+    },
+    "rem_sleep": {
+      "mean": 5194.285714285715,
+      "n": 7,
+      "min": 1710.0,
+      "max": 7950.0,
+      "sd": 2205.9650116565904
+    },
+    "sleep_periods": {
+      "mean": 1.1428571428571428,
+      "n": 7,
+      "min": 1.0,
+      "max": 2.0,
+      "sd": 0.3499271061118826
+    },
+    "nap_duration": {
+      "mean": 30.0,
+      "n": 7,
+      "min": 0.0,
+      "max": 210.0,
+      "sd": 73.48469228349535
+    },
+    "biphasic": {
+      "mean": 0.0,
+      "n": 7,
+      "min": 0.0,
+      "max": 0.0,
+      "sd": 0.0
+    },
+    "vascular_age": {
+      "mean": 40.285714285714285,
+      "n": 7,
+      "min": 36.0,
+      "max": 47.0,
+      "sd": 3.4522988495984492
+    },
+    "workouts": {
+      "mean": 5.714285714285714,
+      "n": 7,
+      "min": 3.0,
+      "max": 8.0,
+      "sd": 1.4846149779161806
+    }
+  },
+  "trends": [
+    {
+      "metric": "daily_activity.meters_to_target",
+      "slope_30d": 5236.9338,
+      "n": 41,
+      "mean": -7139.0244,
+      "sd": 9693.0671,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "daily_activity.resting_time",
+      "slope_30d": -3376.72474,
+      "n": 41,
+      "mean": 29625.3659,
+      "sd": 8125.5238,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "daily_activity.target_meters",
+      "slope_30d": 3308.36237,
+      "n": 41,
+      "mean": 13073.1707,
+      "sd": 2122.9322,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "daily_activity.sedentary_time",
+      "slope_30d": 2791.25436,
+      "n": 41,
+      "mean": 32165.8537,
+      "sd": 8759.4568,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "steps",
+      "slope_30d": -1240.69861,
+      "n": 41,
+      "mean": 12900.8293,
+      "sd": 5897.0122,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "daily_activity.steps",
+      "slope_30d": -1240.69861,
+      "n": 41,
+      "mean": 12900.8293,
+      "sd": 5897.0122,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "daily_activity.non_wear_time",
+      "slope_30d": -1113.55401,
+      "n": 41,
+      "mean": 1309.7561,
+      "sd": 3035.8705,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "deep_sleep",
+      "slope_30d": 382.45779,
+      "n": 40,
+      "mean": 3754.5,
+      "sd": 985.3425,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "rem_sleep",
+      "slope_30d": -182.53283,
+      "n": 40,
+      "mean": 5178.0,
+      "sd": 1664.754,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "daily_activity.target_calories",
+      "slope_30d": 138.50174,
+      "n": 41,
+      "mean": 664.6341,
+      "sd": 97.6829,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "calories",
+      "slope_30d": -128.29965,
+      "n": 41,
+      "mean": 3336.0,
+      "sd": 597.9173,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "daily_activity.total_calories",
+      "slope_30d": -128.29965,
+      "n": 41,
+      "mean": 3336.0,
+      "sd": 597.9173,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "heartrate.bpm_count",
+      "slope_30d": 52.19686,
+      "n": 41,
+      "mean": 3149.4634,
+      "sd": 1553.7967,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "nap_duration",
+      "slope_30d": -30.64728,
+      "n": 40,
+      "mean": 438.75,
+      "sd": 1524.1903,
+      "reliability": "moderate"
+    },
+    {
+      "metric": "heartrate.bpm_max",
+      "slope_30d": 20.5662,
+      "n": 41,
+      "mean": 147.6098,
+      "sd": 20.552,
+      "reliability": "moderate"
+    }
+  ],
+  "patterns": [],
+  "anomalies": [],
+  "correlations_lagged_1d": [
+    {
+      "a": "breathing",
+      "b": "spo2",
+      "r": 0.462,
+      "n": 36,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "spo2",
+      "b": "sleep_periods",
+      "r": 0.422,
+      "n": 36,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "activity_score",
+      "b": "sleep_duration",
+      "r": 0.419,
+      "n": 40,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    },
+    {
+      "a": "nap_duration",
+      "b": "deep_sleep",
+      "r": 0.418,
+      "n": 39,
+      "lag_days": 1,
+      "reliability": "moderate",
+      "confidence": "moderate",
+      "reading": "association only, not causation"
+    }
+  ],
+  "observations_added": [],
+  "briefing": "# Weekly trend and pattern report\nDate: 2026-09-17\nWindow: 2026-09-11 .. 2026-09-17 vs 2026-09-04 .. 2026-09-10\n\n## Changed vs previous window\n  - sleep_score: 68.83 против 68.00 (выше на 0.83 / 1.2%)\n  - hrv: 12.17 против 15.43 (ниже на 3.26 / -21.1%)\n  - rhr: 72.17 против 68.71 (выше на 3.45 / 5.0%)\n  - readiness: 77.67 против 79.00 (ниже на 1.33 / -1.7%)\n  - temp_dev: 0.19 против 0.11 (выше на 0.08 / —)\n  - spo2: 93.93 против 94.49 (ниже на 0.56 / -0.6%)\n  - steps: 10813.50 против 10413.00 (выше на 400.50 / 3.8%)\n  - activity_score: 91.00 против 91.00 (ровно на 0.00 / 0.0%)\n  - sleep_duration: 67.83 против 69.57 (ниже на 1.74 / -2.5%)\n  - stress_high: 0.43 против 0.21 (выше на 0.21 / —)\n  - deep_sleep: 4035.00 против 3492.86 (выше на 542.14 / 15.5%)\n  - rem_sleep: 5035.00 против 5194.29 (ниже на 159.29 / -3.1%)\n  - resilience: 49.30 против 51.89 (ниже на 2.59 / -5.0%)\n  - workouts: 5.50 против 5.71 (ниже на 0.21 / -3.8%)\n\n## Trends (per 30 days, whole history)\n  - daily_activity.meters_to_target: 5236.934 per 30d (n=41, mean -7139.02)\n  - daily_activity.resting_time: -3376.725 per 30d (n=41, mean 29625.37)\n  - daily_activity.target_meters: 3308.362 per 30d (n=41, mean 13073.17)\n  - daily_activity.sedentary_time: 2791.254 per 30d (n=41, mean 32165.85)\n  - steps: -1240.699 per 30d (n=41, mean 12900.83)\n  - daily_activity.steps: -1240.699 per 30d (n=41, mean 12900.83)\n  - daily_activity.non_wear_time: -1113.554 per 30d (n=41, mean 1309.76)\n  - deep_sleep: 382.458 per 30d (n=40, mean 3754.50)\n\n## Patterns\n  - пока ни одной выше порога\n\n## Anomalies, last 7 days\n  - нет\n\n## Lagged correlations (day d vs d+1)\n  - breathing -> spo2: r=0.462 (n=36)\n  - spo2 -> sleep_periods: r=0.422 (n=36)\n  - activity_score -> sleep_duration: r=0.419 (n=40)\n  - nap_duration -> deep_sleep: r=0.418 (n=39)\n\nNew regularities saved to observations.md: 0"
+}

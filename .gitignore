@@ -49,6 +49,7 @@ session*
 /memory/MEMORY-fat-*.md
 /memory/.dreams/
 /memory/dreaming/
+/memory/*.md
 /reports/*.xlsx
 
 travel/*_state.json
@@ -56,3 +57,10 @@ travel/*_state.json
 /hub/**/*.jsonl
 /hub/memory/
 /hub/*.session*
+
+# OpenClaw backup archives (238MB, 0600) — never commit
+*openclaw-backup.tar.gz
+# Local scratch / archived material
+_scratch/
+_archive/
+_tmp_*

@@ -87,6 +87,14 @@ SLEEP_MIN_KEYS = ("lowest_heart_rate", "min_heart_rate")
 SLEEP_AVG_KEYS = ("average_hrv", "average_heart_rate", "average_breath",
                   "average_heart_rate_variability")
 
+# Oura returns some duration fields in seconds; store them as hours so that
+# summary stats and anomaly detection use human-readable units.
+SECONDS_TO_HOURS = {
+    "daily_stress.recovery_high",
+    "daily_stress.stress_high",
+    "daily_stress.stress_seconds_high",
+}
+
 CANONICAL_FALLBACK = (
     ("hrv",            ("sleep.average_hrv",)),
     ("rhr",            ("sleep.lowest_heart_rate", "sleep.average_heart_rate")),
@@ -108,9 +116,9 @@ CANONICAL_FALLBACK = (
     ("sleep_periods",  ("sleep__periods",)),
     ("nap_duration",   ("sleep__nap_duration",)),
     ("biphasic",       ("sleep__biphasic",)),
-    ("hr_avg",         ("heartrate.bpm_mean", "heartrate.bpm")),
-    ("hr_max",         ("heartrate.bpm_max",)),
-    ("hr_min",         ("heartrate.bpm_min",)),
+    # Raw/high-frequency heart-rate streams are intentionally excluded from
+    # canonical health findings: they are vulnerable to motion/sampling
+    # artefacts. Use sleep.lowest_heart_rate for the RHR signal instead.
     ("vascular_age",   ("daily_cardiovascular_age.vascular_age",)),
     ("workouts",       ("workout__items", "daily_activity__items")),
     ("workout_minutes", ("workout.total_duration",)),
@@ -119,12 +127,18 @@ CANONICAL_FALLBACK = (
 )
 
 MIN_DAYS_BASELINE = 14
-MIN_OVERLAP_CORR = 20
+MIN_OVERLAP_CORR = 30
+ANOMALY_Z_THRESHOLD = 3.0
+# hr_max is a daily maximum by construction; legitimate workout peaks can be
+# far above the median. Use a higher threshold so only physiologically
+# implausible values are flagged.
+ANOMALY_THRESHOLDS = {"hr_max": 5.0}
 # Lagged pairs need more overlap: two noisy series shifted by a day lose
 # effective sample size. Expect EMPTY lagged correlations below ~40 days.
-MIN_OVERLAP_LAGGED = 25
+MIN_OVERLAP_LAGGED = 30
 CORR_MIN_ABS = 0.40
-PATTERN_MIN_DAYS = 21
+# Repeating-pattern claims need a longer series than a one-month MVP.
+PATTERN_MIN_DAYS = 60
 
 
 # --------------------------------------------------------------------------- #
@@ -409,6 +423,8 @@ def normalize(con: sqlite3.Connection) -> dict:
             else:
                 agg = _agg_for(metric)
             value = sum(values) if agg == "sum" else (sum(values) / len(values))
+            if metric in SECONDS_TO_HOURS:
+                value = round(value / 3600.0, 2)
             fact_rows.append((day, metric, float(value), len(values), agg))
             metric_set.add(metric)
 
@@ -586,8 +602,9 @@ def anomalies(series: dict, resolved: dict, limit: int = 25) -> list:
         robust = 1.4826 * mad
         if robust <= 0:
             continue
+        threshold = ANOMALY_THRESHOLDS.get(name, ANOMALY_Z_THRESHOLD)
         flagged = [day for day in days
-                   if day >= cutoff and abs((data[day] - median) / robust) >= 3.0]
+                   if day >= cutoff and abs((data[day] - median) / robust) >= threshold]
         if not flagged:
             continue
         # v1-compatible share: flagged days over the baseline days scanned
@@ -719,8 +736,8 @@ def detect_patterns(series: dict, resolved: dict,
                 if after_deltas else 0.0,
                 "direction": "down" if mean_delta < 0 else "up",
                 "consistency": round(consistency, 2), "n": n,
-                # v1-compatible aliases so existing report consumers keep working
-                "occurrences": n, "of_opportunities": len(cases),
+                # v1-compatible alias so existing report consumers keep working
+                "occurrences": n,
                 "effect_holds_next_day": bool(
                     after_deltas and (mean_delta < 0) == ((sum(after_deltas) / len(after_deltas)) < 0)),
                 "reliability": band, "confidence": confidence,
@@ -770,6 +787,13 @@ def analyze(days_window: int = 14) -> dict:
             "correlations_lagged_1d": correlations(series, resolved, lag=1),
             "patterns": patterns,
             "patterns_meta": patterns_meta,
+            "interpretation_policy": {
+                "minimum_days_for_patterns": PATTERN_MIN_DAYS,
+                "minimum_overlap_for_correlation": MIN_OVERLAP_CORR,
+                "minimum_overlap_for_lagged_correlation": MIN_OVERLAP_LAGGED,
+                "raw_heartrate_canonical": False,
+                "note": "correlations are exploratory associations, never causation",
+            },
         }
         return {
             "generated_at": datetime.now(LOCAL_TZ).isoformat(timespec="seconds"),
@@ -796,7 +820,8 @@ def save(pack: dict, name: str = "current.json") -> Path:
     archive.mkdir(exist_ok=True)
     payload = json.dumps(pack, ensure_ascii=False, indent=2)
     stem = Path(name).stem
-    versioned = archive / (local_today().isoformat() + "_" + stem + ".json")
+    now = datetime.now(LOCAL_TZ)
+    versioned = archive / (local_today().isoformat() + "_" + now.strftime("%H%M%S") + "_" + stem + ".json")
     versioned.write_text(payload, encoding="utf-8")
     current = ANALYSIS_DIR / name
     current.write_text(payload, encoding="utf-8")

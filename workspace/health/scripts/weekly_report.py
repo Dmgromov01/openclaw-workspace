@@ -55,16 +55,18 @@ def delta_line(name: str, cur: dict, prev: dict) -> str:
         return "  - " + name + ": " + fmt(now) + " (нет сравнения)"
     before = prev[name]["mean"]
     diff = now - before
-    pct = (diff / before * 100.0) if before else 0.0
     arrow = "выше" if diff > 0 else ("ниже" if diff < 0 else "ровно")
+    # Percent change is misleading for signed or near-zero baselines (e.g. temp_dev).
+    show_pct = before > 0.5
+    pct_part = (" / " + fmt(diff / before * 100.0, 1) + "%") if show_pct else " / —"
     return ("  - " + name + ": " + fmt(now) + " против " + fmt(before) +
-            " (" + arrow + " на " + fmt(abs(diff)) + " / " + fmt(pct, 1) + "%)")
+            " (" + arrow + " на " + fmt(abs(diff)) + pct_part + ")")
 
 
 def append_observations(pack: dict) -> list:
     """Append newly discovered regularities; idempotent by exact summary line."""
     pack = pack.get("signals", pack)  # v2.1 nests the signal block
-    today = date.today().isoformat()
+    today = analytics.local_today().isoformat()
     text = OBS_PATH.read_text(encoding="utf-8") if OBS_PATH.exists() else "# Observations\n"
     added = []
     for p in pack["patterns"][:8]:
@@ -105,7 +107,7 @@ def build(scope: str) -> dict:
     try:
         series = analytics.load_series(con)
         resolved = pack["canonical_metrics"]
-        end = date.today()
+        end = analytics.local_today()
         cur_start = (end - timedelta(days=days - 1)).isoformat()
         prev_end = (end - timedelta(days=days)).isoformat()
         prev_start = (end - timedelta(days=2 * days - 1)).isoformat()

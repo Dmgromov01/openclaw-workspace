@@ -1,0 +1,86 @@
+{
+  "report": {
+    "title": "Health fixture privacy-hardening pass",
+    "timestamp": "2026-09-12T19:20:00Z",
+    "model": "relaymodels/kimi-k2.7-code",
+    "goal": "Remove real personal Oura aggregates from the client-side health fixture bundle and ensure the UI cannot be mistaken for a personal analysis."
+  },
+  "changes": {
+    "files": [
+      "/root/atlas-green-pearl-dawn/src/components/health/health-mock.ts",
+      "/root/atlas-green-pearl-dawn/src/components/health/health-view.tsx",
+      "/root/atlas-green-pearl-dawn/src/components/health/health-mock.test.ts",
+      "/root/openclaw/tests/health/2026-09-12-privacy-hardening-report.json"
+    ],
+    "summary": [
+      "Replaced all personal Oura aggregates in healthFixtures with clearly synthetic round values.",
+      "Set every metric baseline to null and status to gray; dataConfidence to insufficient.",
+      "Updated trend points to synthetic round values.",
+      "Rewrote finding text to state that all data is synthetic/demo.",
+      "Changed dataQuality source to 'Synthetic fixture', coverageDays to 0, syncStatus to demo.",
+      "Strengthened demoNote and added isDemo/synthetic markers.",
+      "Removed 'Oura', 'личный baseline' and 'данные актуальны' wording from the UI.",
+      "Added statusHeadline gray case for demo state.",
+      "Evidence paper citations kept; fixture MCP provenance remains synthetic placeholder only."
+    ]
+  },
+  "privacy_audit": {
+    "real_oura_aggregates_in_fixture": {
+      "status": "PASS",
+      "note": "No real personal values (HRV 13, RHR 71, sleep 62, readiness 82, activity 88, steps 11581, SpO₂ 93.6, sleep_duration 56) remain in healthFixtures or trend points."
+    },
+    "synthetic_markers": {
+      "status": "PASS",
+      "note": "All fixtures have isDemo=true, demoNote includes synthetic/демо warning, generatedAt is 2099-01-01T00:00:00Z."
+    },
+    "baseline_null_and_gray": {
+      "status": "PASS",
+      "note": "Every metric has null baseline and gray status; fixture finding status is gray."
+    },
+    "medical_thresholds_and_claims": {
+      "status": "PASS",
+      "note": "No medical thresholds or personal clinical claims are made. UI states it is not a diagnosis or triage."
+    },
+    "mcp_provenance": {
+      "status": "PASS",
+      "note": "Fixture provenance uses synthetic TEST_MCP_TOOL/test_toolkit/test-log-id-placeholder. Real MCP provenance stays only in prior local report, not in client fixture."
+    },
+    "xss_and_accessibility": {
+      "status": "PASS",
+      "note": "No dangerouslySetInnerHTML. All rendered strings come from static fixtures or translated labels. Evidence links are rendered as plain text, not clickable hrefs. Existing aria-labels/roles preserved; new statusHeadline supports gray state."
+    },
+    "bundle_leak_check": {
+      "status": "PASS",
+      "note": "Scanned .output/public/assets *.js/*.css after build:dev; no banned personal-fact substrings found."
+    },
+    "secrets_and_pii": {
+      "status": "PASS",
+      "note": "No email, tokens, .env, credentials, nginx/systemd/gateway/auth changes in this pass."
+    }
+  },
+  "validation": {
+    "tsc_no_emit": {
+      "status": "PASS",
+      "command": "/usr/bin/node node_modules/typescript/bin/tsc --noEmit",
+      "exit_code": 0
+    },
+    "unit_tests": {
+      "status": "PASS",
+      "command": "node --experimental-strip-types --test src/lib/auth/gate-identity.test.ts src/components/health/health-mock.test.ts src/lib/finance/rates.test.ts src/lib/hub/actions.test.ts src/lib/hub/gateway.test.ts src/lib/reminders/parse.test.ts src/lib/server/backup-auth.test.ts src/lib/openclaw/bot-access.test.ts src/lib/weather/forecast.test.ts",
+      "tests": 53,
+      "suites": 8,
+      "pass": 53,
+      "fail": 0
+    },
+    "build_dev": {
+      "status": "PASS",
+      "command": "node scripts/with-app-env.mjs node node_modules/vite/bin/vite.js build --mode development",
+      "note": "Wrapper only merges VITE_ build flags; no production deploy or auth/env changes."
+    }
+  },
+  "blockers": [],
+  "next_steps": [
+    "When real local Oura aggregates are reintroduced, route them through a server-side DTO and keep raw rows out of the client bundle.",
+    "Persist real MCP provenance in a private report only, never in healthFixtures."
+  ]
+}

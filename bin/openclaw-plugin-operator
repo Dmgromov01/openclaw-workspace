@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+"""Bounded OpenClaw plugin lifecycle operator for the owner-controlled main agent."""
+import os
+import re
+import subprocess
+import sys
+
+OPENCLAW = "/usr/bin/openclaw"
+OFFICIAL_NPM = re.compile(r"^@openclaw/[a-z0-9][a-z0-9._-]*(?:@[0-9][a-z0-9._-]*)?$")
+CLAWHUB = re.compile(r"^clawhub:[a-z0-9][a-z0-9._-]*$")
+PLUGIN_ID = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
+QUERY = re.compile(r"^[\w .,:+/@-]{1,120}$", re.ASCII)
+
+
+def deny(message: str) -> None:
+    print(f"plugin operator: denied: {message}", file=sys.stderr)
+    raise SystemExit(2)
+
+
+def run(args: list[str]) -> None:
+    os.chdir("/root/openclaw")
+    raise SystemExit(subprocess.run([OPENCLAW, "plugins", *args], check=False).returncode)
+
+
+def plugin_spec(value: str) -> bool:
+    return bool(OFFICIAL_NPM.fullmatch(value) or CLAWHUB.fullmatch(value))
+
+
+def main(argv: list[str]) -> None:
+    if not argv:
+        deny("usage: search <query> | list | inspect <id> | install <clawhub:package|@openclaw/package> | enable|disable|uninstall <id> | update <id> | validate | doctor | registry-refresh")
+    cmd, *rest = argv
+    if cmd == "list" and not rest:
+        run(["list"])
+    if cmd in {"validate", "doctor"} and not rest:
+        run([cmd])
+    if cmd == "registry-refresh" and not rest:
+        run(["registry", "--refresh"])
+    if cmd == "search" and len(rest) == 1 and QUERY.fullmatch(rest[0]):
+        run(["search", rest[0]])
+    if cmd == "inspect" and len(rest) == 1 and PLUGIN_ID.fullmatch(rest[0]):
+        run(["inspect", rest[0]])
+    if cmd == "install" and len(rest) == 1 and plugin_spec(rest[0]):
+        run(["install", rest[0]])
+    if cmd in {"enable", "disable", "uninstall", "update"} and len(rest) == 1 and PLUGIN_ID.fullmatch(rest[0]):
+        run([cmd, rest[0]])
+    deny("unsupported command, source, option, or argument")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

@@ -1,0 +1,37 @@
+# ===========================================================================
+# Oura OAuth2 callback -> hub.gbkz.uk root path ("/")
+# ===========================================================================
+# The Oura application is registered with redirect URI https://hub.gbkz.uk/
+# (root path, trailing slash, exact match). A GET carrying ?code= or ?error=
+# must reach the local callback service; every other request keeps flowing to
+# the hub app on 127.0.0.1:8091, unchanged.
+#
+# --- 1) Add this map at the TOP of /etc/nginx/sites-enabled/hub.gbkz.uk ------
+#     (http-level directive; the file is included inside http{})
+
+map $arg_code $hub_root_upstream {
+    ""      http://127.0.0.1:8091;   # plain root request -> hub app
+    default http://127.0.0.1:8092;   # ?code= / ?error= -> Oura callback service
+}
+
+# --- 2) Insert this location INSIDE the existing server block ---------------
+#     server { server_name hub.gbkz.uk; ... }
+#     Place it BEFORE the existing `location / {`.
+
+    location = / {
+        limit_req zone=perip burst=20 nodelay;
+        proxy_pass $hub_root_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+# --- 3) Apply ---------------------------------------------------------------
+#   mkdir -p /root/_trash/ideal-$(date +%Y%m%d)
+#   cp /etc/nginx/sites-enabled/hub.gbkz.uk /root/_trash/ideal-$(date +%Y%m%d)/
+#   (edit the file: add the map + the location block)
+#   nginx -t && systemctl reload nginx
+#
+# Rollback: restore the copy from /root/_trash/... and reload again.

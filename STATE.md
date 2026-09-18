@@ -1,3 +1,4 @@
+<!-- project: github.com/Dmgromov01/openclaw-workspace -->
 # STATE.md — актуальное runtime-состояние
 
 > Это единственный канон для живой инфраструктуры.

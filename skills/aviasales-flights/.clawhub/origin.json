@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "registry": "https://clawhub.ai",
+  "slug": "aviasales-flights",
+  "ownerHandle": "aspalagin",
+  "installedAt": 1788724084476,
+  "artifact": {
+    "kind": "archive",
+    "sha256": "e36b884da9ee56bf514d285317954df5a56a85e7ab31b272b6d6fda6b0ee17af",
+    "integrity": "sha256-42uITanuVr9RTShTF5VN9aVqheerMbJyttb9prDuF68="
+  },
+  "skillFile": {
+    "path": "SKILL.md",
+    "sha256": "4edeca99c7601ad119e79264784ab127e1f3e2bdad1806f550ef3ea40a23bd88"
+  },
+  "fileTreeSha256": "sha256:7b7c94e9141b8c5baffc7ae4dee76da65dd5baf6ca6fa27b3ecd153b32a9c0a1",
+  "installedVersion": "1.0.0"
+}
